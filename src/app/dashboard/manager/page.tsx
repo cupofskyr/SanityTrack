@@ -11,13 +11,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, CalendarDays, ListTodo, Wand2 } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, CalendarDays, ListTodo, Wand2, Boxes } from "lucide-react";
 import AIRecommendationForm from "@/components/ai-recommendation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import AIShiftScheduler from '@/components/ai-shift-scheduler';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AISetupAssistant from '@/components/ai-setup-assistant';
+import InventoryManager from '@/components/inventory-manager';
 
 
 const teamMembers = [
@@ -149,6 +150,16 @@ export default function ManagerDashboard() {
                             <Progress value={member.progress} className="h-2" />
                         </div>
                     ))}
+                </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Boxes /> Inventory & Counting</CardTitle>
+                    <CardDescription>Manage inventory items and set the frequency for automatic counting tasks.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <InventoryManager />
                 </CardContent>
             </Card>
 
