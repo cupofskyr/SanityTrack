@@ -3,8 +3,13 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Toolti
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText, TrendingUp, ShieldCheck } from "lucide-react";
+import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle } from "lucide-react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Button } from '@/components/ui/button';
 
 const complianceData = [
   { month: "Jan", score: 82 },
@@ -108,6 +113,53 @@ export default function HealthDeptDashboard() {
               ))}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card className="lg:col-span-4">
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2"><PlusCircle /> Add New Compliance Task</CardTitle>
+          <CardDescription>
+            Define new weekly or monthly tasks for establishments to follow.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="grid gap-6">
+            <div className="grid gap-2">
+              <Label htmlFor="task-description">Task Description</Label>
+              <Input id="task-description" placeholder="e.g., Verify all fire extinguishers are certified" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="frequency">Frequency</Label>
+                <Select>
+                  <SelectTrigger id="frequency">
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Type</Label>
+                <RadioGroup defaultValue="mandatory" className="flex items-center gap-4 pt-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="mandatory" id="mandatory" />
+                    <Label htmlFor="mandatory" className="font-normal">Mandatory</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="optional" id="optional" />
+                    <Label htmlFor="optional" className="font-normal">Optional</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="flex items-end">
+                <Button type="submit" className="w-full md:w-auto bg-primary hover:bg-primary/90">Add Task</Button>
+              </div>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
