@@ -11,12 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, CalendarDays, ListTodo } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, CalendarDays, ListTodo, Wand2 } from "lucide-react";
 import AIRecommendationForm from "@/components/ai-recommendation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import AIShiftScheduler from '@/components/ai-shift-scheduler';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import AISetupAssistant from '@/components/ai-setup-assistant';
 
 
 const teamMembers = [
@@ -114,6 +115,22 @@ export default function ManagerDashboard() {
         })
     };
 
+    const handleGeneratedTasks = (generatedTasks: { description: string, frequency: string }[]) => {
+        const newTasks = generatedTasks.map((task, index) => ({
+            id: (managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) : 0) + index + 1,
+            description: task.description,
+            frequency: task.frequency,
+            assignee: 'Unassigned',
+        }));
+
+        setManagedTasks(prevTasks => [...newTasks, ...prevTasks]);
+
+        toast({
+            title: "Task Checklist Generated!",
+            description: `${newTasks.length} new tasks have been added to your 'Assigned Tasks' list below.`,
+        });
+    };
+
 
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -135,6 +152,8 @@ export default function ManagerDashboard() {
                 </CardContent>
             </Card>
 
+            <AISetupAssistant onTasksGenerated={handleGeneratedTasks} />
+
             <Card className="lg:col-span-3">
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><PlusCircle /> Create & Assign Task</CardTitle>
@@ -151,12 +170,13 @@ export default function ManagerDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="frequency">Frequency</Label>
-                                <Select value={taskFrequency} onValueChange={setTaskFrequency}>
+                                <Select value={taskFrequency} onValueChange={setTaskFrequency} required>
                                     <SelectTrigger id="frequency">
                                         <SelectValue placeholder="Select frequency" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="One-time">One-time</SelectItem>
+                                        <SelectItem value="Daily">Daily</SelectItem>
                                         <SelectItem value="Weekly">Weekly</SelectItem>
                                         <SelectItem value="Monthly">Monthly</SelectItem>
                                     </SelectContent>
@@ -164,7 +184,7 @@ export default function ManagerDashboard() {
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="assignee">Assign To</Label>
-                                <Select value={taskAssignee} onValuechange={setTaskAssignee}>
+                                <Select value={taskAssignee} onValueChange={setTaskAssignee} required>
                                     <SelectTrigger id="assignee">
                                         <SelectValue placeholder="Select employee" />
                                     </SelectTrigger>
@@ -187,7 +207,7 @@ export default function ManagerDashboard() {
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> Assigned Tasks</CardTitle>
                     <CardDescription>
-                        A list of all recurring and one-time tasks you've created.
+                        A list of all recurring and one-time tasks you've created. AI-generated tasks appear here.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -213,7 +233,7 @@ export default function ManagerDashboard() {
                             ) : (
                                 <TableRow>
                                 <TableCell colSpan={3} className="text-center h-24">
-                                    No tasks created yet.
+                                    No tasks created yet. Use the forms above to create tasks manually or with AI.
                                 </TableCell>
                                 </TableRow>
                             )}
