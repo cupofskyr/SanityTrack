@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -18,10 +19,12 @@ import {
 import {
   LayoutDashboard,
   ClipboardList,
-  AreaChart,
   User,
   LogOut,
   ChevronDown,
+  CalendarDays,
+  Boxes,
+  Wrench,
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -55,12 +58,21 @@ export default function DashboardLayout({
     if (role === "Manager") return "/dashboard/manager";
     if (role === "Health Department") return "/dashboard/health-department";
     return "/dashboard";
-  }
+  };
 
-  const navItems = [
+  const baseNavItems = [
     { href: getDashboardLink(), icon: LayoutDashboard, label: "Dashboard" },
     { href: "/taskboard", icon: ClipboardList, label: "Taskboard" },
   ];
+
+  const managerNavItems = [
+    { href: "/dashboard/manager/shifts", icon: CalendarDays, label: "Shift Planner" },
+    { href: "/dashboard/manager/inventory", icon: Boxes, label: "Inventory & Counting" },
+    { href: "/dashboard/manager/equipment", icon: Wrench, label: "Equipment Setup" },
+  ];
+
+  const navItems = role === "Manager" ? [...baseNavItems, ...managerNavItems] : baseNavItems;
+
 
   return (
     <SidebarProvider>
@@ -79,7 +91,7 @@ export default function DashboardLayout({
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href)}
                   tooltip={item.label}
                 >
                   <Link href={item.href}>

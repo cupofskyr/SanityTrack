@@ -11,14 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, CalendarDays, ListTodo, Wand2, Boxes } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo } from "lucide-react";
 import AIRecommendationForm from "@/components/ai-recommendation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import AIShiftScheduler from '@/components/ai-shift-scheduler';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import AISetupAssistant from '@/components/ai-setup-assistant';
-import InventoryManager from '@/components/inventory-manager';
 
 
 const teamMembers = [
@@ -116,22 +113,6 @@ export default function ManagerDashboard() {
         })
     };
 
-    const handleGeneratedTasks = (generatedTasks: { description: string, frequency: string }[]) => {
-        const newTasks = generatedTasks.map((task, index) => ({
-            id: (managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) : 0) + index + 1,
-            description: task.description,
-            frequency: task.frequency,
-            assignee: 'Unassigned',
-        }));
-
-        setManagedTasks(prevTasks => [...newTasks, ...prevTasks]);
-
-        toast({
-            title: "Task Checklist Generated!",
-            description: `${newTasks.length} new tasks have been added to your 'Assigned Tasks' list below.`,
-        });
-    };
-
 
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -152,18 +133,6 @@ export default function ManagerDashboard() {
                     ))}
                 </CardContent>
             </Card>
-
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Boxes /> Inventory & Counting</CardTitle>
-                    <CardDescription>Manage inventory items and set the frequency for automatic counting tasks.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <InventoryManager />
-                </CardContent>
-            </Card>
-
-            <AISetupAssistant onTasksGenerated={handleGeneratedTasks} />
 
             <Card className="lg:col-span-3">
                 <CardHeader>
@@ -218,7 +187,7 @@ export default function ManagerDashboard() {
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> Assigned Tasks</CardTitle>
                     <CardDescription>
-                        A list of all recurring and one-time tasks you've created. AI-generated tasks appear here.
+                        A list of all recurring and one-time tasks you've created. AI-generated tasks appear on the Equipment page.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -244,23 +213,12 @@ export default function ManagerDashboard() {
                             ) : (
                                 <TableRow>
                                 <TableCell colSpan={3} className="text-center h-24">
-                                    No tasks created yet. Use the forms above to create tasks manually or with AI.
+                                    No tasks created yet. Use the form above to create tasks manually.
                                 </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
                     </Table>
-                </CardContent>
-            </Card>
-
-
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><CalendarDays className="text-primary"/> AI Shift Scheduler</CardTitle>
-                    <CardDescription>Create shifts and let AI generate a schedule based on employee availability.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AIShiftScheduler />
                 </CardContent>
             </Card>
 
