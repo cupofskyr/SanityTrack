@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -10,11 +11,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, CalendarDays } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, CalendarDays, ListTodo } from "lucide-react";
 import AIRecommendationForm from "@/components/ai-recommendation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import AIShiftScheduler from '@/components/ai-shift-scheduler';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 
 const teamMembers = [
@@ -41,11 +43,27 @@ type Contact = {
     phone: string;
 };
 
+type ManagedTask = {
+    id: number;
+    description: string;
+    frequency: string;
+    assignee: string;
+};
+
 export default function ManagerDashboard() {
     const { toast } = useToast();
     const [contacts, setContacts] = useState<Contact[]>(initialContacts);
     const [isAddContactOpen, setIsAddContactOpen] = useState(false);
     const [newContact, setNewContact] = useState({ name: '', type: '', phone: '' });
+
+    const [managedTasks, setManagedTasks] = useState<ManagedTask[]>([
+        { id: 1, description: "Weekly stock inventory", frequency: "Weekly", assignee: "Jane Smith" },
+        { id: 2, description: "Monthly deep clean of walk-in freezer", frequency: "Monthly", assignee: "Sam Wilson" },
+    ]);
+    const [taskDescription, setTaskDescription] = useState('');
+    const [taskFrequency, setTaskFrequency] = useState('');
+    const [taskAssignee, setTaskAssignee] = useState('');
+
 
     const findContact = (type: string) => contacts.find(c => c.type === type);
 
@@ -68,6 +86,34 @@ export default function ManagerDashboard() {
             description: "The new service contact has been saved.",
         });
     };
+    
+    const handleAddTask = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!taskDescription || !taskFrequency || !taskAssignee) {
+            toast({
+                variant: "destructive",
+                title: "Missing Information",
+                description: "Please fill out all task fields.",
+            });
+            return;
+        }
+        const newTask: ManagedTask = {
+            id: managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) + 1 : 1,
+            description: taskDescription,
+            frequency: taskFrequency,
+            assignee: taskAssignee,
+        };
+        setManagedTasks([newTask, ...managedTasks]);
+        // Reset form
+        setTaskDescription('');
+        setTaskFrequency('');
+        setTaskAssignee('');
+        toast({
+            title: "Task Created",
+            description: `${taskDescription} has been assigned to ${taskAssignee}.`
+        })
+    };
+
 
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -88,6 +134,94 @@ export default function ManagerDashboard() {
                     ))}
                 </CardContent>
             </Card>
+
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><PlusCircle /> Create & Assign Task</CardTitle>
+                    <CardDescription>
+                        Define new one-time, weekly, or monthly tasks and assign them to your team members.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleAddTask} className="grid gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="task-description">Task Description</Label>
+                            <Input id="task-description" placeholder="e.g., Sanitize all kitchen surfaces" value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} required />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="frequency">Frequency</Label>
+                                <Select value={taskFrequency} onValueChange={setTaskFrequency}>
+                                    <SelectTrigger id="frequency">
+                                        <SelectValue placeholder="Select frequency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="One-time">One-time</SelectItem>
+                                        <SelectItem value="Weekly">Weekly</SelectItem>
+                                        <SelectItem value="Monthly">Monthly</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="assignee">Assign To</Label>
+                                <Select value={taskAssignee} onValuechange={setTaskAssignee}>
+                                    <SelectTrigger id="assignee">
+                                        <SelectValue placeholder="Select employee" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {teamMembers.map(member => (
+                                            <SelectItem key={member.name} value={member.name}>{member.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex items-end">
+                                <Button type="submit" className="w-full">Add & Assign Task</Button>
+                            </div>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> Assigned Tasks</CardTitle>
+                    <CardDescription>
+                        A list of all recurring and one-time tasks you've created.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Task</TableHead>
+                                <TableHead>Assignee</TableHead>
+                                <TableHead>Frequency</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {managedTasks.length > 0 ? (
+                                managedTasks.map((task) => (
+                                <TableRow key={task.id}>
+                                    <TableCell className="font-medium">{task.description}</TableCell>
+                                    <TableCell>{task.assignee}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="secondary">{task.frequency}</Badge>
+                                    </TableCell>
+                                </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                <TableCell colSpan={3} className="text-center h-24">
+                                    No tasks created yet.
+                                </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
 
             <Card className="lg:col-span-3">
                 <CardHeader>
