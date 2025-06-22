@@ -8,10 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { Separator } from "@/components/ui/separator";
+
 
 const initialTasks = [
   { id: 1, name: "Clean kitchen floor", area: "Kitchen", priority: "High", status: "Pending" },
@@ -36,6 +39,7 @@ export default function EmployeeDashboard() {
   
   const [newIssueDescription, setNewIssueDescription] = useState("");
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [unavailableDays, setUnavailableDays] = useState<Date[] | undefined>([]);
   const { toast } = useToast();
 
   const handleReportIssue = (e: React.FormEvent) => {
@@ -116,6 +120,37 @@ export default function EmployeeDashboard() {
           </Table>
         </CardContent>
       </Card>
+      
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2"><CalendarDays /> My Schedule & Availability</CardTitle>
+          <CardDescription>View your upcoming shifts and set your unavailable days for the next scheduling period.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid md:grid-cols-2 gap-6">
+            <div>
+                <h3 className="font-semibold mb-2 text-sm">Set Unavailability</h3>
+                <div className="rounded-md border">
+                    <Calendar
+                        mode="multiple"
+                        min={0}
+                        selected={unavailableDays}
+                        onSelect={setUnavailableDays}
+                        className="p-0"
+                    />
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                    You have marked {unavailableDays?.length || 0} day(s) as unavailable.
+                </p>
+            </div>
+            <div>
+                <h3 className="font-semibold mb-2 text-sm">Upcoming Shifts</h3>
+                <div className="border rounded-md p-4 space-y-2 min-h-[290px] flex items-center justify-center">
+                    <p className="text-muted-foreground text-center text-sm">Your schedule will appear here once published by the manager.</p>
+                </div>
+            </div>
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader>

@@ -10,10 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, CalendarDays } from "lucide-react";
 import AIRecommendationForm from "@/components/ai-recommendation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import AIShiftScheduler from '@/components/ai-shift-scheduler';
 
 
 const teamMembers = [
@@ -85,6 +86,16 @@ export default function ManagerDashboard() {
                             <Progress value={member.progress} className="h-2" />
                         </div>
                     ))}
+                </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><CalendarDays className="text-primary"/> AI Shift Scheduler</CardTitle>
+                    <CardDescription>Create shifts and let AI generate a schedule based on employee availability.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AIShiftScheduler />
                 </CardContent>
             </Card>
 
