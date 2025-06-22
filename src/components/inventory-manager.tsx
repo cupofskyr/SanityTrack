@@ -20,8 +20,11 @@ type InventoryItem = {
 export default function InventoryManager() {
     const { toast } = useToast();
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([
-        { id: 1, name: 'Bread Loaves', par: 20 },
-        { id: 2, name: 'Milk Cartons', par: 12 },
+        { id: 1, name: 'Bananas (by count)', par: 50 },
+        { id: 2, name: 'Strawberries (in lbs)', par: 10 },
+        { id: 3, name: 'Blueberries (in lbs)', par: 8 },
+        { id: 4, name: 'Skyr (in kg)', par: 15 },
+        { id: 5, name: 'Protein Powder (in kg)', par: 5 },
     ]);
     const [newItem, setNewItem] = useState({ name: '', par: '' });
     const [countingFrequency, setCountingFrequency] = useState('1');
