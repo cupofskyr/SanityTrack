@@ -1,15 +1,17 @@
 "use client"
+import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle } from "lucide-react";
+import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck } from "lucide-react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const complianceData = [
   { month: "Jan", score: 82 },
@@ -35,6 +37,39 @@ const recentReports = [
 ];
 
 export default function HealthDeptDashboard() {
+  const { toast } = useToast();
+  const [complianceTasks, setComplianceTasks] = useState([
+    { id: 1, description: "Weekly restroom deep clean", frequency: "Weekly", type: "Mandatory" },
+    { id: 2, description: "Monthly fire safety check", frequency: "Monthly", type: "Mandatory" },
+  ]);
+  const [description, setDescription] = useState('');
+  const [frequency, setFrequency] = useState('');
+  const [type, setType] = useState('mandatory');
+
+  const handleAddTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!description || !frequency) {
+        toast({
+          variant: "destructive",
+          title: "Missing Information",
+          description: "Please fill out all task fields.",
+        })
+        return;
+    }
+    const newTask = {
+        id: complianceTasks.length + 1,
+        description,
+        frequency: frequency.charAt(0).toUpperCase() + frequency.slice(1),
+        type: type.charAt(0).toUpperCase() + type.slice(1),
+    };
+    setComplianceTasks([newTask, ...complianceTasks]);
+    // Reset form
+    setDescription('');
+    setFrequency('');
+    setType('mandatory');
+  };
+
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <Card>
@@ -124,15 +159,15 @@ export default function HealthDeptDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="grid gap-6">
+          <form onSubmit={handleAddTask} className="grid gap-6">
             <div className="grid gap-2">
               <Label htmlFor="task-description">Task Description</Label>
-              <Input id="task-description" placeholder="e.g., Verify all fire extinguishers are certified" />
+              <Input id="task-description" placeholder="e.g., Verify all fire extinguishers are certified" value={description} onChange={(e) => setDescription(e.target.value)} required />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="frequency">Frequency</Label>
-                <Select>
+                <Select value={frequency} onValueChange={setFrequency} required>
                   <SelectTrigger id="frequency">
                     <SelectValue placeholder="Select frequency" />
                   </SelectTrigger>
@@ -144,7 +179,7 @@ export default function HealthDeptDashboard() {
               </div>
               <div className="grid gap-2">
                 <Label>Type</Label>
-                <RadioGroup defaultValue="mandatory" className="flex items-center gap-4 pt-2">
+                <RadioGroup value={type} onValueChange={setType} className="flex items-center gap-4 pt-2">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="mandatory" id="mandatory" />
                     <Label htmlFor="mandatory" className="font-normal">Mandatory</Label>
@@ -162,6 +197,43 @@ export default function HealthDeptDashboard() {
           </form>
         </CardContent>
       </Card>
+
+      <Card className="lg:col-span-4">
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2"><FileCheck /> Defined Compliance Tasks</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Description</TableHead>
+                <TableHead>Frequency</TableHead>
+                <TableHead className="text-right">Type</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {complianceTasks.length > 0 ? (
+                complianceTasks.map((task) => (
+                  <TableRow key={task.id}>
+                    <TableCell className="font-medium">{task.description}</TableCell>
+                    <TableCell>{task.frequency}</TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant={task.type === 'Mandatory' ? 'destructive' : 'secondary'}>{task.type}</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                    No compliance tasks defined yet.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
