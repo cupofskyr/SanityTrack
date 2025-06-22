@@ -114,7 +114,7 @@ export default function ManagerDashboard() {
                                 <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                                    <div>
                                         <p>Reported by: {issue.reportedBy}</p>
-                                        <p className="font-semibold">AI Category: <Badge variant="outline" className="text-accent border-accent">{issue.category}</Badge></p>
+                                        <div className="font-semibold">AI Category: <Badge variant="outline" className="text-accent border-accent">{issue.category}</Badge></div>
                                    </div>
                                    <div className="mt-2 sm:mt-0">
                                         {contact ? (
