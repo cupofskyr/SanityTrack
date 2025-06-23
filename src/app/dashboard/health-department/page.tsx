@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Toolti
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil, Mail, BrainCircuit, MessageSquare, Check, X, ThumbsUp, Send, Camera, Clipboard } from "lucide-react";
+import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil, Mail, BrainCircuit, MessageSquare, Check, X, ThumbsUp, Send, Camera, Clipboard, Printer } from "lucide-react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -124,6 +124,9 @@ export default function HealthDeptDashboard() {
   const [isReviewTaskDialogOpen, setIsReviewTaskDialogOpen] = useState(false);
   const [taskToReview, setTaskToReview] = useState<ComplianceTask | null>(null);
   const [inspectorComments, setInspectorComments] = useState('');
+  
+  // State for Report Dialog
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
 
   useEffect(() => {
@@ -399,7 +402,10 @@ export default function HealthDeptDashboard() {
       setIsReviewTaskDialogOpen(false);
       setTaskToReview(null);
   }
-
+  
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <div className="space-y-6">
@@ -447,7 +453,67 @@ export default function HealthDeptDashboard() {
                 <Button type="submit" className="w-full sm:w-auto">Link Location</Button>
             </form>
         </CardContent>
-    </Card>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2"><FileText /> Monthly Reporting</CardTitle>
+          <CardDescription>Generate a printable report of this month's activities for your records or for review.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+            <DialogTrigger asChild>
+              <Button><Printer className="mr-2 h-4 w-4" /> Generate Jurisdiction Report</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle className="font-headline text-2xl">Monthly Jurisdiction Report</DialogTitle>
+                <DialogDescription>
+                  Summary for {selectedJurisdiction} - {format(new Date(), 'MMMM yyyy')}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4 space-y-6">
+                <Card>
+                  <CardHeader><CardTitle className="text-lg">Compliance Overview</CardTitle></CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader><TableRow><TableHead>Metric</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        <TableRow><TableCell>Average Compliance Score</TableCell><TableCell className="text-right font-semibold">{filteredComplianceData.reduce((acc, curr) => acc + curr.score, 0) / (filteredComplianceData.length || 1)}%</TableCell></TableRow>
+                        <TableRow><TableCell>Total Reports Processed</TableCell><TableCell className="text-right font-semibold">{filteredReports.length}</TableCell></TableRow>
+                        <TableRow><TableCell>New Compliance Rules Added</TableCell><TableCell className="text-right font-semibold">{complianceTasks.filter(t => t.source === 'Health Dept.').length}</TableCell></TableRow>
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader><CardTitle className="text-lg">Processed Reports Summary</CardTitle></CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader><TableRow><TableHead>Issue</TableHead><TableHead>Location</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {filteredReports.map(report => (
+                          <TableRow key={report.id}><TableCell>{report.issue}</TableCell><TableCell>{report.location}</TableCell><TableCell><Badge variant={report.status === 'Under Investigation' ? 'destructive' : 'outline'}>{report.status}</Badge></TableCell></TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
+              <DialogFooter className="sm:justify-between items-center gap-4">
+                <Alert className="text-left max-w-md">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>For Your Records</AlertTitle>
+                  <AlertDescription>
+                    In a production app, this report could be automatically generated and emailed to you monthly.
+                  </AlertDescription>
+                </Alert>
+                <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print Report</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>

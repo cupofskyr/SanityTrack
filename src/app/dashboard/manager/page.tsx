@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -126,6 +126,8 @@ export default function ManagerDashboard() {
 
     const [translations, setTranslations] = useState<Record<number, string>>({});
     const [translatingId, setTranslatingId] = useState<number | null>(null);
+    
+    const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
     useEffect(() => {
         const getBriefing = async () => {
@@ -373,9 +375,81 @@ export default function ManagerDashboard() {
             setTranslatingId(null);
         }
     };
+    
+    const handlePrint = () => {
+        window.print();
+    };
 
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Printer /> Monthly Reporting</CardTitle>
+                    <CardDescription>Generate a printable report of this month's activities to share with the owner or for your records.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button><Printer className="mr-2 h-4 w-4" /> Generate Monthly Report</Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl">
+                             <DialogHeader>
+                                <DialogTitle className="font-headline text-2xl">Monthly Activity Report</DialogTitle>
+                                <DialogDescription>
+                                  Summary for {format(new Date(), 'MMMM yyyy')}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="py-4 space-y-6">
+                                <Card>
+                                    <CardHeader><CardTitle className="text-lg">Team Performance</CardTitle></CardHeader>
+                                    <CardContent>
+                                        <Table>
+                                        <TableHeader><TableRow><TableHead>Member</TableHead><TableHead>Tasks Completed</TableHead><TableHead>Completion Rate</TableHead></TableRow></TableHeader>
+                                        <TableBody>
+                                            {teamMembers.map(member => (
+                                            <TableRow key={member.name}>
+                                                <TableCell>{member.name}</TableCell>
+                                                <TableCell>{member.tasksCompleted}/{member.tasksCompleted + member.tasksPending}</TableCell>
+                                                <TableCell><Progress value={member.progress} className="h-2" /></TableCell>
+                                            </TableRow>
+                                            ))}
+                                        </TableBody>
+                                        </Table>
+                                    </CardContent>
+                                </Card>
+                                 <Card>
+                                    <CardHeader><CardTitle className="text-lg">High-Priority Issues Handled</CardTitle></CardHeader>
+                                    <CardContent>
+                                        <Table>
+                                            <TableHeader><TableRow><TableHead>Issue</TableHead><TableHead>Category</TableHead><TableHead>Resolution Notes</TableHead></TableRow></TableHeader>
+                                            <TableBody>
+                                                {highPriorityIssues.length > 0 ? highPriorityIssues.map(issue => (
+                                                <TableRow key={issue.id}>
+                                                    <TableCell>{issue.description}</TableCell>
+                                                    <TableCell><Badge variant="outline">{issue.category}</Badge></TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground">{issue.resolutionNotes || 'N/A'}</TableCell>
+                                                </TableRow>
+                                                )) : <TableRow><TableCell colSpan={3} className="text-center">No high-priority issues recorded this month.</TableCell></TableRow>}
+                                            </TableBody>
+                                        </Table>
+                                    </CardContent>
+                                </Card>
+                              </div>
+                               <DialogFooter className="sm:justify-between items-center gap-4">
+                                <Alert className="text-left max-w-md">
+                                  <AlertCircle className="h-4 w-4" />
+                                  <AlertTitle>For Your Records</AlertTitle>
+                                  <AlertDescription>
+                                    In a production app, this report could be automatically generated and emailed to you and the owner monthly.
+                                  </AlertDescription>
+                                </Alert>
+                                <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print Report</Button>
+                              </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </CardContent>
+            </Card>
+            
             <Card className="lg:col-span-3">
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><Users /> Team Overview</CardTitle>
