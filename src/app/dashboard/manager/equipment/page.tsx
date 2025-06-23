@@ -7,8 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
-import { ListTodo, PlusCircle, X, Sparkles, Trash2 } from 'lucide-react';
+import { ListTodo, PlusCircle, X, Sparkles, Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 type Task = {
     description: string;
@@ -23,6 +28,13 @@ export default function EquipmentPage() {
     const { toast } = useToast();
     const [managedTasks, setManagedTasks] = useState<ManagedTask[]>([]);
     const [suggestedTasks, setSuggestedTasks] = useState<Task[] | null>(null);
+
+    const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+    const [currentTask, setCurrentTask] = useState<{ id: number | null; description: string; frequency: string }>({
+        id: null,
+        description: '',
+        frequency: '',
+    });
     
     const handleTasksSuggested = (tasks: Task[]) => {
         setSuggestedTasks(tasks);
@@ -78,6 +90,46 @@ export default function EquipmentPage() {
         });
     }
 
+    const handleOpenDialog = (task: ManagedTask | null) => {
+        if (task) {
+            setCurrentTask({ id: task.id, description: task.description, frequency: task.frequency });
+        } else {
+            setCurrentTask({ id: null, description: '', frequency: '' });
+        }
+        setIsTaskDialogOpen(true);
+    };
+
+    const handleSaveTask = () => {
+        if (!currentTask.description || !currentTask.frequency) {
+            toast({
+                variant: 'destructive',
+                title: "Missing Information",
+                description: "Please provide a description and frequency.",
+            });
+            return;
+        }
+
+        if (currentTask.id) { // Editing existing task
+            setManagedTasks(managedTasks.map(t => t.id === currentTask.id ? { ...t, description: currentTask.description, frequency: currentTask.frequency } : t));
+            toast({
+                title: "Task Updated",
+                description: `"${currentTask.description}" has been updated.`,
+            });
+        } else { // Adding new task
+            const newManagedTask: ManagedTask = {
+                id: (managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) : 0) + 1,
+                description: currentTask.description,
+                frequency: currentTask.frequency,
+            };
+            setManagedTasks(prevTasks => [...prevTasks, newManagedTask]);
+            toast({
+                title: "Task Added",
+                description: `"${currentTask.description}" has been added to the master list.`,
+            });
+        }
+        setIsTaskDialogOpen(false);
+    };
+
     return (
         <div className="space-y-6">
             <AISetupAssistant onTasksSuggested={handleTasksSuggested} />
@@ -127,19 +179,25 @@ export default function EquipmentPage() {
             )}
 
             <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> Master Task List</CardTitle>
-                    <CardDescription>
-                        This is the master list of recurring tasks. This list will be used by the Shift Planner to automatically assign duties.
-                    </CardDescription>
+                <CardHeader className="flex flex-row items-start justify-between">
+                    <div>
+                        <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> Master Task List</CardTitle>
+                        <CardDescription>
+                            This is the master list of recurring tasks. Add, edit, or remove tasks as needed.
+                        </CardDescription>
+                    </div>
+                    <Button onClick={() => handleOpenDialog(null)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Manual Task
+                    </Button>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[75%]">Task Description</TableHead>
+                                <TableHead className="w-[65%]">Task Description</TableHead>
                                 <TableHead>Frequency</TableHead>
-                                <TableHead className="text-right">Action</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -151,6 +209,10 @@ export default function EquipmentPage() {
                                         <Badge variant="secondary">{task.frequency}</Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}>
+                                            <Pencil className="h-4 w-4" />
+                                            <span className="sr-only">Edit Task</span>
+                                        </Button>
                                         <Button variant="ghost" size="icon" onClick={() => handleRemoveTask(task.id)}>
                                             <Trash2 className="h-4 w-4" />
                                             <span className="sr-only">Remove Task</span>
@@ -160,8 +222,8 @@ export default function EquipmentPage() {
                                 ))
                             ) : (
                                 <TableRow>
-                                <TableCell colSpan={3} className="text-center h-24">
-                                    No tasks in the master list yet. Use the AI Setup Assistant above to generate tasks.
+                                <TableCell colSpan={4} className="text-center h-24">
+                                    No tasks in the master list yet. Use the AI Setup Assistant or "Add Manual Task" to get started.
                                 </TableCell>
                                 </TableRow>
                             )}
@@ -169,6 +231,49 @@ export default function EquipmentPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="font-headline">{currentTask.id ? 'Edit Task' : 'Add Manual Task'}</DialogTitle>
+                        <DialogDescription>
+                            {currentTask.id ? 'Modify the details of this task.' : 'Add a new task to the master list.'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="task-description">Task Description</Label>
+                            <Input
+                                id="task-description"
+                                value={currentTask.description}
+                                onChange={(e) => setCurrentTask({ ...currentTask, description: e.target.value })}
+                                placeholder="e.g., Clean the ice machine"
+                                required
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="task-frequency">Frequency</Label>
+                            <Select
+                                value={currentTask.frequency}
+                                onValueChange={(value) => setCurrentTask({ ...currentTask, frequency: value })}
+                                required
+                            >
+                                <SelectTrigger id="task-frequency">
+                                    <SelectValue placeholder="Select frequency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Daily">Daily</SelectItem>
+                                    <SelectItem value="Weekly">Weekly</SelectItem>
+                                    <SelectItem value="Monthly">Monthly</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleSaveTask}>Save Task</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
