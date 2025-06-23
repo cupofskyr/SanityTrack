@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone, Sparkles, Loader2, User, Phone, Mail } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone, Sparkles, Loader2, User, Phone, Mail, UtensilsCrossed } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,6 +41,7 @@ const initialReviews = [
     { id: 3, rating: 5, comment: "I love coming here. The staff always remembers my order!", author: "A Regular" },
 ];
 
+const mealLimit = 2;
 
 export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState(initialTasks);
@@ -62,6 +63,10 @@ export default function EmployeeDashboard() {
 
   const [photoForAnalysis, setPhotoForAnalysis] = useState<string | null>(null);
   const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
+  
+  const [loggedMeals, setLoggedMeals] = useState<{ id: number, description: string }[]>([]);
+  const [isMealLogDialogOpen, setIsMealLogDialogOpen] = useState(false);
+  const [newMealDescription, setNewMealDescription] = useState("");
 
   useEffect(() => {
     const pendingIssue = localStorage.getItem('ai-issue-suggestion');
@@ -150,6 +155,37 @@ export default function EmployeeDashboard() {
     toast({
         title: "Overtime Request Submitted",
         description: `Your request for ${overtimeHours} hour(s) has been sent to the owner for approval.`,
+    });
+  };
+
+  const handleLogMeal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMealDescription.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please describe the meal you are logging.",
+      });
+      return;
+    }
+    if (loggedMeals.length >= mealLimit) {
+        toast({
+            variant: "destructive",
+            title: "Limit Reached",
+            description: `You have already logged ${mealLimit} meals for this shift.`,
+        });
+        return;
+    }
+    const newMeal = {
+      id: Date.now(),
+      description: newMealDescription,
+    };
+    setLoggedMeals([...loggedMeals, newMeal]);
+    setNewMealDescription("");
+    setIsMealLogDialogOpen(false);
+    toast({
+      title: "Meal Logged",
+      description: "Your meal has been successfully logged.",
     });
   };
 
@@ -349,6 +385,65 @@ export default function EmployeeDashboard() {
             <Button variant="outline" className="w-full" disabled>Edit Profile</Button>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><UtensilsCrossed /> Staff Meal Log</CardTitle>
+            <CardDescription>Log your meals for the shift. Limit: {mealLimit} items.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div>
+                        <p className="text-sm font-medium">Logged Items</p>
+                        <p className="text-2xl font-bold">{loggedMeals.length} / {mealLimit}</p>
+                    </div>
+                    <Dialog open={isMealLogDialogOpen} onOpenChange={setIsMealLogDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button disabled={loggedMeals.length >= mealLimit}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Log Meal
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle className="font-headline">Log Staff Meal</DialogTitle>
+                                <DialogDescription>
+                                    Describe the item(s) you are taking for your meal.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleLogMeal}>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid gap-2">
+                                    <Label htmlFor="meal-description">Meal Description</Label>
+                                    <Textarea
+                                        id="meal-description"
+                                        placeholder="e.g., Turkey sandwich and a bag of chips"
+                                        value={newMealDescription}
+                                        onChange={(e) => setNewMealDescription(e.target.value)}
+                                        required
+                                    />
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit">Log Meal</Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+                <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Your Logged Meals Today</h4>
+                    {loggedMeals.length > 0 ? (
+                        <ul className="list-disc list-inside text-sm text-muted-foreground">
+                            {loggedMeals.map(meal => <li key={meal.id}>{meal.description}</li>)}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center pt-2">You haven't logged any meals yet.</p>
+                    )}
+                </div>
+            </div>
+        </CardContent>
+    </Card>
 
       <Card>
         <CardHeader>

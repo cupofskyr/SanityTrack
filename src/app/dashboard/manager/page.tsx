@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -70,6 +70,13 @@ const initialDelegatedTasks: DelegatedTask[] = [
     { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: 'Pending' },
     { id: 3, description: "Clear blockage from back storage area hand-washing sink.", source: "Health Inspector Report (2024-07-01)", status: 'Pending' },
 
+];
+
+const staffMealLogs = [
+    { id: 1, employee: "John Doe", date: "2024-07-26", items: "Turkey Sandwich, Apple", itemsCount: 2 },
+    { id: 2, employee: "Jane Smith", date: "2024-07-26", items: "Chicken Salad", itemsCount: 1 },
+    { id: 3, employee: "John Doe", date: "2024-07-25", items: "Smoothie, Protein Bar", itemsCount: 2 },
+    { id: 4, employee: "Sam Wilson", date: "2024-07-25", items: "Leftover Pizza", itemsCount: 1 },
 ];
 
 export default function ManagerDashboard() {
@@ -299,6 +306,13 @@ export default function ManagerDashboard() {
         setMeetingDetails({ title: '', date: new Date(), time: '', attendee: '', description: '' });
     };
 
+    const handleAiMealAnalysis = () => {
+        toast({
+            title: "AI Analysis (Simulated)",
+            description: "John Doe has consistently taken the maximum number of items (2) this week. Consider a friendly reminder about the policy if this trend continues."
+        });
+    };
+
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card className="lg:col-span-3">
@@ -456,6 +470,45 @@ export default function ManagerDashboard() {
                         </TableBody>
                     </Table>
                 </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><UtensilsCrossed /> Staff Meal Log</CardTitle>
+                    <CardDescription>
+                        Review meals logged by employees. The policy allows for 2 items per shift.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Employee</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Items Logged</TableHead>
+                                <TableHead className="text-right">Item Count</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {staffMealLogs.map((log) => (
+                            <TableRow key={log.id}>
+                                <TableCell className="font-medium">{log.employee}</TableCell>
+                                <TableCell>{log.date}</TableCell>
+                                <TableCell>{log.items}</TableCell>
+                                <TableCell className="text-right">
+                                    <Badge variant={log.itemsCount >= 2 ? "destructive" : "outline"}>{log.itemsCount}</Badge>
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+                <CardFooter>
+                    <Button variant="outline" onClick={handleAiMealAnalysis}>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Get AI Insights on Meal Patterns
+                    </Button>
+                </CardFooter>
             </Card>
 
             <Card className="lg:col-span-3" id="ai-issue-analyzer-card">
