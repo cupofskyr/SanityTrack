@@ -3,7 +3,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes, CalendarClock, CalendarIcon, ListTodo, LinkIcon, UserPlus, Clock, Send } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes, CalendarClock, CalendarIcon, ListTodo, LinkIcon, UserPlus, Clock, Send, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -336,6 +336,17 @@ export default function OwnerDashboard() {
         });
     };
 
+    const handleManualPost = (requestId: number) => {
+        const request = hiringRequests.find(r => r.id === requestId);
+        if (!request) return;
+
+        setHiringRequests(hiringRequests.filter(r => r.id !== requestId));
+        toast({
+            title: `Request Fulfilled`,
+            description: `You have marked the hiring request for a ${request.role} as manually posted.`,
+        });
+    };
+
     const handleSuggestAssignment = async (issueDescription: string, location: string) => {
         setSelectedAlert(issueDescription);
         setAssignmentResult(null);
@@ -524,6 +535,13 @@ export default function OwnerDashboard() {
                         <CardDescription>Review and approve hiring requests from your managers. Approved requests will be posted to the job board via AI.</CardDescription>
                     </CardHeader>
                     <CardContent>
+                        <Alert className="mb-4">
+                            <Briefcase className="h-4 w-4" />
+                            <AlertTitle>Job Board Integration</AlertTitle>
+                            <AlertDescription>
+                                The "Post via AI" button simulates posting to Indeed. In a production app, this could be configured to connect to your preferred job board API (e.g., Indeed, Workable, LinkedIn).
+                            </AlertDescription>
+                        </Alert>
                         {hiringRequests.length > 0 ? (
                             <div className="space-y-4">
                                 {hiringRequests.map(req => (
@@ -537,7 +555,8 @@ export default function OwnerDashboard() {
                                             </div>
                                         </div>
                                         <div className="flex gap-2 self-end sm:self-center">
-                                            <Button size="sm" onClick={() => handleApproveRequest(req)}><CheckCircle className="mr-2 h-4 w-4" /> Approve & Post</Button>
+                                            <Button size="sm" onClick={() => handleApproveRequest(req)}><CheckCircle className="mr-2 h-4 w-4" /> Approve & Post via AI</Button>
+                                            <Button size="sm" variant="outline" onClick={() => handleManualPost(req.id)}><ThumbsUp className="mr-2 h-4 w-4" /> Manually Posted</Button>
                                             <Button size="sm" variant="destructive" onClick={() => handleRejectRequest(req.id)}><XCircle className="mr-2 h-4 w-4" /> Reject</Button>
                                         </div>
                                     </div>
