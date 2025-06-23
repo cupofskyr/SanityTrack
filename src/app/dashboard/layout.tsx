@@ -26,6 +26,8 @@ import {
   Boxes,
   Wrench,
   ShieldCheck,
+  BookOpen,
+  GraduationCap
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -66,9 +68,9 @@ export default function DashboardLayout({
 
   const baseNavItems = [
     { href: getDashboardLink(), icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/dashboard/training", icon: BookOpen, label: "Training Game" },
   ];
 
-  // Owner does not get a taskboard
   if (role !== 'Owner') {
     baseNavItems.push({ href: "/taskboard", icon: ClipboardList, label: "Taskboard" });
   }
@@ -78,8 +80,15 @@ export default function DashboardLayout({
     { href: "/dashboard/manager/inventory", icon: Boxes, label: "Inventory & Counting" },
     { href: "/dashboard/manager/equipment", icon: Wrench, label: "Equipment Setup" },
   ];
+
+  let navItems = [...baseNavItems];
+  if (role === "Manager") {
+    navItems.push(...managerNavItems);
+  }
   
-  const navItems = (role === "Manager" || role === "Owner") ? [...baseNavItems, ...managerNavItems] : baseNavItems;
+  if (role === "Manager" || role === "Owner") {
+    navItems.push({ href: "/dashboard/training/setup", icon: GraduationCap, label: "Training Setup" });
+  }
 
 
   return (
@@ -99,7 +108,7 @@ export default function DashboardLayout({
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname.startsWith(item.href)}
+                  isActive={pathname.startsWith(item.href) && (item.href.length > getDashboardLink().length || item.href === getDashboardLink())}
                   tooltip={item.label}
                 >
                   <Link href={item.href}>
