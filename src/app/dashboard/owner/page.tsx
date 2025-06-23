@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/accordion";
 import PhotoUploader from '@/components/photo-uploader';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 
 // --- MOCK DATA ---
 const teamMembers = [
@@ -45,6 +46,12 @@ const initialRequests = [
   { id: 1, type: "Shift Change", description: "Manager proposed 45 shifts for the upcoming week.", details: "Mon-Fri, 9am-5pm", manager: "Alex Ray", location: "Downtown Cafe" },
   { id: 2, type: "Overtime", description: "John Doe requested 2 hours of overtime.", details: "Reason: Deep clean kitchen after busy weekend.", manager: "Alex Ray", location: "Downtown Cafe" },
   { id: 3, type: "Overtime", description: "Sam Smith requested 3 hours of overtime.", details: "Reason: Cover for sick colleague.", manager: "Casey Lee", location: "Uptown Bistro" },
+];
+
+const overtimeWatchlist = [
+  { id: 1, name: "John Doe", location: "Downtown Cafe", hours: 38, limit: 40 },
+  { id: 2, name: "Jane Smith", location: "Uptown Bistro", hours: 39, limit: 40 },
+  { id: 3, name: "Casey Lee", location: "Uptown Bistro", hours: 35, limit: 40 },
 ];
 // --- END MOCK DATA ---
 
@@ -176,6 +183,26 @@ export default function OwnerDashboard() {
                     </Card>
                     
                     <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><TrendingUp /> Overtime Watchlist</CardTitle>
+                            <CardDescription>
+                                Employees approaching the weekly 40-hour overtime limit.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {overtimeWatchlist.map((employee) => (
+                                <div key={employee.id}>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <p className="font-medium">{employee.name} <span className="text-xs text-muted-foreground">({employee.location})</span></p>
+                                        <span className="text-sm text-muted-foreground">{employee.hours} / {employee.limit} hrs</span>
+                                    </div>
+                                    <Progress value={(employee.hours / employee.limit) * 100} className="h-2" />
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                    
+                    <Card className="lg:col-span-2">
                          <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2"><ClipboardPen /> Owner's Memo Board</CardTitle>
                             <CardDescription>Your private notepad for reminders and high-level strategy.</CardDescription>
@@ -185,7 +212,7 @@ export default function OwnerDashboard() {
                                 value={memo}
                                 onChange={(e) => setMemo(e.target.value)}
                                 placeholder="Jot down your notes here..."
-                                rows={8}
+                                rows={5}
                                 className="resize-none"
                             />
                         </CardContent>
