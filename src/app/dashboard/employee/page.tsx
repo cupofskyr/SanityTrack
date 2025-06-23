@@ -8,12 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
-import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 const initialTasks = [
@@ -91,21 +91,29 @@ export default function EmployeeDashboard() {
       <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2"><Clock /> Time Clock</CardTitle>
-          <CardDescription>Clock in when you start your shift and clock out when you leave. Automatic location-based tracking is not available in this web version.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-center md:text-left">
-                <p className="text-lg font-semibold">{isClockedIn ? "You are clocked in." : "You are clocked out."}</p>
-                {lastClockIn && isClockedIn && (
-                    <p className="text-sm text-muted-foreground">
-                        Clocked in at {lastClockIn.toLocaleTimeString()}
-                    </p>
-                )}
+        <CardContent className="space-y-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="text-center md:text-left">
+                    <p className="text-lg font-semibold">{isClockedIn ? "You are clocked in." : "You are clocked out."}</p>
+                    {lastClockIn && isClockedIn && (
+                        <p className="text-sm text-muted-foreground">
+                            Clocked in at {lastClockIn.toLocaleTimeString()}
+                        </p>
+                    )}
+                </div>
+                <div className="flex gap-2">
+                    <Button onClick={handleClockIn} disabled={isClockedIn} className="w-32">Clock In</Button>
+                    <Button onClick={handleClockOut} disabled={!isClockedIn} variant="destructive" className="w-32">Clock Out</Button>
+                </div>
             </div>
-            <div className="flex gap-2">
-                <Button onClick={handleClockIn} disabled={isClockedIn} className="w-32">Clock In</Button>
-                <Button onClick={handleClockOut} disabled={!isClockedIn} variant="destructive" className="w-32">Clock Out</Button>
-            </div>
+             <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Manual Clock-In</AlertTitle>
+                <AlertDescription>
+                    Automatic location-based clock-in is not possible in web applications due to browser privacy and technical limitations. Please clock in and out manually.
+                </AlertDescription>
+            </Alert>
         </CardContent>
       </Card>
       <Card className="lg:col-span-2">
