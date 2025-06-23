@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -120,6 +120,27 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+       <Card className="lg:col-span-2">
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Message from the Manager</CardTitle>
+                <CardDescription>Your manager's daily briefing and focus for the team.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Alert>
+                    <AlertTitle className="font-semibold">Let's Make it a Great Tuesday!</AlertTitle>
+                    <AlertDescription>
+                        <p className="mb-2">Great work yesterday everyone! Let's keep the energy high today. Our focus is on guest experience, so let's make sure every customer leaves with a smile.</p>
+                        <p className="font-semibold text-xs mb-1">Today's Focus:</p>
+                        <ul className="list-disc list-inside text-xs">
+                            <li>Double-check all tables for cleanliness before seating new guests.</li>
+                            <li>Give a friendly greeting to everyone who walks in.</li>
+                        </ul>
+                    </AlertDescription>
+                </Alert>
+                <p className="text-xs text-muted-foreground mt-2 text-center">This is an example briefing. Your manager can post new messages daily.</p>
+            </CardContent>
+        </Card>
+
       <Card className="lg:col-span-2">
         <CardHeader className="flex-row justify-between items-start">
           <CardTitle className="font-headline flex items-center gap-2"><Clock /> Time Clock</CardTitle>

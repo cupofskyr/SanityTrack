@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -16,14 +16,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare } from "lucide-react";
-import AIRecommendationForm from "@/components/ai-recommendation-form";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { analyzeIssue } from '@/ai/flows/analyze-issue-flow';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import PhotoUploader from '@/components/photo-uploader';
+import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },
@@ -88,6 +88,41 @@ export default function ManagerDashboard() {
     const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
     const [currentIssueForNotes, setCurrentIssueForNotes] = useState<HighPriorityIssue | null>(null);
     const [resolutionNotes, setResolutionNotes] = useState("");
+
+    const [isBriefingDialogOpen, setIsBriefingDialogOpen] = useState(false);
+    const [dailyBriefing, setDailyBriefing] = useState<GenerateDailyBriefingOutput | null>(null);
+    const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(true);
+
+    useEffect(() => {
+        // Simulate a "daily" fetch when the manager logs in/visits the page
+        const getBriefing = async () => {
+            try {
+                const briefing = await generateDailyBriefing();
+                setDailyBriefing(briefing);
+                setIsBriefingDialogOpen(true);
+            } catch (error) {
+                console.error("Failed to generate daily briefing:", error);
+                toast({
+                    variant: "destructive",
+                    title: "AI Daily Briefing Failed",
+                    description: "Could not generate a daily message. You can proceed without it.",
+                });
+            } finally {
+                setIsGeneratingBriefing(false);
+            }
+        };
+        
+        getBriefing();
+    }, [toast]);
+
+    const handlePostBriefing = () => {
+        toast({
+            title: "Briefing Posted!",
+            description: "Your daily message is now visible to all employees."
+        });
+        setIsBriefingDialogOpen(false);
+        // In a real app, this would save the briefing to a database.
+    };
 
     const handleManagerSubmitForApproval = (taskId: number) => {
         setDelegatedTasks(tasks => tasks.map(task => 
@@ -511,16 +546,6 @@ export default function ManagerDashboard() {
                 </CardContent>
             </Card>
 
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Sparkles className="text-primary"/> AI Task Recommendation</CardTitle>
-                    <CardDescription>Let AI suggest the optimal tasks for your team members based on their skills and current needs.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AIRecommendationForm />
-                </CardContent>
-            </Card>
-
             <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -540,6 +565,52 @@ export default function ManagerDashboard() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsNotesDialogOpen(false)}>Cancel</Button>
                         <Button onClick={handleSaveNotes}>Save Notes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isBriefingDialogOpen} onOpenChange={setIsBriefingDialogOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="font-headline flex items-center gap-2">
+                            <Sparkles className="text-primary h-5 w-5" />
+                            AI Daily Briefing Suggestion
+                        </DialogTitle>
+                        <DialogDescription>
+                            Here's a suggested daily briefing to share with your team. You can post it to their dashboard or dismiss it.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {isGeneratingBriefing ? (
+                        <div className="flex items-center justify-center p-8 space-x-2">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                            <p className="text-muted-foreground">AI is preparing your daily briefing...</p>
+                        </div>
+                    ) : dailyBriefing ? (
+                        <div className="py-4 space-y-4">
+                            <Alert>
+                                <Megaphone className="h-4 w-4" />
+                                <AlertTitle>{dailyBriefing.title}</AlertTitle>
+                                <AlertDescription>
+                                    {dailyBriefing.message}
+                                </AlertDescription>
+                            </Alert>
+                            <div className="space-y-2">
+                                <Label className="font-semibold">Suggested Focus Tasks:</Label>
+                                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                                    {dailyBriefing.suggestedTasks.map((task, index) => (
+                                        <li key={index}>{task}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-destructive text-center py-8">Could not load a briefing.</p>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsBriefingDialogOpen(false)}>Dismiss</Button>
+                        <Button onClick={handlePostBriefing} disabled={isGeneratingBriefing || !dailyBriefing}>
+                            Post to Employee Dashboard
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
