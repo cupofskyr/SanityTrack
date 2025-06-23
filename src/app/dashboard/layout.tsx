@@ -68,7 +68,7 @@ export default function DashboardLayout({
 
   const baseNavItems = [
     { href: getDashboardLink(), icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/dashboard/training", icon: BookOpen, label: "Training Game" },
+    { href: "/dashboard/training", icon: BookOpen, label: "Training" },
   ];
 
   if (role !== 'Owner') {
