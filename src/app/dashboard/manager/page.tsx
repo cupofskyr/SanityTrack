@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare } from "lucide-react";
 import AIRecommendationForm from "@/components/ai-recommendation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
@@ -38,7 +38,7 @@ const initialContacts = [
 
 type Contact = { id: number; name: string; type: string; phone: string; };
 type ManagedTask = { id: number; description: string; frequency: string; assignee: string; };
-type HighPriorityIssue = { id: number; description: string; reportedBy: string; category: string; contactType: string; };
+type HighPriorityIssue = { id: number; description: string; reportedBy: string; category: string; contactType: string; resolutionNotes?: string; };
 type DelegatedTask = {
     id: number;
     description: string;
@@ -84,6 +84,10 @@ export default function ManagerDashboard() {
     });
 
     const [delegatedTasks, setDelegatedTasks] = useState<DelegatedTask[]>(initialDelegatedTasks);
+
+    const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+    const [currentIssueForNotes, setCurrentIssueForNotes] = useState<HighPriorityIssue | null>(null);
+    const [resolutionNotes, setResolutionNotes] = useState("");
 
     const handleManagerSubmitForApproval = (taskId: number) => {
         setDelegatedTasks(tasks => tasks.map(task => 
@@ -177,6 +181,28 @@ export default function ManagerDashboard() {
             title: "Task Created",
             description: `${taskDescription} has been assigned to ${taskAssignee}.`
         })
+    };
+
+    const handleOpenNotesDialog = (issue: HighPriorityIssue) => {
+        setCurrentIssueForNotes(issue);
+        setResolutionNotes(issue.resolutionNotes || "");
+        setIsNotesDialogOpen(true);
+    };
+
+    const handleSaveNotes = () => {
+        if (!currentIssueForNotes) return;
+        setHighPriorityIssues(prev => prev.map(issue => 
+            issue.id === currentIssueForNotes.id 
+            ? { ...issue, resolutionNotes } 
+            : issue
+        ));
+        toast({
+            title: "Resolution Notes Saved",
+            description: "The notes have been saved and are visible to the Health Department.",
+        });
+        setIsNotesDialogOpen(false);
+        setCurrentIssueForNotes(null);
+        setResolutionNotes("");
     };
 
 
@@ -388,7 +414,7 @@ export default function ManagerDashboard() {
                                             <p>Reported by: {issue.reportedBy}</p>
                                             <div className="font-semibold">AI Category: <Badge variant="outline" className="text-accent border-accent">{issue.category}</Badge></div>
                                        </div>
-                                       <div className="mt-2 sm:mt-0">
+                                       <div className="mt-2 sm:mt-0 flex gap-2">
                                             {contact ? (
                                                  <Button size="sm" asChild>
                                                     <a href={`tel:${contact.phone}`}>
@@ -398,10 +424,14 @@ export default function ManagerDashboard() {
                                             ) : (
                                                 <Button size="sm" asChild>
                                                     <Link href={`https://www.thumbtack.com/s/${issue.contactType.toLowerCase().replace(' ', '-')}/near-me/`} target="_blank">
-                                                        <ExternalLink className="mr-2 h-4 w-4" /> Find on Thumbtack
+                                                        <ExternalLink className="mr-2 h-4 w-4" /> Find
                                                     </Link>
                                                 </Button>
                                             )}
+                                             <Button size="sm" variant="secondary" onClick={() => handleOpenNotesDialog(issue)}>
+                                                <MessageSquare className="mr-2 h-4 w-4" />
+                                                {issue.resolutionNotes ? 'Edit Notes' : 'Add Notes'}
+                                            </Button>
                                        </div>
                                     </AlertDescription>
                                 </Alert>
@@ -490,6 +520,29 @@ export default function ManagerDashboard() {
                     <AIRecommendationForm />
                 </CardContent>
             </Card>
+
+            <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="font-headline">Add/Edit Resolution Notes</DialogTitle>
+                        <DialogDescription>
+                            Describe the steps taken to resolve the issue: "{currentIssueForNotes?.description}"
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            placeholder="e.g., Called Joe's Plumbing, they arrived at 2 PM and replaced the main valve. The area has been cleaned and sanitized."
+                            value={resolutionNotes}
+                            onChange={(e) => setResolutionNotes(e.target.value)}
+                            rows={5}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsNotesDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSaveNotes}>Save Notes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

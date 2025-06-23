@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Toolti
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil, Mail } from "lucide-react";
+import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil, Mail, BrainCircuit, MessageSquare } from "lucide-react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +21,8 @@ import { processInspectionReport } from '@/ai/flows/process-inspection-report-fl
 import { type ProcessInspectionReportOutput } from '@/ai/schemas/inspection-report-schemas';
 import { generateInquiry, type GenerateInquiryOutput } from '@/ai/flows/generate-inquiry-flow';
 import { format } from 'date-fns';
+import { Separator } from '@/components/ui/separator';
+import { analyzeIssue, type AnalyzeIssueOutput } from '@/ai/flows/analyze-issue-flow';
 
 const complianceData = [
   { month: "Jan", score: 82, jurisdiction: "Downtown" },
@@ -39,12 +41,24 @@ const chartConfig = {
 }
 
 const initialReports = [
-  { id: 1, issue: "Water puddle near entrance", location: "Downtown", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown", owner: "Alex Ray" },
+  { id: 1, issue: "Water puddle near entrance", location: "Downtown", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown", owner: "Alex Ray", resolutionNotes: "Manager Alex Ray has mopped the area and placed a 'Wet Floor' sign. Maintenance has been called to check for a roof leak." },
   { id: 2, issue: "Table not cleaned properly", location: "Uptown", date: "2024-05-20", status: "Resolved", jurisdiction: "Uptown", owner: "Casey Lee" },
   { id: 3, issue: "Soap dispenser empty", location: "Downtown", date: "2024-05-19", status: "Resolved", jurisdiction: "Downtown", owner: "Alex Ray" },
   { id: 4, issue: "Strange smell from vent", location: "Uptown", date: "2024-05-18", status: "Reported", jurisdiction: "Uptown", owner: "Casey Lee" },
 ];
-type Report = typeof initialReports[0];
+
+type Report = {
+    id: number;
+    issue: string;
+    location: string;
+    date: string;
+    status: string;
+    jurisdiction: string;
+    owner: string;
+    resolutionNotes?: string;
+    aiAnalysis?: AnalyzeIssueOutput;
+};
+
 
 type ComplianceTask = {
     id: number;
@@ -56,7 +70,7 @@ type ComplianceTask = {
 
 export default function HealthDeptDashboard() {
   const { toast } = useToast();
-  const [recentReports, setRecentReports] = useState(initialReports);
+  const [recentReports, setRecentReports] = useState<Report[]>(initialReports);
   const [complianceTasks, setComplianceTasks] = useState<ComplianceTask[]>([
     { id: 1, description: "Weekly restroom deep clean", frequency: "Weekly", type: "Mandatory", location: "All" },
     { id: 2, description: "Monthly fire safety check", frequency: "Monthly", type: "Mandatory", location: "All" },
@@ -94,6 +108,7 @@ export default function HealthDeptDashboard() {
   // State for Investigation Dialog
   const [isInvestigateDialogOpen, setIsInvestigateDialogOpen] = useState(false);
   const [selectedReportForInvestigation, setSelectedReportForInvestigation] = useState<Report | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
 
   const handleLinkEstablishment = (e: React.FormEvent) => {
@@ -233,14 +248,34 @@ export default function HealthDeptDashboard() {
     return complianceData.filter(data => data.jurisdiction === selectedJurisdiction);
   }, [selectedJurisdiction]);
   
-  const handleOpenInvestigateDialog = (report: Report) => {
+  const handleOpenInvestigateDialog = async (report: Report) => {
     setSelectedReportForInvestigation(report);
     setIsInvestigateDialogOpen(true);
-    setRecentReports(reports => reports.map(r => r.id === report.id ? { ...r, status: 'Under Investigation' } : r));
-    toast({
-        title: 'Report Flagged for Investigation',
-        description: 'The report status has been updated and details are open for review.',
-    });
+
+    const statusesToKeep = ["Under Investigation", "Resolved", "No Action Needed"];
+    if (!statusesToKeep.includes(report.status)) {
+        setRecentReports(reports => reports.map(r => r.id === report.id ? { ...r, status: 'Under Investigation' } : r));
+    }
+    
+    if (!report.aiAnalysis) {
+        setIsAnalyzing(true);
+        try {
+            const result = await analyzeIssue({ description: report.issue });
+            setRecentReports(reports => reports.map(r => 
+                r.id === report.id ? { ...r, aiAnalysis: result } : r
+            ));
+            setSelectedReportForInvestigation(prev => prev ? {...prev, aiAnalysis: result} : null);
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                title: 'AI Analysis Failed',
+                description: 'Could not get an analysis for this issue.',
+            });
+        } finally {
+            setIsAnalyzing(false);
+        }
+    }
   };
 
   const handleOpenContactOwnerDialog = async (report: Report) => {
@@ -276,6 +311,17 @@ export default function HealthDeptDashboard() {
     });
     // In a real app, this would also trigger a database update to create the task.
     setRecentReports(reports => reports.map(r => r.id === selectedReportForContact.id ? { ...r, status: 'Owner Notified' } : r));
+  };
+  
+  const handleStatusChange = (reportId: number, newStatus: string) => {
+    setRecentReports(reports => reports.map(r => 
+        r.id === reportId ? { ...r, status: newStatus } : r
+    ));
+    setSelectedReportForInvestigation(prev => prev ? { ...prev, status: newStatus } : null);
+    toast({
+        title: "Status Updated",
+        description: `The report status has been changed to "${newStatus}".`,
+    });
   };
 
 
@@ -453,10 +499,10 @@ export default function HealthDeptDashboard() {
                   <TableCell>{report.location}</TableCell>
                   <TableCell>{report.date}</TableCell>
                   <TableCell>
-                    <Badge variant={report.status === 'Under Investigation' ? 'destructive' : 'outline'}>{report.status}</Badge>
+                    <Badge variant={report.status === 'Under Investigation' || report.status === 'Reported' ? 'destructive' : 'outline'}>{report.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right space-x-1">
-                     <Button size="sm" variant="outline" onClick={() => handleOpenInvestigateDialog(report)} disabled={report.status === 'Under Investigation'}>
+                     <Button size="sm" variant="outline" onClick={() => handleOpenInvestigateDialog(report)}>
                         <AlertCircle className="mr-2 h-4 w-4" />
                         Investigate
                      </Button>
@@ -654,49 +700,84 @@ export default function HealthDeptDashboard() {
       </Dialog>
       
       {/* Investigate Report Dialog */}
-      <Dialog open={isInvestigateDialogOpen} onOpenChange={setIsInvestigateDialogOpen}>
-        <DialogContent className="max-w-lg">
-            <DialogHeader>
-                <DialogTitle className="font-headline">Investigate Guest Report</DialogTitle>
-                <DialogDescription>
-                    Review the details of the report from {selectedReportForInvestigation?.location}.
-                </DialogDescription>
-            </DialogHeader>
-            {selectedReportForInvestigation && (
-                <div className="py-4 space-y-4">
-                    <div className="grid grid-cols-3 items-center gap-4">
-                        <Label className="text-right text-muted-foreground">Location</Label>
-                        <p className="col-span-2 font-semibold">{selectedReportForInvestigation.location}</p>
-                    </div>
-                    <div className="grid grid-cols-3 items-center gap-4">
-                        <Label className="text-right text-muted-foreground">Owner</Label>
-                        <p className="col-span-2">{selectedReportForInvestigation.owner}</p>
-                    </div>
-                    <div className="grid grid-cols-3 items-center gap-4">
-                        <Label className="text-right text-muted-foreground">Reported Date</Label>
-                        <p className="col-span-2">{selectedReportForInvestigation.date}</p>
-                    </div>
-                    <div className="grid grid-cols-3 items-center gap-4">
-                        <Label className="text-right text-muted-foreground">Status</Label>
-                        <div className="col-span-2">
-                            <Badge variant={selectedReportForInvestigation.status === 'Under Investigation' ? 'destructive' : 'outline'}>
-                                {selectedReportForInvestigation.status}
-                            </Badge>
+        <Dialog open={isInvestigateDialogOpen} onOpenChange={setIsInvestigateDialogOpen}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle className="font-headline">Investigate Guest Report</DialogTitle>
+                    <DialogDescription>
+                        Review the details of the report from {selectedReportForInvestigation?.location}.
+                    </DialogDescription>
+                </DialogHeader>
+                {selectedReportForInvestigation && (
+                    <div className="py-4 space-y-4">
+                        <div className="grid grid-cols-3 items-center gap-4">
+                            <Label className="text-right text-muted-foreground">Location</Label>
+                            <p className="col-span-2 font-semibold">{selectedReportForInvestigation.location}</p>
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-4">
+                            <Label className="text-right text-muted-foreground">Reported Date</Label>
+                            <p className="col-span-2">{selectedReportForInvestigation.date}</p>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Reported Issue</Label>
+                            <div className="border rounded-md p-3 bg-muted/50">
+                                <p className="text-sm font-semibold">{selectedReportForInvestigation.issue}</p>
+                            </div>
+                        </div>
+                        <Separator/>
+                        <div className="space-y-2">
+                            <Label className="flex items-center gap-2 text-muted-foreground"><BrainCircuit className="h-4 w-4" /> AI Analysis</Label>
+                            {isAnalyzing ? (
+                                <div className="flex items-center justify-center p-4"><Loader2 className="h-5 w-5 animate-spin" /></div>
+                            ) : selectedReportForInvestigation.aiAnalysis ? (
+                                <Alert>
+                                    <AlertTitle>Urgency: {selectedReportForInvestigation.aiAnalysis.urgency}</AlertTitle>
+                                    <AlertDescription>
+                                        <p><strong>Category:</strong> {selectedReportForInvestigation.aiAnalysis.category}</p>
+                                        <p><strong>Suggested Action:</strong> {selectedReportForInvestigation.aiAnalysis.suggestedAction}</p>
+                                    </AlertDescription>
+                                </Alert>
+                            ) : (
+                                <p className="text-sm text-muted-foreground italic p-4 text-center">No AI analysis available.</p>
+                            )}
+                        </div>
+                         <div className="space-y-2">
+                            <Label className="flex items-center gap-2 text-muted-foreground"><MessageSquare className="h-4 w-4" /> Manager's Resolution Notes</Label>
+                            <div className="border rounded-md p-3 bg-muted/50 text-sm min-h-[60px]">
+                                {selectedReportForInvestigation.resolutionNotes ? (
+                                    <p>{selectedReportForInvestigation.resolutionNotes}</p>
+                                ) : (
+                                    <p className="italic text-muted-foreground">No resolution notes have been submitted by the manager yet.</p>
+                                )}
+                            </div>
+                        </div>
+                         <div className="grid grid-cols-3 items-center gap-4">
+                            <Label htmlFor='status-select' className="text-right text-muted-foreground">Update Status</Label>
+                            <div className="col-span-2">
+                                <Select 
+                                    value={selectedReportForInvestigation.status}
+                                    onValueChange={(newStatus) => handleStatusChange(selectedReportForInvestigation.id, newStatus)}
+                                >
+                                    <SelectTrigger id="status-select">
+                                        <SelectValue placeholder="Change status..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Reported">Reported</SelectItem>
+                                        <SelectItem value="Under Investigation">Under Investigation</SelectItem>
+                                        <SelectItem value="Action Taken">Action Taken</SelectItem>
+                                        <SelectItem value="Resolved">Resolved</SelectItem>
+                                        <SelectItem value="No Action Needed">No Action Needed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </div>
-                    <div className="grid gap-2">
-                        <Label>Reported Issue</Label>
-                        <div className="border rounded-md p-3 bg-muted/50">
-                            <p className="text-sm font-semibold">{selectedReportForInvestigation.issue}</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-            <DialogFooter>
-                <Button variant="outline" onClick={() => setIsInvestigateDialogOpen(false)}>Close</Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                )}
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsInvestigateDialogOpen(false)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
 
     </div>
   );
