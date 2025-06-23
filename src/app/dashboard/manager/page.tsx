@@ -22,8 +22,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { analyzeIssue } from '@/ai/flows/analyze-issue-flow';
-import LiveReviews from '@/components/live-reviews';
-
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },
@@ -402,8 +400,6 @@ export default function ManagerDashboard() {
                 </CardContent>
             </Card>
 
-            <LiveReviews />
-            
             <Card className="lg:col-span-3">
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><Sparkles className="text-primary"/> AI Task Recommendation</CardTitle>

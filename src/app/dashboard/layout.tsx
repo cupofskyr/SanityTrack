@@ -46,6 +46,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   const getRole = () => {
+    if (pathname.includes("/owner")) return "Owner";
     if (pathname.includes("/employee")) return "Employee";
     if (pathname.includes("/manager")) return "Manager";
     if (pathname.includes("/health-department")) return "Health Department";
@@ -54,6 +55,7 @@ export default function DashboardLayout({
 
   const role = getRole();
   const getDashboardLink = () => {
+    if (role === "Owner") return "/dashboard/owner";
     if (role === "Employee") return "/dashboard/employee";
     if (role === "Manager") return "/dashboard/manager";
     if (role === "Health Department") return "/dashboard/health-department";
@@ -71,7 +73,7 @@ export default function DashboardLayout({
     { href: "/dashboard/manager/equipment", icon: Wrench, label: "Equipment Setup" },
   ];
 
-  const navItems = role === "Manager" ? [...baseNavItems, ...managerNavItems] : baseNavItems;
+  const navItems = (role === "Manager" || role === "Owner") ? [...baseNavItems, ...managerNavItems] : baseNavItems;
 
 
   return (

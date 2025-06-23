@@ -1,7 +1,8 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, ClipboardCheck, UserCog, HeartPulse } from 'lucide-react';
+import { User, ClipboardCheck, UserCog, HeartPulse, Crown } from 'lucide-react';
 import { Logo } from '@/components/icons';
 
 export default function LoginPage() {
@@ -35,6 +36,12 @@ export default function LoginPage() {
                 <Link href="/dashboard/manager">
                   <UserCog />
                   Login as Manager
+                </Link>
+              </Button>
+               <Button asChild variant="outline" size="lg" className="justify-start">
+                <Link href="/dashboard/owner">
+                  <Crown />
+                  Login as Owner
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="justify-start">
