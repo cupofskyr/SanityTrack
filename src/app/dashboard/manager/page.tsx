@@ -26,6 +26,7 @@ import { analyzeIssue } from '@/ai/flows/analyze-issue-flow';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import PhotoUploader from '@/components/photo-uploader';
 import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
+import StaffMealManager from '@/components/staff-meal-manager';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -531,6 +532,8 @@ export default function ManagerDashboard() {
                     </Button>
                 </CardFooter>
             </Card>
+
+            <StaffMealManager />
 
             <Card className="lg:col-span-3" id="ai-issue-analyzer-card">
                  <CardHeader>

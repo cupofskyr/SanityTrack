@@ -14,26 +14,24 @@ import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
 import { generateShoppingList, type GenerateShoppingListOutput } from '@/ai/flows/generate-shopping-list-flow';
 import { Textarea } from './ui/textarea';
-import { Checkbox } from './ui/checkbox';
 
 type InventoryItem = {
     id: number;
     name: string;
     par: number;
     currentCount: number;
-    isStaffMeal: boolean;
 };
 
 export default function InventoryManager() {
     const { toast } = useToast();
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([
-        { id: 1, name: 'Bananas (by count)', par: 50, currentCount: 60, isStaffMeal: true },
-        { id: 2, name: 'Strawberries (in lbs)', par: 10, currentCount: 5, isStaffMeal: true },
-        { id: 3, name: 'Blueberries (in lbs)', par: 8, currentCount: 9, isStaffMeal: true },
-        { id: 4, name: 'Skyr (in kg)', par: 15, currentCount: 10, isStaffMeal: true },
-        { id: 5, name: 'Protein Powder (in kg)', par: 5, currentCount: 5, isStaffMeal: false },
+        { id: 1, name: 'Bananas (by count)', par: 50, currentCount: 60 },
+        { id: 2, name: 'Strawberries (in lbs)', par: 10, currentCount: 5 },
+        { id: 3, name: 'Blueberries (in lbs)', par: 8, currentCount: 9 },
+        { id: 4, name: 'Skyr (in kg)', par: 15, currentCount: 10 },
+        { id: 5, name: 'Protein Powder (in kg)', par: 5, currentCount: 5 },
     ]);
-    const [newItem, setNewItem] = useState({ name: '', par: '', isStaffMeal: false });
+    const [newItem, setNewItem] = useState({ name: '', par: ''});
     const [countingFrequency, setCountingFrequency] = useState('1');
 
     const [isGenerating, setIsGenerating] = useState(false);
@@ -55,10 +53,9 @@ export default function InventoryManager() {
             name: newItem.name,
             par: parseInt(newItem.par, 10),
             currentCount: 0,
-            isStaffMeal: newItem.isStaffMeal,
         };
         setInventoryItems([...inventoryItems, newInventoryItem]);
-        setNewItem({ name: '', par: '', isStaffMeal: false });
+        setNewItem({ name: '', par: '' });
         toast({
             title: 'Item Added',
             description: `${newItem.name} has been added to the inventory list.`,
@@ -91,14 +88,6 @@ export default function InventoryManager() {
         setInventoryItems(
             inventoryItems.map(item =>
                 item.id === id ? { ...item, par: isNaN(par) ? 0 : par } : item
-            )
-        );
-    };
-
-    const handleStaffMealToggle = (id: number) => {
-        setInventoryItems(
-            inventoryItems.map(item =>
-                item.id === id ? { ...item, isStaffMeal: !item.isStaffMeal } : item
             )
         );
     };
@@ -144,7 +133,7 @@ export default function InventoryManager() {
                     <CardTitle>Add & Manage Inventory</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div className="grid gap-2">
                             <Label htmlFor="item-name">New Item Name</Label>
                             <Input 
@@ -163,16 +152,6 @@ export default function InventoryManager() {
                                 value={newItem.par}
                                 onChange={(e) => setNewItem({ ...newItem, par: e.target.value })}
                             />
-                        </div>
-                        <div className="flex items-center gap-2 pt-5">
-                            <Checkbox
-                                id="item-staff-meal"
-                                checked={newItem.isStaffMeal}
-                                onCheckedChange={(checked) => setNewItem({ ...newItem, isStaffMeal: !!checked })}
-                            />
-                            <Label htmlFor="item-staff-meal" className="font-normal">
-                                Available for Staff Meal
-                            </Label>
                         </div>
                         <Button type="submit" className="w-full md:w-auto">
                             <PlusCircle className="mr-2 h-4 w-4" /> Add Item
@@ -249,7 +228,6 @@ export default function InventoryManager() {
                                     <TableHead>Item</TableHead>
                                     <TableHead>Par Level</TableHead>
                                     <TableHead>Current Count</TableHead>
-                                    <TableHead>Staff Meal</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
@@ -278,14 +256,6 @@ export default function InventoryManager() {
                                                 />
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex justify-center">
-                                                    <Checkbox
-                                                        checked={item.isStaffMeal}
-                                                        onCheckedChange={() => handleStaffMealToggle(item.id)}
-                                                    />
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
                                                 <Badge variant={isLow ? "destructive" : "outline"}>
                                                     {isLow ? "Low Stock" : "OK"}
                                                 </Badge>
@@ -300,7 +270,7 @@ export default function InventoryManager() {
                                     )})
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center h-24">
+                                        <TableCell colSpan={5} className="text-center h-24">
                                             No inventory items added yet.
                                         </TableCell>
                                     </TableRow>
