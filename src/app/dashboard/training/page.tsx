@@ -5,7 +5,7 @@ import { useState } from 'react';
 import MenuGame from '@/components/menu-game';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { BookOpen, Calculator, ShieldQuestion, Video, Upload, Trophy, PlayCircle } from 'lucide-react';
+import { BookOpen, Calculator, ShieldQuestion, Video, Upload, Trophy, PlayCircle, Lightbulb } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 
 type VideoSubmission = {
@@ -139,6 +140,14 @@ export default function TrainingPage() {
                             </form>
                         </DialogContent>
                     </Dialog>
+
+                    <Alert className="mt-6">
+                        <Lightbulb className="h-4 w-4" />
+                        <AlertTitle>A Note on AI Video Analysis</AlertTitle>
+                        <AlertDescription>
+                            Directly analyzing videos to automatically determine your time is a highly complex feature we are exploring for the future. For now, please accurately enter your time manually when you submit your video. Honesty is key to a fun competition!
+                        </AlertDescription>
+                    </Alert>
 
                     <div className="mt-6 space-y-8">
                         <div>
