@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, Send } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -525,12 +525,6 @@ export default function ManagerDashboard() {
                         </TableBody>
                     </Table>
                 </CardContent>
-                <CardFooter>
-                    <Button variant="outline" onClick={handleAiMealAnalysis}>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Get AI Insights on Meal Patterns
-                    </Button>
-                </CardFooter>
             </Card>
 
             <StaffMealManager />
@@ -850,25 +844,6 @@ export default function ManagerDashboard() {
                         <Button variant="outline" onClick={() => setIsBriefingDialogOpen(false)}>Dismiss</Button>
                         <Button onClick={handlePostBriefing} disabled={isGeneratingBriefing || !dailyBriefing}>
                             Post to Employee Dashboard
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-            <Dialog open={isMealInsightDialogOpen} onOpenChange={setIsMealInsightDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="font-headline">{aiMealInsight?.title}</DialogTitle>
-                        <DialogDescription>
-                            This is a private, AI-generated insight. You can send this as a message to the employee's dashboard.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <p className="text-sm">{aiMealInsight?.description}</p>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="secondary" onClick={() => setIsMealInsightDialogOpen(false)}>Close</Button>
-                        <Button onClick={handleSendMealInsight}>
-                            <Send className="mr-2 h-4 w-4" /> Send to Employee
                         </Button>
                     </DialogFooter>
                 </DialogContent>
