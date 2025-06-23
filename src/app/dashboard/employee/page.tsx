@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone, Sparkles, Loader2 } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone, Sparkles, Loader2, User, Phone, Mail } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +22,7 @@ const initialTasks = [
   { id: 1, name: "Clean kitchen floor", area: "Kitchen", priority: "High", status: "Pending" },
   { id: 2, name: "Restock restroom supplies", area: "Restroom", priority: "Medium", status: "Pending" },
   { id: 3, name: "Sanitize all door handles", area: "All Areas", priority: "High", status: "In Progress" },
+  { id: 4, name: "Mandatory Team Meeting: Q3 Planning", area: "Main Office", priority: "High", status: "Pending" }
 ];
 
 const initialCompletedTasks = [
@@ -327,6 +328,27 @@ export default function EmployeeDashboard() {
         </CardContent>
       </Card>
 
+    <Card>
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2"><User /> My Profile</CardTitle>
+          <CardDescription>Your contact information for scheduling and communication.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-2"><User className="h-4 w-4"/> Full Name</span>
+                <span className="font-semibold">John Doe (Demo)</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-2"><Mail className="h-4 w-4"/> Email</span>
+                <span className="font-semibold">john.doe@example.com</span>
+            </div>
+             <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-2"><Phone className="h-4 w-4"/> Phone</span>
+                <span className="font-semibold">555-123-4567</span>
+            </div>
+            <Button variant="outline" className="w-full" disabled>Edit Profile</Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
