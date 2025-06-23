@@ -1,10 +1,11 @@
+
 "use client"
 import { useState, useMemo } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2 } from "lucide-react";
+import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil } from "lucide-react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +14,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { processInspectionReport } from '@/ai/flows/process-inspection-report-flow';
 import { type ProcessInspectionReportOutput } from '@/ai/schemas/inspection-report-schemas';
@@ -56,7 +59,6 @@ export default function HealthDeptDashboard() {
     { id: 2, description: "Monthly fire safety check", frequency: "Monthly", type: "Mandatory", location: "All" },
     { id: 3, description: "Verify temperature logs for all coolers", frequency: "Daily", type: "Mandatory", location: "Downtown" },
   ]);
-  const [newTask, setNewTask] = useState({ description: '', frequency: '', type: 'mandatory', location: 'All' });
   
   const [linkedJurisdictions, setLinkedJurisdictions] = useState(["Downtown", "Uptown"]);
   const [selectedJurisdiction, setSelectedJurisdiction] = useState('All');
@@ -67,6 +69,18 @@ export default function HealthDeptDashboard() {
   const [reportLocation, setReportLocation] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingResult, setProcessingResult] = useState<ProcessInspectionReportOutput | null>(null);
+  
+  // State for task management dialogs
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [currentTask, setCurrentTask] = useState<{ id: number | null; description: string; frequency: string; type: string; location: string }>({
+    id: null,
+    description: '',
+    frequency: '',
+    type: 'Mandatory',
+    location: 'All',
+  });
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<ComplianceTask | null>(null);
 
 
   const handleLinkEstablishment = (e: React.FormEvent) => {
@@ -97,30 +111,55 @@ export default function HealthDeptDashboard() {
         });
     }
   };
+  
+  const handleOpenDialog = (task: ComplianceTask | null) => {
+    if (task) {
+        setCurrentTask({ ...task, type: task.type || 'Mandatory', location: task.location || 'All' });
+    } else {
+        setCurrentTask({ id: null, description: '', frequency: '', type: 'Mandatory', location: 'All' });
+    }
+    setIsTaskDialogOpen(true);
+  };
 
-
-  const handleAddTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTask.description || !newTask.frequency) {
+  const handleSaveTask = () => {
+    if (!currentTask.description || !currentTask.frequency) {
         toast({
-          variant: "destructive",
-          title: "Missing Information",
-          description: "Please fill out all task fields.",
-        })
+            variant: 'destructive',
+            title: 'Missing Information',
+            description: 'Please fill out all task fields.',
+        });
         return;
     }
-    const newId = complianceTasks.length > 0 ? Math.max(...complianceTasks.map(t => t.id)) + 1 : 1;
-    const taskToAdd = {
-        ...newTask,
-        id: newId,
-        frequency: newTask.frequency.charAt(0).toUpperCase() + newTask.frequency.slice(1),
-        type: newTask.type.charAt(0).toUpperCase() + newTask.type.slice(1),
-    };
-    setComplianceTasks([taskToAdd, ...complianceTasks]);
-    // Reset form
-    setNewTask({ description: '', frequency: '', type: 'mandatory', location: 'All' });
+
+    if (currentTask.id) { // Editing
+        setComplianceTasks(complianceTasks.map(t => (t.id === currentTask.id ? { ...t, ...currentTask } : t)));
+        toast({ title: 'Task Updated', description: `"${currentTask.description}" has been updated.` });
+    } else { // Adding
+        const newId = complianceTasks.length > 0 ? Math.max(...complianceTasks.map(t => t.id)) + 1 : 1;
+        setComplianceTasks([{ ...currentTask, id: newId }, ...complianceTasks]);
+        toast({ title: 'Task Added', description: `"${currentTask.description}" has been created.` });
+    }
+    setIsTaskDialogOpen(false);
   };
   
+  const handleDeleteClick = (task: ComplianceTask) => {
+    setTaskToDelete(task);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (taskToDelete) {
+        setComplianceTasks(complianceTasks.filter(t => t.id !== taskToDelete.id));
+        toast({
+            variant: 'secondary',
+            title: 'Task Deleted',
+            description: `"${taskToDelete.description}" has been deleted.`,
+        });
+    }
+    setIsDeleteDialogOpen(false);
+    setTaskToDelete(null);
+  };
+
   const handleProcessReport = async () => {
     if (!reportNotes.trim() || !reportLocation) {
       toast({
@@ -371,77 +410,27 @@ export default function HealthDeptDashboard() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><PlusCircle /> Add New Compliance Task</CardTitle>
-          <CardDescription>
-            Define new weekly or monthly tasks for establishments to follow.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAddTask} className="grid gap-6">
-            <div className="grid gap-2">
-              <Label htmlFor="task-description">Task Description</Label>
-              <Input id="task-description" placeholder="e.g., Verify all fire extinguishers are certified" value={newTask.description} onChange={(e) => setNewTask({...newTask, description: e.target.value})} required />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="frequency">Frequency</Label>
-                <Select value={newTask.frequency} onValueChange={(val) => setNewTask({...newTask, frequency: val})} required>
-                  <SelectTrigger id="frequency">
-                    <SelectValue placeholder="Select frequency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-               <div className="grid gap-2">
-                <Label htmlFor="task-location">For Location</Label>
-                <Select value={newTask.location} onValueChange={(val) => setNewTask({...newTask, location: val})} required>
-                  <SelectTrigger id="task-location">
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                     <SelectItem value="All">All Jurisdictions</SelectItem>
-                     {linkedJurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label>Type</Label>
-                <RadioGroup value={newTask.type} onValueChange={(val) => setNewTask({...newTask, type: val})} className="flex items-center gap-4 pt-2">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="mandatory" id="mandatory" />
-                    <Label htmlFor="mandatory" className="font-normal">Mandatory</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="optional" id="optional" />
-                    <Label htmlFor="optional" className="font-normal">Optional</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div className="flex items-end">
-                <Button type="submit" className="w-full md:w-auto bg-primary hover:bg-primary/90">Add Task</Button>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><FileCheck /> Defined Compliance Tasks</CardTitle>
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div>
+            <CardTitle className="font-headline flex items-center gap-2"><FileCheck /> Defined Compliance Tasks</CardTitle>
+            <CardDescription>
+                This is the master list of all recurring compliance tasks for all locations. Add, edit, or remove tasks as needed.
+            </CardDescription>
+          </div>
+           <Button onClick={() => handleOpenDialog(null)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Task
+            </Button>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Description</TableHead>
+                <TableHead className="w-[50%]">Description</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Frequency</TableHead>
-                <TableHead className="text-right">Type</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -451,15 +440,25 @@ export default function HealthDeptDashboard() {
                     <TableCell className="font-medium">{task.description}</TableCell>
                     <TableCell>{task.location}</TableCell>
                     <TableCell>{task.frequency}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell>
                       <Badge variant={task.type === 'Mandatory' ? 'destructive' : 'secondary'}>{task.type}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}>
+                            <Pencil className="h-4 w-4" />
+                            <span className="sr-only">Edit Task</span>
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(task)}>
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Remove Task</span>
+                        </Button>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
-                    No compliance tasks defined yet.
+                  <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                    No compliance tasks defined yet. Click "Add New Task" to begin.
                   </TableCell>
                 </TableRow>
               )}
@@ -468,6 +467,86 @@ export default function HealthDeptDashboard() {
         </CardContent>
       </Card>
 
+      {/* Add/Edit Task Dialog */}
+      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle className="font-headline">{currentTask.id ? 'Edit Compliance Task' : 'Add New Compliance Task'}</DialogTitle>
+                <DialogDescription>
+                    {currentTask.id ? 'Modify the details of this task.' : 'Define new weekly or monthly tasks for establishments to follow.'}
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-6 py-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="task-description">Task Description</Label>
+                    <Input id="task-description" placeholder="e.g., Verify all fire extinguishers are certified" value={currentTask.description} onChange={(e) => setCurrentTask({ ...currentTask, description: e.target.value })} required />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid gap-2">
+                        <Label htmlFor="frequency">Frequency</Label>
+                        <Select value={currentTask.frequency} onValueChange={(val) => setCurrentTask({ ...currentTask, frequency: val })} required>
+                        <SelectTrigger id="frequency">
+                            <SelectValue placeholder="Select frequency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Daily">Daily</SelectItem>
+                            <SelectItem value="Weekly">Weekly</SelectItem>
+                            <SelectItem value="Monthly">Monthly</SelectItem>
+                        </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="task-location">For Location</Label>
+                        <Select value={currentTask.location} onValueChange={(val) => setCurrentTask({ ...currentTask, location: val })} required>
+                        <SelectTrigger id="task-location">
+                            <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Jurisdictions</SelectItem>
+                            {linkedJurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                        </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <div className="grid gap-2">
+                    <Label>Type</Label>
+                    <RadioGroup value={currentTask.type} onValueChange={(val) => setCurrentTask({ ...currentTask, type: val })} className="flex items-center gap-4 pt-2">
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Mandatory" id="mandatory" />
+                        <Label htmlFor="mandatory" className="font-normal">Mandatory</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Optional" id="optional" />
+                        <Label htmlFor="optional" className="font-normal">Optional</Label>
+                    </div>
+                    </RadioGroup>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsTaskDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleSaveTask}>Save Task</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the compliance task: <span className="font-semibold">"{taskToDelete?.description}"</span>.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
+
+    
