@@ -219,6 +219,9 @@ export default function InventoryManager() {
             <Card>
                 <CardHeader>
                     <CardTitle>Current Inventory List</CardTitle>
+                    <CardDescription>
+                        Update the "Current Count" after receiving a delivery. Adjust "Par Level" to change reorder points. The AI uses this data to create shopping lists.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="border rounded-md">
