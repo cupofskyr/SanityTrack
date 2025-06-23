@@ -220,28 +220,6 @@ export default function TrainingPage() {
                     </div>
                 </CardContent>
             </Card>
-
-            <div className="grid gap-6 md:grid-cols-2">
-                <Card className="flex flex-col bg-muted/50">
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2 text-muted-foreground"><Calculator /> Recipe & Counting Quiz</CardTitle>
-                        <CardDescription>How many strawberries go in a Cloudy Morning bowl? Test your recipe knowledge here.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center p-6">
-                       <Button variant="secondary" disabled>Coming Soon</Button>
-                    </CardContent>
-                </Card>
-
-                 <Card className="flex flex-col bg-muted/50">
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2 text-muted-foreground"><ShieldQuestion /> Basic Knowledge & Rules</CardTitle>
-                        <CardDescription>Review company policies, safety procedures, and service standards.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow flex items-center justify-center p-6">
-                        <Button variant="secondary" disabled>Coming Soon</Button>
-                    </CardContent>
-                </Card>
-            </div>
         </div>
     );
 }
