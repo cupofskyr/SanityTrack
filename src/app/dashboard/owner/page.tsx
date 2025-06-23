@@ -3,7 +3,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -56,6 +56,13 @@ export default function OwnerDashboard() {
     const [isShareCodeDialogOpen, setShareCodeDialogOpen] = useState(false);
     const [locationToShare, setLocationToShare] = useState<Location | null>(null);
     const [inspectorEmail, setInspectorEmail] = useState('');
+    const [isAddLocationDialogOpen, setIsAddLocationDialogOpen] = useState(false);
+    const [newLocationData, setNewLocationData] = useState({
+        name: '',
+        toastKey: '',
+        managerName: '',
+        managerEmail: '',
+    });
 
     // Onboarding Form State
     const [newLocationName, setNewLocationName] = useState('');
@@ -120,6 +127,40 @@ export default function OwnerDashboard() {
             { id: 1, location: newLocationName, description: "Main freezer unit is offline. Temperature rising rapidly." },
             { id: 2, location: newLocationName, description: "POS system is down. Cannot process credit card payments." },
         ]);
+    };
+
+    const handleAddLocation = (e: FormEvent) => {
+        e.preventDefault();
+        if (!newLocationData.name || !newLocationData.managerName || !newLocationData.managerEmail) {
+            toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out all required fields for the new location.' });
+            return;
+        }
+
+        const newLocationId = locations.length > 0 ? Math.max(...locations.map(l => l.id)) + 1 : 1;
+        const newLocation: Location = {
+            id: newLocationId,
+            name: newLocationData.name,
+            manager: newLocationData.managerName,
+            inspectionCode: `${newLocationData.name.substring(0, 2).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+            toastApiKey: newLocationData.toastKey,
+        };
+        const newManager: TeamMember = {
+            name: newLocationData.managerName,
+            role: "Manager",
+            location: newLocationData.name,
+        };
+
+        setLocations([...locations, newLocation]);
+        setTeamMembers([...teamMembers, newManager]);
+
+        toast({
+            title: 'Location Added!',
+            description: `${newLocation.name} is now configured and its manager has been invited.`,
+        });
+
+        // Reset form and close dialog
+        setNewLocationData({ name: '', toastKey: '', managerName: '', managerEmail: '' });
+        setIsAddLocationDialogOpen(false);
     };
 
     if (locations.length === 0) {
@@ -314,9 +355,48 @@ export default function OwnerDashboard() {
                 <LiveReviews location={locations[0]?.name} />
                  
                 <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2"><MapPin/> My Locations</CardTitle>
-                        <CardDescription>Provide the inspection code to a Health Dept. agent to grant them access.</CardDescription>
+                    <CardHeader className="flex flex-row items-start justify-between">
+                        <div>
+                            <CardTitle className="font-headline flex items-center gap-2"><MapPin/> My Locations</CardTitle>
+                            <CardDescription>Manage your business locations and share access with health inspectors.</CardDescription>
+                        </div>
+                        <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4"/> Add New Location</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle className="font-headline">Add a New Location</DialogTitle>
+                                    <DialogDescription>
+                                        Configure a new location and invite its manager.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleAddLocation} className="space-y-4 py-4">
+                                     <div className="space-y-2">
+                                        <Label htmlFor="add-location-name">Location Name</Label>
+                                        <Input id="add-location-name" placeholder="e.g., Uptown Smoothies" value={newLocationData.name} onChange={e => setNewLocationData({...newLocationData, name: e.target.value})} required />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="add-toast-key">Toast POS API Key (Optional)</Label>
+                                        <Input id="add-toast-key" placeholder="Enter API key" value={newLocationData.toastKey} onChange={e => setNewLocationData({...newLocationData, toastKey: e.target.value})} />
+                                    </div>
+                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="add-manager-name">Manager's Full Name</Label>
+                                            <Input id="add-manager-name" placeholder="Casey Lee" value={newLocationData.managerName} onChange={e => setNewLocationData({...newLocationData, managerName: e.target.value})} required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="add-manager-email">Manager's Email (for Invite)</Label>
+                                            <Input id="add-manager-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={e => setNewLocationData({...newLocationData, managerEmail: e.target.value})} required/>
+                                        </div>
+                                    </div>
+                                    <DialogFooter>
+                                        <Button type="button" variant="secondary" onClick={() => setIsAddLocationDialogOpen(false)}>Cancel</Button>
+                                        <Button type="submit">Save Location</Button>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2">
                         {locations.map(loc => (
@@ -643,5 +723,3 @@ export default function OwnerDashboard() {
         </TooltipProvider>
     );
 }
-
-    
