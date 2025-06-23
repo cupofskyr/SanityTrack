@@ -64,9 +64,10 @@ export default function EmployeeDashboard() {
   const [photoForAnalysis, setPhotoForAnalysis] = useState<string | null>(null);
   const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
   
-  const [loggedMeals, setLoggedMeals] = useState<{ id: number, description: string }[]>([]);
+  const [loggedMeals, setLoggedMeals] = useState<{ id: number; description: string; photoUrl: string | null; }[]>([]);
   const [isMealLogDialogOpen, setIsMealLogDialogOpen] = useState(false);
   const [newMealDescription, setNewMealDescription] = useState("");
+  const [newMealPhoto, setNewMealPhoto] = useState<string | null>(null);
 
   const [directMessage, setDirectMessage] = useState<{title: string, description: string} | null>(null);
 
@@ -176,6 +177,14 @@ export default function EmployeeDashboard() {
       });
       return;
     }
+    if (!newMealPhoto) {
+      toast({
+        variant: "destructive",
+        title: "Missing Photo",
+        description: "Please upload a photo of your meal.",
+      });
+      return;
+    }
     if (loggedMeals.length >= mealLimit) {
         toast({
             variant: "destructive",
@@ -187,9 +196,11 @@ export default function EmployeeDashboard() {
     const newMeal = {
       id: Date.now(),
       description: newMealDescription,
+      photoUrl: newMealPhoto,
     };
     setLoggedMeals([...loggedMeals, newMeal]);
     setNewMealDescription("");
+    setNewMealPhoto(null);
     setIsMealLogDialogOpen(false);
     toast({
       title: "Meal Logged",
@@ -437,20 +448,24 @@ export default function EmployeeDashboard() {
                             <DialogHeader>
                                 <DialogTitle className="font-headline">Log Staff Meal</DialogTitle>
                                 <DialogDescription>
-                                    Describe the item(s) you are taking for your meal.
+                                    Describe the item(s) you are taking for your meal and upload a photo.
                                 </DialogDescription>
                             </DialogHeader>
                             <form onSubmit={handleLogMeal}>
                                 <div className="grid gap-4 py-4">
                                     <div className="grid gap-2">
-                                    <Label htmlFor="meal-description">Meal Description</Label>
-                                    <Textarea
-                                        id="meal-description"
-                                        placeholder="e.g., Turkey sandwich and a bag of chips"
-                                        value={newMealDescription}
-                                        onChange={(e) => setNewMealDescription(e.target.value)}
-                                        required
-                                    />
+                                        <Label htmlFor="meal-photo">Photo of Meal</Label>
+                                        <PhotoUploader onPhotoDataChange={setNewMealPhoto} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="meal-description">Meal Description</Label>
+                                        <Textarea
+                                            id="meal-description"
+                                            placeholder="e.g., Turkey sandwich and a bag of chips"
+                                            value={newMealDescription}
+                                            onChange={(e) => setNewMealDescription(e.target.value)}
+                                            required
+                                        />
                                     </div>
                                 </div>
                                 <DialogFooter>
