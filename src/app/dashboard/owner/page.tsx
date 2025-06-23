@@ -166,6 +166,15 @@ export default function OwnerDashboard() {
         setContactManagerOpen(false);
     };
 
+    const handleCopyCode = (code: string) => {
+        navigator.clipboard.writeText(code);
+        toast({
+            title: "Code Copied!",
+            description: `The inspection code "${code}" has been copied to your clipboard.`,
+        });
+    };
+
+
     return (
         <TooltipProvider>
             <div className="space-y-6">
@@ -224,9 +233,22 @@ export default function OwnerDashboard() {
                                     <p className="font-semibold">{loc.name}</p>
                                     <p className="text-sm text-muted-foreground">Manager: {loc.manager}</p>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-xs text-muted-foreground">Inspection Code</p>
-                                    <p className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded-md">{loc.inspectionCode}</p>
+                                <div className="flex items-center gap-2">
+                                    <div className="text-right">
+                                        <p className="text-xs text-muted-foreground">Inspection Code</p>
+                                        <p className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded-md">{loc.inspectionCode}</p>
+                                    </div>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopyCode(loc.inspectionCode)}>
+                                                <Share2 className="h-4 w-4" />
+                                                <span className="sr-only">Copy Code</span>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Copy Code</p>
+                                        </TooltipContent>
+                                    </Tooltip>
                                 </div>
                             </div>
                         ))}
