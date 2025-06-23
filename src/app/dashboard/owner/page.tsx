@@ -28,7 +28,8 @@ export default function OwnerDashboard() {
     const handleFetchRevenue = async () => {
         setIsLoadingRevenue(true);
         try {
-            const data = await fetchToastData();
+            // In a real multi-location app, this would come from a state or selector.
+            const data = await fetchToastData({ location: "Downtown Cafe" });
             setRevenueData(data);
         } catch (error) {
             console.error(error);
