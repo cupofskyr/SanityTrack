@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -62,6 +62,16 @@ type Meeting = {
     description: string;
     meetLink?: string;
 };
+type HiringRequest = {
+    id: number;
+    manager: string;
+    location: string;
+    role: string;
+    urgency: string;
+    shiftType: 'Full-time' | 'Part-time' | 'Contract';
+    justification: string;
+};
+type RejectedRequest = HiringRequest & { ownerComment: string; };
 
 
 const issueAnalyzerSchema = z.object({
@@ -129,6 +139,17 @@ export default function ManagerDashboard() {
     const [translatingId, setTranslatingId] = useState<number | null>(null);
     
     const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+    
+    const [rejectedRequests, setRejectedRequests] = useState<RejectedRequest[]>([]);
+
+    useEffect(() => {
+        const storedRejected = localStorage.getItem('rejectedHiringRequests');
+        if (storedRejected) {
+            // A real app would filter these for the current manager
+            setRejectedRequests(JSON.parse(storedRejected));
+        }
+    }, []);
+
 
     useEffect(() => {
         const getBriefing = async () => {
@@ -377,6 +398,16 @@ export default function ManagerDashboard() {
         }
     };
     
+    const handleDismissRejection = (requestId: number) => {
+        const updatedRejected = rejectedRequests.filter(req => req.id !== requestId);
+        setRejectedRequests(updatedRejected);
+        localStorage.setItem('rejectedHiringRequests', JSON.stringify(updatedRejected));
+        toast({
+            title: "Notification Dismissed",
+            description: "The rejected hiring request has been cleared from your dashboard.",
+        });
+    };
+
     const handlePrint = () => {
         window.print();
     };
@@ -456,6 +487,31 @@ export default function ManagerDashboard() {
                 </TooltipTrigger>
                 <TooltipContent><p>Generate a printable report of this month's activities to share with the owner.</p></TooltipContent>
             </Tooltip>
+
+             {rejectedRequests.length > 0 && (
+                <Card className="lg:col-span-3">
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><Info /> Request Updates from Owner</CardTitle>
+                        <CardDescription>The owner has responded to the following hiring requests. You can dismiss these notifications.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {rejectedRequests.map(req => (
+                            <Alert key={req.id} variant="destructive">
+                                <AlertTitle className="flex justify-between items-center">
+                                    <span>Request for {req.role} was rejected</span>
+                                     <Button size="sm" variant="ghost" className="h-7" onClick={() => handleDismissRejection(req.id)}>
+                                        <XCircle className="mr-2 h-4 w-4" /> Dismiss
+                                    </Button>
+                                </AlertTitle>
+                                <AlertDescription>
+                                    <p className="font-semibold mt-2">Owner's Comment:</p>
+                                    <p className="italic">"{req.ownerComment}"</p>
+                                </AlertDescription>
+                            </Alert>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
 
             <Tooltip>
                 <TooltipTrigger asChild>

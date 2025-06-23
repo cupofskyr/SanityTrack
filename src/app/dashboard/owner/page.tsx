@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { Textarea } from '@/components/ui/textarea';
 import { suggestTaskAssignment, type SuggestTaskAssignmentOutput } from '@/ai/flows/suggest-task-assignment-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import PhotoUploader from '@/components/photo-uploader';
@@ -94,6 +95,9 @@ export default function OwnerDashboard() {
         managerName: '',
         managerEmail: '',
     });
+    const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+    const [requestToReject, setRequestToReject] = useState<HiringRequest | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
 
     // Onboarding Form State
     const [newLocationName, setNewLocationName] = useState('');
@@ -323,16 +327,41 @@ export default function OwnerDashboard() {
         }
     };
 
-    const handleRejectRequest = (requestId: number) => {
-        const request = hiringRequests.find(r => r.id === requestId);
-        if (!request) return;
+    const handleOpenRejectDialog = (request: HiringRequest) => {
+        setRequestToReject(request);
+        setIsRejectDialogOpen(true);
+    };
 
-        setHiringRequests(hiringRequests.filter(r => r.id !== requestId));
+    const handleConfirmRejection = () => {
+        if (!requestToReject || !rejectionReason.trim()) {
+            toast({
+                variant: 'destructive',
+                title: 'Reason Required',
+                description: 'Please provide a comment for the manager.',
+            });
+            return;
+        }
+
+        // Simulate sending the rejection back to the manager via localStorage
+        const rejectedRequest = { ...requestToReject, ownerComment: rejectionReason };
+        const storedRejected = localStorage.getItem('rejectedHiringRequests');
+        const rejectedList = storedRejected ? JSON.parse(storedRejected) : [];
+        rejectedList.push(rejectedRequest);
+        localStorage.setItem('rejectedHiringRequests', JSON.stringify(rejectedList));
+
+        // Update owner's UI
+        setHiringRequests(prev => prev.filter(r => r.id !== requestToReject.id));
+
         toast({
-            title: `Request Rejected`,
-            description: `The hiring request for a ${request.role} has been rejected.`,
-            variant: 'secondary'
+            title: 'Request Rejected',
+            description: 'The manager has been notified with your comment.',
+            variant: 'secondary',
         });
+
+        // Cleanup state
+        setIsRejectDialogOpen(false);
+        setRejectionReason('');
+        setRequestToReject(null);
     };
 
     const handleManualPost = (requestId: number) => {
@@ -586,7 +615,7 @@ export default function OwnerDashboard() {
                                                 <div className="flex gap-2 self-end sm:self-center shrink-0">
                                                     <Button size="sm" onClick={() => handleApproveRequest(req)}><CheckCircle className="mr-2 h-4 w-4" /> Approve & Post via AI</Button>
                                                     <Button size="sm" variant="outline" onClick={() => handleManualPost(req.id)}><ThumbsUp className="mr-2 h-4 w-4" /> Manually Posted</Button>
-                                                    <Button size="sm" variant="destructive" onClick={() => handleRejectRequest(req.id)}><XCircle className="mr-2 h-4 w-4" /> Reject</Button>
+                                                    <Button size="sm" variant="destructive" onClick={() => handleOpenRejectDialog(req)}><XCircle className="mr-2 h-4 w-4" /> Reject</Button>
                                                 </div>
                                             </div>
                                         ))}
@@ -1089,6 +1118,30 @@ export default function OwnerDashboard() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+
+                <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Reject Hiring Request</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Please provide a reason for rejecting this request. This will be shared with the manager.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="py-4">
+                             <Textarea
+                                placeholder="e.g., Let's hold off on this for now. Please call me to discuss an alternative solution."
+                                value={rejectionReason}
+                                onChange={(e) => setRejectionReason(e.target.value)}
+                                rows={4}
+                            />
+                        </div>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setRejectionReason('')}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirmRejection}>Confirm Rejection</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
             </div>
         </TooltipProvider>
     );
