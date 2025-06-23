@@ -1,21 +1,2 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        pathname: '/**',
-      },
-    ],
-  },
-};
-
-module.exports = nextConfig;
+// This file is intentionally left blank.
+// The configuration has been moved to next.config.js to resolve a startup issue.
