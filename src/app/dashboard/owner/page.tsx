@@ -1,13 +1,15 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import LiveReviews from '@/components/live-reviews';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 const initialRequests = [
@@ -19,6 +21,29 @@ const initialRequests = [
 export default function OwnerDashboard() {
     const { toast } = useToast();
     const [requests, setRequests] = useState(initialRequests);
+    const [revenueData, setRevenueData] = useState<ToastPOSData | null>(null);
+    const [isLoadingRevenue, setIsLoadingRevenue] = useState(true);
+
+    const handleFetchRevenue = async () => {
+        setIsLoadingRevenue(true);
+        try {
+            const data = await fetchToastData();
+            setRevenueData(data);
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                title: 'Failed to fetch revenue data',
+                description: 'Could not connect to the POS system.',
+            })
+        } finally {
+            setIsLoadingRevenue(false);
+        }
+    };
+
+    useEffect(() => {
+        handleFetchRevenue();
+    }, []);
 
     const handleRequest = (requestId: number, approved: boolean) => {
         const request = requests.find(r => r.id === requestId);
@@ -35,16 +60,35 @@ export default function OwnerDashboard() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                    Total Revenue
-                </CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">
+                        Total Revenue (Live)
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleFetchRevenue} disabled={isLoadingRevenue}>
+                            {isLoadingRevenue ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                            <span className="sr-only">Refresh Revenue Data</span>
+                        </Button>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </div>
                 </CardHeader>
                 <CardContent>
-                <div className="text-2xl font-bold">$45,231.89</div>
-                <p className="text-xs text-muted-foreground">
-                    +20.1% from last month
-                </p>
+                    {isLoadingRevenue ? (
+                        <div className="space-y-2">
+                            <Skeleton className="h-8 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </div>
+                    ) : revenueData ? (
+                        <>
+                            <div className="text-2xl font-bold">
+                                ${revenueData.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                +{revenueData.changeFromLastMonth}% from last month
+                            </p>
+                        </>
+                    ) : (
+                        <div className="text-sm text-destructive">Could not load data.</div>
+                    )}
                 </CardContent>
             </Card>
             <Card>
