@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -57,6 +57,7 @@ type Meeting = {
     time: string;
     attendee: string;
     description: string;
+    meetLink?: string;
 };
 
 
@@ -287,6 +288,7 @@ export default function ManagerDashboard() {
         const newMeeting: Meeting = {
             id: Date.now(),
             ...meetingDetails,
+            meetLink: 'https://meet.google.com/lookup/dmo-cnic-xyz',
         };
         setMeetings(prev => [newMeeting, ...prev]);
         toast({
@@ -560,6 +562,7 @@ export default function ManagerDashboard() {
                                 <TableHead>Title</TableHead>
                                 <TableHead>Date & Time</TableHead>
                                 <TableHead>Attendee</TableHead>
+                                <TableHead className="text-right">Meeting Link</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -569,11 +572,21 @@ export default function ManagerDashboard() {
                                     <TableCell className="font-medium">{meeting.title}</TableCell>
                                     <TableCell>{format(meeting.date, 'PPP')} at {meeting.time}</TableCell>
                                     <TableCell>{meeting.attendee}</TableCell>
+                                    <TableCell className="text-right">
+                                        {meeting.meetLink && (
+                                            <Button variant="ghost" size="icon" asChild>
+                                                <a href={meeting.meetLink} target="_blank" rel="noopener noreferrer">
+                                                    <LinkIcon className="h-4 w-4" />
+                                                    <span className="sr-only">Open meeting link</span>
+                                                </a>
+                                            </Button>
+                                        )}
+                                    </TableCell>
                                 </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                <TableCell colSpan={3} className="text-center h-24">
+                                <TableCell colSpan={4} className="text-center h-24">
                                     No meetings scheduled yet.
                                 </TableCell>
                                 </TableRow>

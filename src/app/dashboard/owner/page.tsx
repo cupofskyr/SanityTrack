@@ -3,7 +3,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes, CalendarClock, CalendarIcon, ListTodo } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes, CalendarClock, CalendarIcon, ListTodo, LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,7 @@ import InventoryManager from '@/components/inventory-manager';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 
 type TeamMember = { name: string; role: "Manager" | "Employee"; location: string };
@@ -40,6 +40,7 @@ type Meeting = {
     time: string;
     attendee: string;
     description: string;
+    meetLink?: string;
 };
 
 
@@ -404,6 +405,7 @@ export default function OwnerDashboard() {
         const newMeeting: Meeting = {
             id: Date.now(),
             ...meetingDetails,
+            meetLink: 'https://meet.google.com/lookup/dmo-cnic-xyz',
         };
         setMeetings(prev => [newMeeting, ...prev]);
         toast({
@@ -540,6 +542,7 @@ export default function OwnerDashboard() {
                                     <TableHead>Title</TableHead>
                                     <TableHead>Date & Time</TableHead>
                                     <TableHead>Attendee</TableHead>
+                                    <TableHead className="text-right">Meeting Link</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -549,11 +552,21 @@ export default function OwnerDashboard() {
                                         <TableCell className="font-medium">{meeting.title}</TableCell>
                                         <TableCell>{format(meeting.date, 'PPP')} at {meeting.time}</TableCell>
                                         <TableCell>{meeting.attendee}</TableCell>
+                                        <TableCell className="text-right">
+                                            {meeting.meetLink && (
+                                                <Button variant="ghost" size="icon" asChild>
+                                                    <a href={meeting.meetLink} target="_blank" rel="noopener noreferrer">
+                                                        <LinkIcon className="h-4 w-4" />
+                                                        <span className="sr-only">Open meeting link</span>
+                                                    </a>
+                                                </Button>
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                    <TableCell colSpan={3} className="text-center h-24">
+                                    <TableCell colSpan={4} className="text-center h-24">
                                         No meetings scheduled yet.
                                     </TableCell>
                                     </TableRow>
@@ -995,5 +1008,3 @@ export default function OwnerDashboard() {
         </TooltipProvider>
     );
 }
-
-    
