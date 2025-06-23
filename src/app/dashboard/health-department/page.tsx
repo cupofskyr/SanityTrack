@@ -41,10 +41,10 @@ const chartConfig = {
 }
 
 const initialReports = [
-  { id: 1, issue: "Water puddle near entrance", location: "Downtown", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown", owner: "Alex Ray", resolutionNotes: "Manager Alex Ray has mopped the area and placed a 'Wet Floor' sign. Maintenance has been called to check for a roof leak." },
-  { id: 2, issue: "Table not cleaned properly", location: "Uptown", date: "2024-05-20", status: "Resolved", jurisdiction: "Uptown", owner: "Casey Lee" },
-  { id: 3, issue: "Soap dispenser empty", location: "Downtown", date: "2024-05-19", status: "Resolved", jurisdiction: "Downtown", owner: "Alex Ray" },
-  { id: 4, issue: "Strange smell from vent", location: "Uptown", date: "2024-05-18", status: "Reported", jurisdiction: "Uptown", owner: "Casey Lee" },
+  { id: 1, issue: "Water puddle near entrance", location: "Downtown", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown", owner: "Alex Ray", source: 'Guest Report', resolutionNotes: "Manager Alex Ray has mopped the area and placed a 'Wet Floor' sign. Maintenance has been called to check for a roof leak." },
+  { id: 2, issue: "Table not cleaned properly", location: "Uptown", date: "2024-05-20", status: "Resolved", jurisdiction: "Uptown", owner: "Casey Lee", source: 'Guest Report' },
+  { id: 3, issue: "Soap dispenser empty", location: "Downtown", date: "2024-05-19", status: "Resolved", jurisdiction: "Downtown", owner: "Alex Ray", source: 'Inspector Filed' },
+  { id: 4, issue: "Strange smell from vent", location: "Uptown", date: "2024-05-18", status: "Reported", jurisdiction: "Uptown", owner: "Casey Lee", source: 'Guest Report' },
 ];
 
 type Report = {
@@ -55,6 +55,7 @@ type Report = {
     status: string;
     jurisdiction: string;
     owner: string;
+    source: 'Guest Report' | 'Inspector Filed';
     resolutionNotes?: string;
     aiAnalysis?: AnalyzeIssueOutput;
 };
@@ -515,14 +516,22 @@ export default function HealthDeptDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Recent Guest Reports for {selectedJurisdiction}</CardTitle>
+          <CardTitle className="font-headline">Guest & Inspector Reports for {selectedJurisdiction}</CardTitle>
         </CardHeader>
         <CardContent>
+          <Alert className="mb-4">
+            <ShieldCheck className="h-4 w-4" />
+            <AlertTitle>Data Visibility Note</AlertTitle>
+            <AlertDescription>
+                You are viewing reports filed by guests or inspectors. In a live system, unresolved high-priority issues reported internally by staff would automatically escalate and appear here after a set period.
+            </AlertDescription>
+          </Alert>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Issue</TableHead>
                 <TableHead>Location</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -533,6 +542,7 @@ export default function HealthDeptDashboard() {
                 <TableRow key={report.id}>
                   <TableCell className="font-medium">{report.issue}</TableCell>
                   <TableCell>{report.location}</TableCell>
+                  <TableCell><Badge variant="outline">{report.source}</Badge></TableCell>
                   <TableCell>{report.date}</TableCell>
                   <TableCell>
                     <Badge variant={report.status === 'Under Investigation' || report.status === 'Reported' ? 'destructive' : 'outline'}>{report.status}</Badge>
@@ -550,7 +560,7 @@ export default function HealthDeptDashboard() {
                 </TableRow>
               )) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                     No reports found for the "{selectedJurisdiction}" jurisdiction.
                   </TableCell>
                 </TableRow>

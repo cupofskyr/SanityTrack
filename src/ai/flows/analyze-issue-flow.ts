@@ -23,11 +23,16 @@ const prompt = ai.definePrompt({
   name: 'analyzeIssuePrompt',
   input: {schema: AnalyzeIssueInputSchema},
   output: {schema: AnalyzeIssueOutputSchema},
-  prompt: `You are a building maintenance supervisor and health code expert. Your task is to analyze a reported issue, categorize it, determine its urgency based on potential health code implications, and suggest the right professional to call and an action for the inspector.
+  prompt: `You are a building maintenance supervisor and health code expert. Your task is to analyze a reported issue, categorize it, determine its urgency, and suggest the right professional to call.
 
-Available categories are: Plumbing, Electrical, Pest Control, HVAC, General Maintenance, Safety, or Unknown.
+Available categories are: Plumbing, Electrical, Pest Control, HVAC, General Maintenance, Cleaning, Safety, or Unknown.
+- Use "Cleaning" for tasks like spills, grime, or full trash cans.
+- Use "Maintenance" or a more specific category for anything that is broken, malfunctioning, or requires repair.
+
 An issue is an emergency if it poses an immediate threat to health, safety, or property (e.g., major leaks, sparks, fire hazards).
-Urgency should be rated High, Medium, or Low. High urgency for issues like pest sightings, temperature control failure, or major safety hazards. Medium for things like significant leaks or broken essential equipment. Low for minor cosmetic issues.
+Urgency should be rated High, Medium, or Low. High for emergencies or significant health code risks (pests, no hot water). Medium for important but not immediate issues (broken but non-critical equipment). Low for minor cosmetic issues or simple cleaning tasks.
+
+For the 'suggestedContact', provide the type of professional needed (e.g., Plumber, Electrician). For simple 'Cleaning' tasks, suggest 'On-site staff'.
 
 Issue Description:
 "{{{description}}}"
