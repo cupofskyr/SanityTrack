@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Textarea } from '@/components/ui/textarea';
 import { suggestTaskAssignment, type SuggestTaskAssignmentOutput } from '@/ai/flows/suggest-task-assignment-flow';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import PhotoUploader from '@/components/photo-uploader';
@@ -20,7 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
 import LiveReviews from '@/components/live-reviews';
-import { DialogTrigger } from '@/components/ui/dialog';
+import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
+
 
 type TeamMember = { name: string; role: "Manager" | "Employee"; location: string };
 type Location = { id: number; name: string; manager: string; inspectionCode: string; toastApiKey?: string; };
@@ -75,6 +76,11 @@ export default function OwnerDashboard() {
     const [toastData, setToastData] = useState<ToastPOSData | null>(null);
     const [isFetchingToast, setIsFetchingToast] = useState(false);
 
+    // Daily briefing state
+    const [isBriefingDialogOpen, setIsBriefingDialogOpen] = useState(false);
+    const [dailyBriefing, setDailyBriefing] = useState<GenerateDailyBriefingOutput | null>(null);
+    const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(true);
+
     const managers = teamMembers.filter(m => m.role === 'Manager');
     
     useEffect(() => {
@@ -89,6 +95,38 @@ export default function OwnerDashboard() {
                 .finally(() => setIsFetchingToast(false));
         }
     }, [locations, toast]);
+
+    useEffect(() => {
+        const getBriefing = async () => {
+            if (locations.length === 0) return; // Don't run if no locations are set up
+            setIsGeneratingBriefing(true);
+            try {
+                const briefing = await generateDailyBriefing();
+                setDailyBriefing(briefing);
+                setIsBriefingDialogOpen(true);
+            } catch (error) {
+                console.error("Failed to generate daily briefing:", error);
+                toast({
+                    variant: "destructive",
+                    title: "AI Daily Briefing Failed",
+                    description: "Could not generate a daily message for the team.",
+                });
+            } finally {
+                setIsGeneratingBriefing(false);
+            }
+        };
+        
+        getBriefing();
+    }, [locations.length, toast]);
+
+    const handlePostBriefing = () => {
+        toast({
+            title: "Briefing Posted!",
+            description: "Your daily message is now visible to all employees."
+        });
+        setIsBriefingDialogOpen(false);
+        // In a real app, this would save the briefing to a database.
+    };
 
     const handleSetupLocation = (e: FormEvent) => {
         e.preventDefault();
@@ -737,6 +775,50 @@ export default function OwnerDashboard() {
                                 <Button type="submit">Send Code</Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* AI Briefing Dialog */}
+                <Dialog open={isBriefingDialogOpen} onOpenChange={setIsBriefingDialogOpen}>
+                    <DialogContent className="sm:max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle className="font-headline flex items-center gap-2">
+                                <Sparkles className="text-primary h-5 w-5" />
+                                AI Daily Briefing Suggestion
+                            </DialogTitle>
+                            <DialogDescription>
+                                Here's a suggested daily briefing to share with your team. You can edit it, post it to their dashboard, or dismiss it.
+                            </DialogDescription>
+                        </DialogHeader>
+                        {isGeneratingBriefing ? (
+                            <div className="flex items-center justify-center p-8 space-x-2">
+                                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                <p className="text-muted-foreground">AI is preparing your daily briefing...</p>
+                            </div>
+                        ) : dailyBriefing ? (
+                            <div className="py-4 space-y-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="briefing-title">Title</Label>
+                                    <Input id="briefing-title" value={dailyBriefing.title} onChange={(e) => setDailyBriefing(prev => prev ? {...prev, title: e.target.value} : null)} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="briefing-message">Message</Label>
+                                    <Textarea id="briefing-message" value={dailyBriefing.message} onChange={(e) => setDailyBriefing(prev => prev ? {...prev, message: e.target.value} : null)} rows={4} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="briefing-tasks">Focus Tasks (one per line)</Label>
+                                    <Textarea id="briefing-tasks" value={dailyBriefing.suggestedTasks.join('\n')} onChange={(e) => setDailyBriefing(prev => prev ? {...prev, suggestedTasks: e.target.value.split('\n').filter(task => task.trim() !== '')} : null)} rows={3} />
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-destructive text-center py-8">Could not load a briefing.</p>
+                        )}
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsBriefingDialogOpen(false)}>Dismiss</Button>
+                            <Button onClick={handlePostBriefing} disabled={isGeneratingBriefing || !dailyBriefing}>
+                                Post to Employee Dashboard
+                            </Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>

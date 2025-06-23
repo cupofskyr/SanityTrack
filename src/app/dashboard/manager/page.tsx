@@ -96,6 +96,7 @@ export default function ManagerDashboard() {
     useEffect(() => {
         // Simulate a "daily" fetch when the manager logs in/visits the page
         const getBriefing = async () => {
+            setIsGeneratingBriefing(true);
             try {
                 const briefing = await generateDailyBriefing();
                 setDailyBriefing(briefing);
@@ -577,7 +578,7 @@ export default function ManagerDashboard() {
                             AI Daily Briefing Suggestion
                         </DialogTitle>
                         <DialogDescription>
-                            Here's a suggested daily briefing to share with your team. You can post it to their dashboard or dismiss it.
+                            Here's a suggested daily briefing to share with your team. You can edit it, post it to their dashboard, or dismiss it.
                         </DialogDescription>
                     </DialogHeader>
                     {isGeneratingBriefing ? (
@@ -587,20 +588,17 @@ export default function ManagerDashboard() {
                         </div>
                     ) : dailyBriefing ? (
                         <div className="py-4 space-y-4">
-                            <Alert>
-                                <Megaphone className="h-4 w-4" />
-                                <AlertTitle>{dailyBriefing.title}</AlertTitle>
-                                <AlertDescription>
-                                    {dailyBriefing.message}
-                                </AlertDescription>
-                            </Alert>
-                            <div className="space-y-2">
-                                <Label className="font-semibold">Suggested Focus Tasks:</Label>
-                                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                                    {dailyBriefing.suggestedTasks.map((task, index) => (
-                                        <li key={index}>{task}</li>
-                                    ))}
-                                </ul>
+                            <div className="grid gap-2">
+                                <Label htmlFor="briefing-title">Title</Label>
+                                <Input id="briefing-title" value={dailyBriefing.title} onChange={(e) => setDailyBriefing(prev => prev ? {...prev, title: e.target.value} : null)} />
+                            </div>
+                             <div className="grid gap-2">
+                                <Label htmlFor="briefing-message">Message</Label>
+                                <Textarea id="briefing-message" value={dailyBriefing.message} onChange={(e) => setDailyBriefing(prev => prev ? {...prev, message: e.target.value} : null)} rows={4} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="briefing-tasks">Focus Tasks (one per line)</Label>
+                                <Textarea id="briefing-tasks" value={dailyBriefing.suggestedTasks.join('\n')} onChange={(e) => setDailyBriefing(prev => prev ? {...prev, suggestedTasks: e.target.value.split('\n').filter(task => task.trim() !== '')} : null)} rows={3} />
                             </div>
                         </div>
                     ) : (
