@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Link as LinkIcon, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -84,6 +85,10 @@ export default function OwnerDashboard() {
     const [isContactManagerOpen, setContactManagerOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<HealthTask | null>(null);
     const [selectedManager, setSelectedManager] = useState('');
+
+    const [isShareCodeDialogOpen, setShareCodeDialogOpen] = useState(false);
+    const [locationToShare, setLocationToShare] = useState<(typeof locations)[0] | null>(null);
+    const [inspectorEmail, setInspectorEmail] = useState('');
     
     const handleRequest = (requestId: number, approved: boolean) => {
         const request = requests.find(r => r.id === requestId);
@@ -166,12 +171,27 @@ export default function OwnerDashboard() {
         setContactManagerOpen(false);
     };
 
-    const handleCopyCode = (code: string) => {
-        navigator.clipboard.writeText(code);
+    const handleOpenShareDialog = (location: (typeof locations)[0]) => {
+        setLocationToShare(location);
+        setInspectorEmail(''); // Reset email field
+        setShareCodeDialogOpen(true);
+    };
+
+    const handleSendCode = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!inspectorEmail.trim()) {
+            toast({
+                variant: 'destructive',
+                title: 'Email Required',
+                description: "Please enter the inspector's email address.",
+            });
+            return;
+        }
         toast({
-            title: "Code Copied!",
-            description: `The inspection code "${code}" has been copied to your clipboard.`,
+            title: "Code Sent!",
+            description: `The inspection code for ${locationToShare?.name} has been sent to ${inspectorEmail}.`,
         });
+        setShareCodeDialogOpen(false);
     };
 
 
@@ -240,13 +260,13 @@ export default function OwnerDashboard() {
                                     </div>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopyCode(loc.inspectionCode)}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenShareDialog(loc)}>
                                                 <Share2 className="h-4 w-4" />
-                                                <span className="sr-only">Copy Code</span>
+                                                <span className="sr-only">Share Code</span>
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>Copy Code</p>
+                                            <p>Share Code via Email</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </div>
@@ -538,8 +558,36 @@ export default function OwnerDashboard() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                
+                {/* Share Code Dialog */}
+                <Dialog open={isShareCodeDialogOpen} onOpenChange={setShareCodeDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className='font-headline'>Share Code with Health Inspector</DialogTitle>
+                            <DialogDescription>
+                                Enter the inspector's email address to send them the inspection code for "{locationToShare?.name}".
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleSendCode}>
+                            <div className="py-4 space-y-2">
+                                <Label htmlFor="inspector-email">Inspector's Email</Label>
+                                <Input
+                                    id="inspector-email"
+                                    type="email"
+                                    placeholder="inspector@example.gov"
+                                    value={inspectorEmail}
+                                    onChange={(e) => setInspectorEmail(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <DialogFooter>
+                                <Button variant="secondary" type="button" onClick={() => setShareCodeDialogOpen(false)}>Cancel</Button>
+                                <Button type="submit">Send Code</Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </TooltipProvider>
     );
 }
-
