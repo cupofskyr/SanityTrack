@@ -116,6 +116,19 @@ export default function ManagerDashboard() {
         getBriefing();
     }, [toast]);
 
+    useEffect(() => {
+        const pendingIssue = localStorage.getItem('ai-issue-suggestion');
+        if (pendingIssue) {
+            issueForm.setValue('description', pendingIssue);
+            localStorage.removeItem('ai-issue-suggestion');
+            toast({
+                title: "AI Suggestion Loaded",
+                description: "The issue description from the AI Camera has been pre-filled for you."
+            });
+            document.getElementById('ai-issue-analyzer-card')?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [toast, issueForm]);
+
     const handlePostBriefing = () => {
         toast({
             title: "Briefing Posted!",
@@ -401,7 +414,7 @@ export default function ManagerDashboard() {
                 </CardContent>
             </Card>
 
-            <Card className="lg:col-span-3">
+            <Card className="lg:col-span-3" id="ai-issue-analyzer-card">
                  <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><Zap className="text-primary"/> AI Issue Analyzer</CardTitle>
                     <CardDescription>Enter a reported issue to have the AI categorize it. Emergencies will be added to the High-Priority list below.</CardDescription>

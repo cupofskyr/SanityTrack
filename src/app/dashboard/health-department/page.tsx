@@ -1,6 +1,6 @@
 
 "use client"
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -115,6 +115,20 @@ export default function HealthDeptDashboard() {
   const [selectedReportForInvestigation, setSelectedReportForInvestigation] = useState<Report | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+
+  useEffect(() => {
+    const pendingInvestigation = localStorage.getItem('ai-investigation-suggestion');
+    if (pendingInvestigation) {
+        setReportNotes(pendingInvestigation);
+        localStorage.removeItem('ai-investigation-suggestion');
+        toast({
+            title: "AI Suggestion Loaded",
+            description: "The description from the AI Camera has been added to the Inspection Notes."
+        });
+        // Scroll to the processor card
+        document.getElementById('ai-report-processor-card')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [toast]);
 
   const handleLinkEstablishment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -446,7 +460,7 @@ export default function HealthDeptDashboard() {
         </CardContent>
       </Card>
       
-      <Card className="border-primary bg-primary/5">
+      <Card className="border-primary bg-primary/5" id="ai-report-processor-card">
         <CardHeader>
           <CardTitle className="font-headline text-primary flex items-center gap-2"><Wand2 /> AI Inspection Report Processor</CardTitle>
           <CardDescription>

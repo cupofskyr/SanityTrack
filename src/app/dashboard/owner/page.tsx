@@ -119,6 +119,18 @@ export default function OwnerDashboard() {
         getBriefing();
     }, [locations.length, toast]);
 
+    useEffect(() => {
+        const pendingMemo = localStorage.getItem('ai-memo-suggestion');
+        if (pendingMemo) {
+            setMemo(prev => `${prev}\n\n- AI Camera Note: ${pendingMemo}`);
+            localStorage.removeItem('ai-memo-suggestion');
+            toast({
+                title: "AI Suggestion Added",
+                description: "The note from the AI Camera has been added to your memo board."
+            });
+        }
+    }, [toast]);
+
     const handlePostBriefing = () => {
         toast({
             title: "Briefing Posted!",

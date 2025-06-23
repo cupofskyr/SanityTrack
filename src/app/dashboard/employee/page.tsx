@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -61,6 +61,20 @@ export default function EmployeeDashboard() {
 
   const [photoForAnalysis, setPhotoForAnalysis] = useState<string | null>(null);
   const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
+
+  useEffect(() => {
+    const pendingIssue = localStorage.getItem('ai-issue-suggestion');
+    if (pendingIssue) {
+        setNewIssueDescription(pendingIssue);
+        setIsReportDialogOpen(true);
+        localStorage.removeItem('ai-issue-suggestion');
+        toast({
+            title: "AI Suggestion Loaded",
+            description: "The issue description from the AI Camera has been pre-filled for you."
+        });
+    }
+  }, [toast]);
+
 
   const handleClockIn = () => {
     setIsClockedIn(true);
@@ -441,5 +455,3 @@ export default function EmployeeDashboard() {
     </div>
   );
 }
-
-    
