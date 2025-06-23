@@ -145,7 +145,7 @@ export default function TrainingPage() {
                         <Lightbulb className="h-4 w-4" />
                         <AlertTitle>A Note on AI Video Analysis</AlertTitle>
                         <AlertDescription>
-                            Directly analyzing videos to automatically determine your time is a highly complex feature we are exploring for the future. For now, please accurately enter your time manually when you submit your video. Honesty is key to a fun competition!
+                            Videos don't automatically determine your time. Honesty is key to a fun competition!
                         </AlertDescription>
                     </Alert>
 
