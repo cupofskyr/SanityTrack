@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Toolti
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil, Mail, BrainCircuit, MessageSquare, Check, X, ThumbsUp } from "lucide-react";
+import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil, Mail, BrainCircuit, MessageSquare, Check, X, ThumbsUp, Send, Camera, Clipboard } from "lucide-react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,8 @@ import { generateInquiry, type GenerateInquiryOutput } from '@/ai/flows/generate
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { analyzeIssue, type AnalyzeIssueOutput } from '@/ai/flows/analyze-issue-flow';
+import PhotoUploader from '@/components/photo-uploader';
+
 
 const complianceData = [
   { month: "Jan", score: 82, jurisdiction: "Downtown" },
@@ -41,10 +43,8 @@ const chartConfig = {
 }
 
 const initialReports = [
-  { id: 1, issue: "Water puddle near entrance", location: "Downtown", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown", owner: "Alex Ray", source: 'Guest Report', resolutionNotes: "Manager Alex Ray has mopped the area and placed a 'Wet Floor' sign. Maintenance has been called to check for a roof leak." },
-  { id: 2, issue: "Table not cleaned properly", location: "Uptown", date: "2024-05-20", status: "Resolved", jurisdiction: "Uptown", owner: "Casey Lee", source: 'Guest Report' },
-  { id: 3, issue: "Soap dispenser empty", location: "Downtown", date: "2024-05-19", status: "Resolved", jurisdiction: "Downtown", owner: "Alex Ray", source: 'Inspector Filed' },
-  { id: 4, issue: "Strange smell from vent", location: "Uptown", date: "2024-05-18", status: "Reported", jurisdiction: "Uptown", owner: "Casey Lee", source: 'Guest Report' },
+  { id: 1, issue: "Water puddle near entrance (Unresolved)", location: "Downtown", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown", owner: "Alex Ray", source: 'Guest Report', resolutionNotes: "Manager Alex Ray has mopped the area and placed a 'Wet Floor' sign. Maintenance has been called to check for a roof leak." },
+  { id: 4, issue: "Strange smell from vent (Unresolved)", location: "Uptown", date: "2024-05-18", status: "Reported", jurisdiction: "Uptown", owner: "Casey Lee", source: 'Guest Report' },
 ];
 
 type Report = {
@@ -69,15 +69,19 @@ type ComplianceTask = {
     location?: string;
     status: 'Approved' | 'Pending Approval';
     source: string;
+    lastCompleted?: {
+        date: string;
+        photoUrl: string;
+    }
 };
 
 export default function HealthDeptDashboard() {
   const { toast } = useToast();
   const [recentReports, setRecentReports] = useState<Report[]>(initialReports);
   const [complianceTasks, setComplianceTasks] = useState<ComplianceTask[]>([
-    { id: 1, description: "Weekly restroom deep clean", frequency: "Weekly", type: "Mandatory", location: "All", status: "Approved", source: "Health Dept." },
+    { id: 1, description: "Weekly restroom deep clean", frequency: "Weekly", type: "Mandatory", location: "All", status: "Approved", source: "Health Dept.", lastCompleted: { date: '2024-07-25', photoUrl: 'https://placehold.co/600x400.png' } },
     { id: 2, description: "Monthly fire safety check", frequency: "Monthly", type: "Mandatory", location: "All", status: "Approved", source: "Health Dept." },
-    { id: 3, description: "Verify temperature logs for all coolers", frequency: "Daily", type: "Mandatory", location: "Downtown", status: "Approved", source: "Health Dept." },
+    { id: 3, description: "Verify temperature logs for all coolers", frequency: "Daily", type: "Mandatory", location: "Downtown", status: "Approved", source: "Health Dept.", lastCompleted: { date: '2024-07-26', photoUrl: 'https://placehold.co/600x400.png'} },
     { id: 4, description: 'Check sanitizer concentration daily', frequency: 'Daily', type: 'Manager Suggestion', location: 'Downtown', status: 'Pending Approval', source: 'Alex Ray (Manager)' },
   ]);
   
@@ -115,6 +119,11 @@ export default function HealthDeptDashboard() {
   const [isInvestigateDialogOpen, setIsInvestigateDialogOpen] = useState(false);
   const [selectedReportForInvestigation, setSelectedReportForInvestigation] = useState<Report | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  // State for Compliance Task Review Dialog
+  const [isReviewTaskDialogOpen, setIsReviewTaskDialogOpen] = useState(false);
+  const [taskToReview, setTaskToReview] = useState<ComplianceTask | null>(null);
+  const [inspectorComments, setInspectorComments] = useState('');
 
 
   useEffect(() => {
@@ -162,7 +171,9 @@ export default function HealthDeptDashboard() {
   
   const handleOpenDialog = (task: ComplianceTask | null) => {
     if (task) {
-        setCurrentTask(task);
+        // Can't edit `lastCompleted` here, so we omit it
+        const { lastCompleted, ...editableTask } = task;
+        setCurrentTask(editableTask);
     } else {
         setCurrentTask({ id: null, description: '', frequency: '', type: 'Mandatory', location: 'All', status: 'Approved', source: 'Health Dept.' });
     }
@@ -229,7 +240,7 @@ export default function HealthDeptDashboard() {
       setProcessingResult(result);
       toast({
         title: 'AI Processing Complete',
-        description: 'Review the generated tasks below. Immediate tasks have been sent to the owner.',
+        description: 'Review the generated tasks below and send them to the owner when ready.',
       });
     } catch (error) {
       console.error(error);
@@ -242,6 +253,17 @@ export default function HealthDeptDashboard() {
       setIsProcessing(false);
     }
   };
+
+  const handleSendAiTasks = () => {
+      if (!processingResult) return;
+      toast({
+          title: "Tasks Sent to Owner",
+          description: "The immediate action items have been sent to the business owner."
+      });
+      // Here you would typically also clear the results or update state
+      setProcessingResult(null);
+      setReportNotes('');
+  }
 
 
   const filteredReports = useMemo(() => {
@@ -361,6 +383,23 @@ export default function HealthDeptDashboard() {
     });
   };
 
+  const handleOpenReviewDialog = (task: ComplianceTask) => {
+      setTaskToReview(task);
+      setInspectorComments(''); // Reset comments
+      setIsReviewTaskDialogOpen(true);
+  }
+
+  const handleSaveReview = () => {
+      if (!taskToReview) return;
+      toast({
+          title: "Review Saved",
+          description: `Your comments for "${taskToReview.description}" have been logged.`
+      });
+      // In a real app, this would save the comment to a database.
+      setIsReviewTaskDialogOpen(false);
+      setTaskToReview(null);
+  }
+
 
   return (
     <div className="space-y-6">
@@ -433,7 +472,7 @@ export default function HealthDeptDashboard() {
         </Card>
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Guest Reports This Month</CardTitle>
+            <CardTitle className="text-sm font-medium">Escalated Guest Reports</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -465,7 +504,7 @@ export default function HealthDeptDashboard() {
         <CardHeader>
           <CardTitle className="font-headline text-primary flex items-center gap-2"><Wand2 /> AI Inspection Report Processor</CardTitle>
           <CardDescription>
-            Paste your inspection notes below. The AI will extract actionable tasks and suggest new compliance rules. The immediate tasks will be sent to the business owner automatically.
+            Paste your inspection notes below. The AI will extract actionable tasks. Review the suggestions, then send them to the business owner.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
@@ -488,26 +527,32 @@ export default function HealthDeptDashboard() {
           </div>
            <Button onClick={handleProcessReport} disabled={isProcessing} className="w-full md:w-auto">
                 {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Process with AI
+                Generate Tasks with AI
             </Button>
             {processingResult && (
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-sm">Immediate Tasks for Owner (Sent)</h4>
-                  {processingResult.immediateTasks.length > 0 ? (
-                    <ul className="list-disc list-inside text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
-                      {processingResult.immediateTasks.map((task, i) => <li key={i}>{task}</li>)}
-                    </ul>
-                  ) : <p className="text-sm text-muted-foreground italic">No immediate tasks generated.</p>}
-                </div>
-                 <div className="space-y-2">
-                  <h4 className="font-semibold text-sm">Suggested New Recurring Tasks</h4>
-                  {processingResult.suggestedRecurringTasks.length > 0 ? (
-                    <ul className="list-disc list-inside text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
-                      {processingResult.suggestedRecurringTasks.map((task, i) => <li key={i}>{task.description} ({task.frequency})</li>)}
-                    </ul>
-                  ) : <p className="text-sm text-muted-foreground italic">No new task suggestions.</p>}
-                </div>
+              <div className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm">Immediate Tasks for Owner</h4>
+                      {processingResult.immediateTasks.length > 0 ? (
+                        <ul className="list-disc list-inside text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
+                          {processingResult.immediateTasks.map((task, i) => <li key={i}>{task}</li>)}
+                        </ul>
+                      ) : <p className="text-sm text-muted-foreground italic">No immediate tasks generated.</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm">Suggested New Recurring Tasks</h4>
+                      {processingResult.suggestedRecurringTasks.length > 0 ? (
+                        <ul className="list-disc list-inside text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
+                          {processingResult.suggestedRecurringTasks.map((task, i) => <li key={i}>{task.description} ({task.frequency})</li>)}
+                        </ul>
+                      ) : <p className="text-sm text-muted-foreground italic">No new task suggestions.</p>}
+                    </div>
+                  </div>
+                  <Button onClick={handleSendAiTasks} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <Send className="mr-2 h-4 w-4"/>
+                    Confirm and Send Tasks to Owner
+                  </Button>
               </div>
             )}
         </CardContent>
@@ -519,12 +564,12 @@ export default function HealthDeptDashboard() {
           <CardTitle className="font-headline">Guest & Inspector Reports for {selectedJurisdiction}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert className="mb-4">
-            <ShieldCheck className="h-4 w-4" />
-            <AlertTitle>Data Visibility Note</AlertTitle>
-            <AlertDescription>
-                You are viewing reports filed by guests or inspectors. In a live system, unresolved high-priority issues reported internally by staff would automatically escalate and appear here after a set period.
-            </AlertDescription>
+           <Alert className="mb-4">
+              <ShieldCheck className="h-4 w-4" />
+              <AlertTitle>Escalation Policy</AlertTitle>
+              <AlertDescription>
+                  Guest reports are only shown here after the business owner has been notified and given a grace period (e.g., 48 hours) to resolve the issue. This view represents escalated, unresolved issues.
+              </AlertDescription>
           </Alert>
           <Table>
             <TableHeader>
@@ -561,7 +606,7 @@ export default function HealthDeptDashboard() {
               )) : (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                    No reports found for the "{selectedJurisdiction}" jurisdiction.
+                    No escalated reports found for the "{selectedJurisdiction}" jurisdiction.
                   </TableCell>
                 </TableRow>
               )}
@@ -575,7 +620,7 @@ export default function HealthDeptDashboard() {
           <div>
             <CardTitle className="font-headline flex items-center gap-2"><FileCheck /> Defined Compliance Tasks</CardTitle>
             <CardDescription>
-                This is the master list of all recurring compliance tasks. Approve manager suggestions or add new tasks manually.
+                This is the master list of all recurring compliance tasks. You can review photo proof of completion and add comments.
             </CardDescription>
           </div>
            <Button onClick={() => handleOpenDialog(null)}>
@@ -587,10 +632,10 @@ export default function HealthDeptDashboard() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[40%]">Description</TableHead>
-                <TableHead>Source</TableHead>
+                <TableHead className="w-[35%]">Description</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Frequency</TableHead>
+                <TableHead>Last Completed</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -600,9 +645,18 @@ export default function HealthDeptDashboard() {
                 complianceTasks.map((task) => (
                   <TableRow key={task.id} className={task.status === 'Pending Approval' ? 'bg-primary/5' : ''}>
                     <TableCell className="font-medium">{task.description}</TableCell>
-                    <TableCell>{task.source}</TableCell>
                     <TableCell>{task.location}</TableCell>
                     <TableCell>{task.frequency}</TableCell>
+                     <TableCell>
+                      {task.lastCompleted ? (
+                        <div className="flex items-center gap-2">
+                           <span>{task.lastCompleted.date}</span>
+                           <Button size="sm" variant="outline" onClick={() => handleOpenReviewDialog(task)}>Review</Button>
+                        </div>
+                      ) : (
+                          <span className="text-muted-foreground">N/A</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={task.status === 'Approved' ? 'default' : 'secondary'}>{task.status}</Badge>
                     </TableCell>
@@ -836,6 +890,42 @@ export default function HealthDeptDashboard() {
                 )}
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsInvestigateDialogOpen(false)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* Review Compliance Task Dialog */}
+        <Dialog open={isReviewTaskDialogOpen} onOpenChange={setIsReviewTaskDialogOpen}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle className="font-headline">Review Completed Task</DialogTitle>
+                    <DialogDescription>
+                        Review the evidence for "{taskToReview?.description}" and add comments if necessary.
+                    </DialogDescription>
+                </DialogHeader>
+                {taskToReview && (
+                    <div className="py-4 space-y-4">
+                        <div>
+                            <Label className="text-sm text-muted-foreground">Photo Proof of Completion</Label>
+                            <div className="mt-2">
+                                <PhotoUploader readOnly initialPreview={{ url: taskToReview.lastCompleted!.photoUrl, name: 'completion.png'}} />
+                            </div>
+                        </div>
+                         <div>
+                            <Label htmlFor="inspector-comments">Your Comments (Optional)</Label>
+                            <Textarea
+                                id="inspector-comments"
+                                placeholder="e.g., Looks good. Please ensure the area behind the equipment is also cleaned next time."
+                                value={inspectorComments}
+                                onChange={(e) => setInspectorComments(e.target.value)}
+                                rows={3}
+                            />
+                        </div>
+                    </div>
+                )}
+                <DialogFooter>
+                    <Button variant="secondary" onClick={() => setIsReviewTaskDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSaveReview}>Save Review</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
