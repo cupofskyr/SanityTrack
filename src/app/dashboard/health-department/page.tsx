@@ -1,7 +1,7 @@
 
 "use client"
 import { useState, useMemo, useEffect } from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { analyzeIssue, type AnalyzeIssueOutput } from '@/ai/flows/analyze-issue-flow';
 import PhotoUploader from '@/components/photo-uploader';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const complianceData = [
@@ -408,26 +409,32 @@ export default function HealthDeptDashboard() {
   };
 
   return (
+    <TooltipProvider>
     <div className="space-y-6">
-       <Card>
-        <CardHeader>
-          <CardTitle className='font-headline flex items-center gap-2'><Map /> Jurisdiction Selector</CardTitle>
-          <CardDescription>Select a jurisdiction to view compliance data for specific locations.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="max-w-xs">
-            <Select value={selectedJurisdiction} onValueChange={setSelectedJurisdiction}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Jurisdiction" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Jurisdictions</SelectItem>
-                {linkedJurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Card>
+            <CardHeader>
+              <CardTitle className='font-headline flex items-center gap-2'><Map /> Jurisdiction Selector</CardTitle>
+              <CardDescription>Select a jurisdiction to view compliance data for specific locations.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="max-w-xs">
+                <Select value={selectedJurisdiction} onValueChange={setSelectedJurisdiction}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Jurisdiction" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Jurisdictions</SelectItem>
+                    {linkedJurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent><p>Filter the dashboard view by a specific location or view all.</p></TooltipContent>
+      </Tooltip>
       
       <Alert>
         <ShieldCheck className="h-4 w-4" />
@@ -437,83 +444,93 @@ export default function HealthDeptDashboard() {
         </CardDescription>
       </Alert>
 
-      <Card>
-        <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><LinkIcon /> Link New Establishment</CardTitle>
-            <CardDescription>Enter the code provided by the business owner to link their location to your jurisdiction file.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <form onSubmit={handleLinkEstablishment} className="flex flex-col sm:flex-row gap-2">
-                <Input 
-                    placeholder="Enter Establishment Code from owner" 
-                    value={newEstablishmentCode} 
-                    onChange={(e) => setNewEstablishmentCode(e.target.value)} 
-                    required
-                />
-                <Button type="submit" className="w-full sm:w-auto">Link Location</Button>
-            </form>
-        </CardContent>
-      </Card>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><LinkIcon /> Link New Establishment</CardTitle>
+                <CardDescription>Enter the code provided by the business owner to link their location to your jurisdiction file.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleLinkEstablishment} className="flex flex-col sm:flex-row gap-2">
+                    <Input 
+                        placeholder="Enter Establishment Code from owner" 
+                        value={newEstablishmentCode} 
+                        onChange={(e) => setNewEstablishmentCode(e.target.value)} 
+                        required
+                    />
+                    <Button type="submit" className="w-full sm:w-auto">Link Location</Button>
+                </form>
+            </CardContent>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent><p>Add a new business to your file using their unique inspection code.</p></TooltipContent>
+      </Tooltip>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><FileText /> Monthly Reporting</CardTitle>
-          <CardDescription>Generate a printable report of this month's activities for your records or for review.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
-            <DialogTrigger asChild>
-              <Button><Printer className="mr-2 h-4 w-4" /> Generate Jurisdiction Report</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl">
-              <DialogHeader>
-                <DialogTitle className="font-headline text-2xl">Monthly Jurisdiction Report</DialogTitle>
-                <DialogDescription>
-                  Summary for {selectedJurisdiction} - {format(new Date(), 'MMMM yyyy')}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4 space-y-6">
-                <Card>
-                  <CardHeader><CardTitle className="text-lg">Compliance Overview</CardTitle></CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader><TableRow><TableHead>Metric</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
-                      <TableBody>
-                        <TableRow><TableCell>Average Compliance Score</TableCell><TableCell className="text-right font-semibold">{filteredComplianceData.reduce((acc, curr) => acc + curr.score, 0) / (filteredComplianceData.length || 1)}%</TableCell></TableRow>
-                        <TableRow><TableCell>Total Reports Processed</TableCell><TableCell className="text-right font-semibold">{filteredReports.length}</TableCell></TableRow>
-                        <TableRow><TableCell>New Compliance Rules Added</TableCell><TableCell className="text-right font-semibold">{complianceTasks.filter(t => t.source === 'Health Dept.').length}</TableCell></TableRow>
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader><CardTitle className="text-lg">Processed Reports Summary</CardTitle></CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader><TableRow><TableHead>Issue</TableHead><TableHead>Location</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-                      <TableBody>
-                        {filteredReports.map(report => (
-                          <TableRow key={report.id}><TableCell>{report.issue}</TableCell><TableCell>{report.location}</TableCell><TableCell><Badge variant={report.status === 'Under Investigation' ? 'destructive' : 'outline'}>{report.status}</Badge></TableCell></TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </div>
-              <DialogFooter className="sm:justify-between items-center gap-4">
-                <Alert className="text-left max-w-md">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>For Your Records</AlertTitle>
-                  <AlertDescription>
-                    In a production app, this report could be automatically generated and emailed to you monthly.
-                  </AlertDescription>
-                </Alert>
-                <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print Report</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </CardContent>
-      </Card>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline flex items-center gap-2"><FileText /> Monthly Reporting</CardTitle>
+              <CardDescription>Generate a printable report of this month's activities for your records or for review.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button><Printer className="mr-2 h-4 w-4" /> Generate Jurisdiction Report</Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle className="font-headline text-2xl">Monthly Jurisdiction Report</DialogTitle>
+                    <DialogDescription>
+                      Summary for {selectedJurisdiction} - {format(new Date(), 'MMMM yyyy')}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4 space-y-6">
+                    <Card>
+                      <CardHeader><CardTitle className="text-lg">Compliance Overview</CardTitle></CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader><TableRow><TableHead>Metric</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
+                          <TableBody>
+                            <TableRow><TableCell>Average Compliance Score</TableCell><TableCell className="text-right font-semibold">{filteredComplianceData.reduce((acc, curr) => acc + curr.score, 0) / (filteredComplianceData.length || 1)}%</TableCell></TableRow>
+                            <TableRow><TableCell>Total Reports Processed</TableCell><TableCell className="text-right font-semibold">{filteredReports.length}</TableCell></TableRow>
+                            <TableRow><TableCell>New Compliance Rules Added</TableCell><TableCell className="text-right font-semibold">{complianceTasks.filter(t => t.source === 'Health Dept.').length}</TableCell></TableRow>
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader><CardTitle className="text-lg">Processed Reports Summary</CardTitle></CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader><TableRow><TableHead>Issue</TableHead><TableHead>Location</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                          <TableBody>
+                            {filteredReports.map(report => (
+                              <TableRow key={report.id}><TableCell>{report.issue}</TableCell><TableCell>{report.location}</TableCell><TableCell><Badge variant={report.status === 'Under Investigation' ? 'destructive' : 'outline'}>{report.status}</Badge></TableCell></TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <DialogFooter className="sm:justify-between items-center gap-4">
+                    <Alert className="text-left max-w-md">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>For Your Records</AlertTitle>
+                      <AlertDescription>
+                        In a production app, this report could be automatically generated and emailed to you monthly.
+                      </AlertDescription>
+                    </Alert>
+                    <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print Report</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent><p>Generate a printable report of the month's activities for your records.</p></TooltipContent>
+      </Tooltip>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -559,209 +576,224 @@ export default function HealthDeptDashboard() {
               <CartesianGrid vertical={false} />
               <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
               <YAxis domain={[70, 100]}/>
-              <Tooltip cursor={false} content={<ChartTooltipContent />} />
+              <RechartsTooltip cursor={false} content={<ChartTooltipContent />} />
               <Bar dataKey="score" fill="var(--color-score)" radius={4} />
             </BarChart>
           </ChartContainer>
         </CardContent>
       </Card>
       
-      <Card className="border-primary bg-primary/5" id="ai-report-processor-card">
-        <CardHeader>
-          <CardTitle className="font-headline text-primary flex items-center gap-2"><Wand2 /> AI Inspection Report Processor</CardTitle>
-          <CardDescription>
-            Paste your inspection notes below. The AI will extract actionable tasks. Review the suggestions, then send them to the business owner.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-             <div className="md:col-span-3 grid gap-2">
-              <Label htmlFor="inspection-notes">Inspection Notes</Label>
-              <Textarea id="inspection-notes" placeholder="e.g., Visited on 6/1. Back storage area had boxes blocking the hand-washing sink. Walk-in freezer door seal is torn. Observed employee not washing hands after handling trash. Otherwise, temps were good." value={reportNotes} onChange={(e) => setReportNotes(e.target.value)} required rows={4}/>
-            </div>
-             <div className="grid gap-2">
-              <Label htmlFor="report-location">Location</Label>
-              <Select value={reportLocation} onValueChange={setReportLocation} required>
-                <SelectTrigger id="report-location">
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {linkedJurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-           <Button onClick={handleProcessReport} disabled={isProcessing} className="w-full md:w-auto">
-                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Generate Tasks with AI
-            </Button>
-            {processingResult && (
-              <div className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-sm">Immediate Tasks for Owner</h4>
-                      {processingResult.immediateTasks.length > 0 ? (
-                        <ul className="list-disc list-inside text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
-                          {processingResult.immediateTasks.map((task, i) => <li key={i}>{task}</li>)}
-                        </ul>
-                      ) : <p className="text-sm text-muted-foreground italic">No immediate tasks generated.</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-sm">Suggested New Recurring Tasks</h4>
-                      {processingResult.suggestedRecurringTasks.length > 0 ? (
-                        <ul className="list-disc list-inside text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
-                          {processingResult.suggestedRecurringTasks.map((task, i) => <li key={i}>{task.description} ({task.frequency})</li>)}
-                        </ul>
-                      ) : <p className="text-sm text-muted-foreground italic">No new task suggestions.</p>}
-                    </div>
-                  </div>
-                  <Button onClick={handleSendAiTasks} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                    <Send className="mr-2 h-4 w-4"/>
-                    Confirm and Send Tasks to Owner
-                  </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+            <Card className="border-primary bg-primary/5" id="ai-report-processor-card">
+            <CardHeader>
+              <CardTitle className="font-headline text-primary flex items-center gap-2"><Wand2 /> AI Inspection Report Processor</CardTitle>
+              <CardDescription>
+                Paste your inspection notes below. The AI will extract actionable tasks. Review the suggestions, then send them to the business owner.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                 <div className="md:col-span-3 grid gap-2">
+                  <Label htmlFor="inspection-notes">Inspection Notes</Label>
+                  <Textarea id="inspection-notes" placeholder="e.g., Visited on 6/1. Back storage area had boxes blocking the hand-washing sink. Walk-in freezer door seal is torn. Observed employee not washing hands after handling trash. Otherwise, temps were good." value={reportNotes} onChange={(e) => setReportNotes(e.target.value)} required rows={4}/>
+                </div>
+                 <div className="grid gap-2">
+                  <Label htmlFor="report-location">Location</Label>
+                  <Select value={reportLocation} onValueChange={setReportLocation} required>
+                    <SelectTrigger id="report-location">
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {linkedJurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            )}
-        </CardContent>
-      </Card>
-
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline">Guest & Inspector Reports for {selectedJurisdiction}</CardTitle>
-        </CardHeader>
-        <CardContent>
-           <Alert className="mb-4">
-              <ShieldCheck className="h-4 w-4" />
-              <AlertTitle>Escalation Policy</AlertTitle>
-              <AlertDescription>
-                  Guest reports are only shown here after the business owner has been notified and given a grace period (e.g., 48 hours) to resolve the issue. This view represents escalated, unresolved issues.
-              </AlertDescription>
-          </Alert>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Issue</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredReports.length > 0 ? filteredReports.map((report) => (
-                <TableRow key={report.id}>
-                  <TableCell className="font-medium">{report.issue}</TableCell>
-                  <TableCell>{report.location}</TableCell>
-                  <TableCell><Badge variant="outline">{report.source}</Badge></TableCell>
-                  <TableCell>{report.date}</TableCell>
-                  <TableCell>
-                    <Badge variant={report.status === 'Under Investigation' || report.status === 'Reported' ? 'destructive' : 'outline'}>{report.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right space-x-1">
-                     <Button size="sm" variant="outline" onClick={() => handleOpenInvestigateDialog(report)}>
-                        <AlertCircle className="mr-2 h-4 w-4" />
-                        Investigate
-                     </Button>
-                     <Button size="sm" onClick={() => handleOpenContactOwnerDialog(report)}>
-                        <Mail className="mr-2 h-4 w-4" />
-                        Contact Owner
-                     </Button>
-                  </TableCell>
-                </TableRow>
-              )) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                    No escalated reports found for the "{selectedJurisdiction}" jurisdiction.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between">
-          <div>
-            <CardTitle className="font-headline flex items-center gap-2"><FileCheck /> Defined Compliance Tasks</CardTitle>
-            <CardDescription>
-                This is the master list of all recurring compliance tasks. You can review photo proof of completion and add comments.
-            </CardDescription>
-          </div>
-           <Button onClick={() => handleOpenDialog(null)}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Task
-            </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[35%]">Description</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Frequency</TableHead>
-                <TableHead>Last Completed</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {complianceTasks.length > 0 ? (
-                complianceTasks.map((task) => (
-                  <TableRow key={task.id} className={task.status === 'Pending Approval' ? 'bg-primary/5' : ''}>
-                    <TableCell className="font-medium">{task.description}</TableCell>
-                    <TableCell>{task.location}</TableCell>
-                    <TableCell>{task.frequency}</TableCell>
-                     <TableCell>
-                      {task.lastCompleted ? (
-                        <div className="flex items-center gap-2">
-                           <span>{task.lastCompleted.date}</span>
-                           <Button size="sm" variant="outline" onClick={() => handleOpenReviewDialog(task)}>Review</Button>
+               <Button onClick={handleProcessReport} disabled={isProcessing} className="w-full md:w-auto">
+                    {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Generate Tasks with AI
+                </Button>
+                {processingResult && (
+                  <div className="space-y-4">
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-sm">Immediate Tasks for Owner</h4>
+                          {processingResult.immediateTasks.length > 0 ? (
+                            <ul className="list-disc list-inside text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
+                              {processingResult.immediateTasks.map((task, i) => <li key={i}>{task}</li>)}
+                            </ul>
+                          ) : <p className="text-sm text-muted-foreground italic">No immediate tasks generated.</p>}
                         </div>
-                      ) : (
-                          <span className="text-muted-foreground">N/A</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={task.status === 'Approved' ? 'default' : 'secondary'}>{task.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                        {task.status === 'Approved' ? (
-                            <>
-                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}>
-                                    <Pencil className="h-4 w-4" />
-                                    <span className="sr-only">Edit Task</span>
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(task)}>
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Remove Task</span>
-                                </Button>
-                            </>
-                        ) : (
-                             <div className="flex justify-end gap-2">
-                                <Button size="sm" onClick={() => handleApproveTask(task.id)}>
-                                    <Check className="mr-2 h-4 w-4" /> Approve
-                                </Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleRejectTask(task.id)}>
-                                    <X className="mr-2 h-4 w-4" /> Reject
-                                </Button>
-                            </div>
-                        )}
-                    </TableCell>
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-sm">Suggested New Recurring Tasks</h4>
+                          {processingResult.suggestedRecurringTasks.length > 0 ? (
+                            <ul className="list-disc list-inside text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
+                              {processingResult.suggestedRecurringTasks.map((task, i) => <li key={i}>{task.description} ({task.frequency})</li>)}
+                            </ul>
+                          ) : <p className="text-sm text-muted-foreground italic">No new task suggestions.</p>}
+                        </div>
+                      </div>
+                      <Button onClick={handleSendAiTasks} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                        <Send className="mr-2 h-4 w-4"/>
+                        Confirm and Send Tasks to Owner
+                      </Button>
+                  </div>
+                )}
+            </CardContent>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent><p>Paste raw notes here and let AI extract actionable tasks.</p></TooltipContent>
+      </Tooltip>
+
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+            <Card>
+            <CardHeader>
+              <CardTitle className="font-headline">Guest & Inspector Reports for {selectedJurisdiction}</CardTitle>
+            </CardHeader>
+            <CardContent>
+               <Alert className="mb-4">
+                  <ShieldCheck className="h-4 w-4" />
+                  <AlertTitle>Escalation Policy</AlertTitle>
+                  <AlertDescription>
+                      Guest reports are only shown here after the business owner has been notified and given a grace period (e.g., 48 hours) to resolve the issue. This view represents escalated, unresolved issues.
+                  </AlertDescription>
+              </Alert>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Issue</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
-                    No compliance tasks defined yet. Click "Add New Task" to begin.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredReports.length > 0 ? filteredReports.map((report) => (
+                    <TableRow key={report.id}>
+                      <TableCell className="font-medium">{report.issue}</TableCell>
+                      <TableCell>{report.location}</TableCell>
+                      <TableCell><Badge variant="outline">{report.source}</Badge></TableCell>
+                      <TableCell>{report.date}</TableCell>
+                      <TableCell>
+                        <Badge variant={report.status === 'Under Investigation' || report.status === 'Reported' ? 'destructive' : 'outline'}>{report.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right space-x-1">
+                         <Button size="sm" variant="outline" onClick={() => handleOpenInvestigateDialog(report)}>
+                            <AlertCircle className="mr-2 h-4 w-4" />
+                            Investigate
+                         </Button>
+                         <Button size="sm" onClick={() => handleOpenContactOwnerDialog(report)}>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Contact Owner
+                         </Button>
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                        No escalated reports found for the "{selectedJurisdiction}" jurisdiction.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent><p>An escalated queue of unresolved issues reported by guests or inspectors.</p></TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+            <Card>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle className="font-headline flex items-center gap-2"><FileCheck /> Defined Compliance Tasks</CardTitle>
+                <CardDescription>
+                    This is the master list of all recurring compliance tasks. You can review photo proof of completion and add comments.
+                </CardDescription>
+              </div>
+               <Button onClick={() => handleOpenDialog(null)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add New Task
+                </Button>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[35%]">Description</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Frequency</TableHead>
+                    <TableHead>Last Completed</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {complianceTasks.length > 0 ? (
+                    complianceTasks.map((task) => (
+                      <TableRow key={task.id} className={task.status === 'Pending Approval' ? 'bg-primary/5' : ''}>
+                        <TableCell className="font-medium">{task.description}</TableCell>
+                        <TableCell>{task.location}</TableCell>
+                        <TableCell>{task.frequency}</TableCell>
+                         <TableCell>
+                          {task.lastCompleted ? (
+                            <div className="flex items-center gap-2">
+                               <span>{task.lastCompleted.date}</span>
+                               <Button size="sm" variant="outline" onClick={() => handleOpenReviewDialog(task)}>Review</Button>
+                            </div>
+                          ) : (
+                              <span className="text-muted-foreground">N/A</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={task.status === 'Approved' ? 'default' : 'secondary'}>{task.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                            {task.status === 'Approved' ? (
+                                <>
+                                    <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}>
+                                        <Pencil className="h-4 w-4" />
+                                        <span className="sr-only">Edit Task</span>
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(task)}>
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Remove Task</span>
+                                    </Button>
+                                </>
+                            ) : (
+                                 <div className="flex justify-end gap-2">
+                                    <Button size="sm" onClick={() => handleApproveTask(task.id)}>
+                                        <Check className="mr-2 h-4 w-4" /> Approve
+                                    </Button>
+                                    <Button size="sm" variant="destructive" onClick={() => handleRejectTask(task.id)}>
+                                        <X className="mr-2 h-4 w-4" /> Reject
+                                    </Button>
+                                </div>
+                            )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
+                        No compliance tasks defined yet. Click "Add New Task" to begin.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent><p>The master list of all recurring tasks for establishments in your jurisdiction.</p></TooltipContent>
+      </Tooltip>
 
       {/* Add/Edit Task Dialog */}
       <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
@@ -997,5 +1029,6 @@ export default function HealthDeptDashboard() {
         </Dialog>
 
     </div>
+    </TooltipProvider>
   );
 }

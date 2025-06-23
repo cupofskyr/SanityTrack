@@ -472,105 +472,133 @@ export default function OwnerDashboard() {
         <TooltipProvider>
             <div className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                Live Sales for {locations[0]?.name}
-                            </CardTitle>
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                             {isFetchingToast ? <Loader2 className="h-6 w-6 animate-spin"/> : toastData ? (
-                                <div className="space-y-2">
-                                    <div>
-                                        <p className="text-xs text-muted-foreground">Today's Sales</p>
-                                        <p className="text-2xl font-bold">${toastData.liveSalesToday.toLocaleString()}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-muted-foreground">This Month</p>
-                                        <p className="text-lg font-semibold">${toastData.salesThisMonth.toLocaleString()}</p>
-                                    </div>
-                                </div>
-                             ) : (
-                                <div className="text-center pt-4">
-                                    <p className="text-sm text-muted-foreground">Toast POS not connected.</p>
-                                </div>
-                             )}
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Aggregate Compliance
-                        </CardTitle>
-                        <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                        <div className="text-2xl font-bold">94.1%</div>
-                        <p className="text-xs text-muted-foreground">
-                            +1.5% from last month
-                        </p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Overall Customer Sat.</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                        <div className="text-2xl font-bold">4.7/5 Stars</div>
-                        <p className="text-xs text-muted-foreground">
-                            Across all locations
-                        </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <LiveReviews location={locations[0]?.name} />
-
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2"><UserPlus /> Hiring Requests</CardTitle>
-                        <CardDescription>Review and approve hiring requests from your managers. Approved requests will be posted to the job board via AI.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Alert className="mb-4">
-                            <Briefcase className="h-4 w-4" />
-                            <AlertTitle>Job Board Integration</AlertTitle>
-                            <AlertDescription>
-                                The "Post via AI" button simulates posting to Indeed. In a production app, this could be configured to connect to your preferred job board API (e.g., Indeed, Workable, LinkedIn).
-                            </AlertDescription>
-                        </Alert>
-                        {hiringRequests.length > 0 ? (
-                            <div className="space-y-4">
-                                {hiringRequests.map(req => (
-                                    <div key={req.id} className="flex flex-col sm:flex-row items-start justify-between rounded-lg border p-4 gap-4">
-                                        <div className="space-y-2 flex-grow">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">
+                                        Live Sales for {locations[0]?.name}
+                                    </CardTitle>
+                                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                     {isFetchingToast ? <Loader2 className="h-6 w-6 animate-spin"/> : toastData ? (
+                                        <div className="space-y-2">
                                             <div>
-                                                <p className="font-semibold">{req.role} <span className="font-normal text-muted-foreground">at {req.location}</span></p>
-                                                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-1">
-                                                    <span><Badge variant="outline">{req.shiftType}</Badge></span>
-                                                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Urgency: {req.urgency}</span>
-                                                    <span className="flex items-center gap-1"><UserCog className="h-3 w-3" /> From: {req.manager}</span>
+                                                <p className="text-xs text-muted-foreground">Today's Sales</p>
+                                                <p className="text-2xl font-bold">${toastData.liveSalesToday.toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-muted-foreground">This Month</p>
+                                                <p className="text-lg font-semibold">${toastData.salesThisMonth.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                     ) : (
+                                        <div className="text-center pt-4">
+                                            <p className="text-sm text-muted-foreground">Toast POS not connected.</p>
+                                        </div>
+                                     )}
+                                </CardContent>
+                            </Card>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Displays real-time sales data from your Toast POS integration.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Aggregate Compliance
+                                </CardTitle>
+                                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                <div className="text-2xl font-bold">94.1%</div>
+                                <p className="text-xs text-muted-foreground">
+                                    +1.5% from last month
+                                </p>
+                                </CardContent>
+                            </Card>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Shows the average compliance score across all your locations.</p></TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Overall Customer Sat.</CardTitle>
+                                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                <div className="text-2xl font-bold">4.7/5 Stars</div>
+                                <p className="text-xs text-muted-foreground">
+                                    Across all locations
+                                </p>
+                                </CardContent>
+                            </Card>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Aggregates customer satisfaction ratings from Google and Yelp.</p></TooltipContent>
+                    </Tooltip>
+                </div>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="w-full">
+                            <LiveReviews location={locations[0]?.name} />
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Fetch and summarize recent customer reviews from Google or Yelp.</p></TooltipContent>
+                </Tooltip>
+
+                 <Tooltip>
+                     <TooltipTrigger asChild>
+                         <Card>
+                            <CardHeader>
+                                <CardTitle className="font-headline flex items-center gap-2"><UserPlus /> Hiring Requests</CardTitle>
+                                <CardDescription>Review and approve hiring requests from your managers. Approved requests will be posted to the job board via AI.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Alert className="mb-4">
+                                    <Briefcase className="h-4 w-4" />
+                                    <AlertTitle>Job Board Integration</AlertTitle>
+                                    <AlertDescription>
+                                        The "Post via AI" button simulates posting to Indeed. In a production app, this could be configured to connect to your preferred job board API (e.g., Indeed, Workable, LinkedIn).
+                                    </AlertDescription>
+                                </Alert>
+                                {hiringRequests.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {hiringRequests.map(req => (
+                                            <div key={req.id} className="flex flex-col sm:flex-row items-start justify-between rounded-lg border p-4 gap-4">
+                                                <div className="space-y-2 flex-grow">
+                                                    <div>
+                                                        <p className="font-semibold">{req.role} <span className="font-normal text-muted-foreground">at {req.location}</span></p>
+                                                        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-1">
+                                                            <span><Badge variant="outline">{req.shiftType}</Badge></span>
+                                                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Urgency: {req.urgency}</span>
+                                                            <span className="flex items-center gap-1"><UserCog className="h-3 w-3" /> From: {req.manager}</span>
+                                                        </div>
+                                                    </div>
+                                                    <blockquote className="text-sm text-muted-foreground italic border-l-2 pl-3 mt-2">
+                                                        "{req.justification}"
+                                                    </blockquote>
+                                                </div>
+                                                <div className="flex gap-2 self-end sm:self-center shrink-0">
+                                                    <Button size="sm" onClick={() => handleApproveRequest(req)}><CheckCircle className="mr-2 h-4 w-4" /> Approve & Post via AI</Button>
+                                                    <Button size="sm" variant="outline" onClick={() => handleManualPost(req.id)}><ThumbsUp className="mr-2 h-4 w-4" /> Manually Posted</Button>
+                                                    <Button size="sm" variant="destructive" onClick={() => handleRejectRequest(req.id)}><XCircle className="mr-2 h-4 w-4" /> Reject</Button>
                                                 </div>
                                             </div>
-                                            <blockquote className="text-sm text-muted-foreground italic border-l-2 pl-3 mt-2">
-                                                "{req.justification}"
-                                            </blockquote>
-                                        </div>
-                                        <div className="flex gap-2 self-end sm:self-center shrink-0">
-                                            <Button size="sm" onClick={() => handleApproveRequest(req)}><CheckCircle className="mr-2 h-4 w-4" /> Approve & Post via AI</Button>
-                                            <Button size="sm" variant="outline" onClick={() => handleManualPost(req.id)}><ThumbsUp className="mr-2 h-4 w-4" /> Manually Posted</Button>
-                                            <Button size="sm" variant="destructive" onClick={() => handleRejectRequest(req.id)}><XCircle className="mr-2 h-4 w-4" /> Reject</Button>
-                                        </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                             <div className="text-center text-sm text-muted-foreground p-8">No pending hiring requests.</div>
-                        )}
-                    </CardContent>
-                </Card>
+                                ) : (
+                                     <div className="text-center text-sm text-muted-foreground p-8">No pending hiring requests.</div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Approve or reject hiring requests submitted by your managers.</p></TooltipContent>
+                 </Tooltip>
 
 
                 <Card>
@@ -679,181 +707,201 @@ export default function OwnerDashboard() {
                     </CardContent>
                 </Card>
                  
-                <Card>
-                    <CardHeader className="flex flex-row items-start justify-between">
-                        <div>
-                            <CardTitle className="font-headline flex items-center gap-2"><MapPin/> My Locations</CardTitle>
-                            <CardDescription>Manage your business locations and share access with health inspectors.</CardDescription>
-                        </div>
-                        <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4"/> Add New Location</Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle className="font-headline">Add a New Location</DialogTitle>
-                                    <DialogDescription>
-                                        Configure a new location and invite its manager.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <form onSubmit={handleAddLocation} className="space-y-4 py-4">
-                                     <div className="space-y-2">
-                                        <Label htmlFor="add-location-name">Location Name</Label>
-                                        <Input id="add-location-name" placeholder="e.g., Uptown Smoothies" value={newLocationData.name} onChange={e => setNewLocationData({...newLocationData, name: e.target.value})} required />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="add-toast-key">Toast POS API Key (Optional)</Label>
-                                        <Input id="add-toast-key" placeholder="Enter API key" value={newLocationData.toastKey} onChange={e => setNewLocationData({...newLocationData, toastKey: e.target.value})} />
-                                    </div>
-                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="add-manager-name">Manager's Full Name</Label>
-                                            <Input id="add-manager-name" placeholder="Casey Lee" value={newLocationData.managerName} onChange={e => setNewLocationData({...newLocationData, managerName: e.target.value})} required />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="add-manager-email">Manager's Email (for Invite)</Label>
-                                            <Input id="add-manager-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={e => setNewLocationData({...newLocationData, managerEmail: e.target.value})} required/>
-                                        </div>
-                                    </div>
-                                    <DialogFooter>
-                                        <Button type="button" variant="secondary" onClick={() => setIsAddLocationDialogOpen(false)}>Cancel</Button>
-                                        <Button type="submit">Save Location</Button>
-                                    </DialogFooter>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
-                    </CardHeader>
-                    <CardContent className="grid gap-4 md:grid-cols-2">
-                        {locations.map(loc => (
-                            <div key={loc.id} className="flex items-center justify-between rounded-lg border p-4">
+                 <Tooltip>
+                     <TooltipTrigger asChild>
+                         <Card>
+                            <CardHeader className="flex flex-row items-start justify-between">
                                 <div>
-                                    <p className="font-semibold">{loc.name}</p>
-                                    <p className="text-sm text-muted-foreground">Manager: {loc.manager}</p>
+                                    <CardTitle className="font-headline flex items-center gap-2"><MapPin/> My Locations</CardTitle>
+                                    <CardDescription>Manage your business locations and share access with health inspectors.</CardDescription>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="text-right">
-                                        <p className="text-xs text-muted-foreground">Inspection Code</p>
-                                        <p className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded-md">{loc.inspectionCode}</p>
+                                <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4"/> Add New Location</Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle className="font-headline">Add a New Location</DialogTitle>
+                                            <DialogDescription>
+                                                Configure a new location and invite its manager.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <form onSubmit={handleAddLocation} className="space-y-4 py-4">
+                                             <div className="space-y-2">
+                                                <Label htmlFor="add-location-name">Location Name</Label>
+                                                <Input id="add-location-name" placeholder="e.g., Uptown Smoothies" value={newLocationData.name} onChange={e => setNewLocationData({...newLocationData, name: e.target.value})} required />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="add-toast-key">Toast POS API Key (Optional)</Label>
+                                                <Input id="add-toast-key" placeholder="Enter API key" value={newLocationData.toastKey} onChange={e => setNewLocationData({...newLocationData, toastKey: e.target.value})} />
+                                            </div>
+                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="add-manager-name">Manager's Full Name</Label>
+                                                    <Input id="add-manager-name" placeholder="Casey Lee" value={newLocationData.managerName} onChange={e => setNewLocationData({...newLocationData, managerName: e.target.value})} required />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="add-manager-email">Manager's Email (for Invite)</Label>
+                                                    <Input id="add-manager-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={e => setNewLocationData({...newLocationData, managerEmail: e.target.value})} required/>
+                                                </div>
+                                            </div>
+                                            <DialogFooter>
+                                                <Button type="button" variant="secondary" onClick={() => setIsAddLocationDialogOpen(false)}>Cancel</Button>
+                                                <Button type="submit">Save Location</Button>
+                                            </DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
+                            </CardHeader>
+                            <CardContent className="grid gap-4 md:grid-cols-2">
+                                {locations.map(loc => (
+                                    <div key={loc.id} className="flex items-center justify-between rounded-lg border p-4">
+                                        <div>
+                                            <p className="font-semibold">{loc.name}</p>
+                                            <p className="text-sm text-muted-foreground">Manager: {loc.manager}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-right">
+                                                <p className="text-xs text-muted-foreground">Inspection Code</p>
+                                                <p className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded-md">{loc.inspectionCode}</p>
+                                            </div>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenShareDialog(loc)}>
+                                                        <Share2 className="h-4 w-4" />
+                                                        <span className="sr-only">Share Code</span>
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Share Code via Email</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </div>
                                     </div>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenShareDialog(loc)}>
-                                                <Share2 className="h-4 w-4" />
-                                                <span className="sr-only">Share Code</span>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Share Code via Email</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </div>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
+                                ))}
+                            </CardContent>
+                        </Card>
+                     </TooltipTrigger>
+                     <TooltipContent><p>Manage your business locations and share access codes with inspectors.</p></TooltipContent>
+                 </Tooltip>
 
 
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2 text-accent"><Megaphone /> Crucial Alerts</CardTitle>
-                            <CardDescription>High-priority issues from all locations that require immediate owner-level attention.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            {crucialAlerts.map(alert => (
-                                <Alert key={alert.id} variant="destructive" className="bg-accent/10 border-accent/50">
-                                    <AlertTriangle className="h-4 w-4 !text-accent" />
-                                    <AlertTitle className="font-bold flex justify-between items-center">
-                                        <span>{alert.location}</span>
-                                        {alert.type === 'overtime' ? (
-                                            <Button size="sm" variant="secondary" onClick={() => setContactManagerOpen(true)}>
-                                                <MessageSquare className="mr-2 h-4 w-4"/>
-                                                Contact Manager
-                                            </Button>
-                                        ) : (
-                                            <Button size="sm" variant="secondary" onClick={() => handleSuggestAssignment(alert.description, alert.location)}>
-                                                <Sparkles className="mr-2 h-4 w-4"/>
-                                                AI Assign
-                                            </Button>
-                                        )}
-                                    </AlertTitle>
-                                    <AlertDescription>
-                                        {alert.description}
-                                    </AlertDescription>
-                                </Alert>
-                            ))}
-                        </CardContent>
-                    </Card>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="font-headline flex items-center gap-2 text-accent"><Megaphone /> Crucial Alerts</CardTitle>
+                                    <CardDescription>High-priority issues from all locations that require immediate owner-level attention.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {crucialAlerts.map(alert => (
+                                        <Alert key={alert.id} variant="destructive" className="bg-accent/10 border-accent/50">
+                                            <AlertTriangle className="h-4 w-4 !text-accent" />
+                                            <AlertTitle className="font-bold flex justify-between items-center">
+                                                <span>{alert.location}</span>
+                                                {alert.type === 'overtime' ? (
+                                                    <Button size="sm" variant="secondary" onClick={() => setContactManagerOpen(true)}>
+                                                        <MessageSquare className="mr-2 h-4 w-4"/>
+                                                        Contact Manager
+                                                    </Button>
+                                                ) : (
+                                                    <Button size="sm" variant="secondary" onClick={() => handleSuggestAssignment(alert.description, alert.location)}>
+                                                        <Sparkles className="mr-2 h-4 w-4"/>
+                                                        AI Assign
+                                                    </Button>
+                                                )}
+                                            </AlertTitle>
+                                            <AlertDescription>
+                                                {alert.description}
+                                            </AlertDescription>
+                                        </Alert>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        </TooltipTrigger>
+                        <TooltipContent><p>A feed of high-priority issues that require your immediate attention.</p></TooltipContent>
+                    </Tooltip>
                     
-                    <Card>
-                         <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2"><ClipboardPen /> Owner's Memo Board</CardTitle>
-                            <CardDescription>Your private notepad for reminders and high-level strategy.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Textarea 
-                                value={memo}
-                                onChange={(e) => setMemo(e.target.value)}
-                                placeholder="Jot down your notes here..."
-                                rows={5}
-                                className="resize-none"
-                            />
-                        </CardContent>
-                    </Card>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Card>
+                                 <CardHeader>
+                                    <CardTitle className="font-headline flex items-center gap-2"><ClipboardPen /> Owner's Memo Board</CardTitle>
+                                    <CardDescription>Your private notepad for reminders and high-level strategy.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Textarea 
+                                        value={memo}
+                                        onChange={(e) => setMemo(e.target.value)}
+                                        placeholder="Jot down your notes here..."
+                                        rows={5}
+                                        className="resize-none"
+                                    />
+                                </CardContent>
+                            </Card>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Your private notepad for reminders and high-level strategy.</p></TooltipContent>
+                    </Tooltip>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2"><ShieldAlert /> Mandatory Health Dept. Tasks</CardTitle>
-                        <CardDescription>Review, complete, and submit required tasks from the Health Department.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Accordion type="single" collapsible className="w-full">
-                            {healthDeptTasks.map(task => (
-                                <AccordionItem value={`task-${task.id}`} key={task.id}>
-                                    <AccordionTrigger className="hover:no-underline text-left">
-                                        <div className="flex w-full items-center justify-between pr-4 gap-4">
-                                            <div className='text-left'>
-                                                <p className="font-semibold">{task.description}</p>
-                                                <p className="text-xs text-muted-foreground">Source: {task.source}</p>
-                                            </div>
-                                            <Badge variant={task.status === 'Submitted' ? 'default' : task.status === 'Pending' ? 'destructive' : 'secondary'} className='whitespace-nowrap shrink-0'>
-                                                {task.status === 'PendingOwnerApproval' ? 'Pending Your Approval' : task.status}
-                                            </Badge>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                        <div className='p-4 bg-muted/50 rounded-md m-1 space-y-4'>
-                                            {task.status === 'Pending' && (
-                                                <div className='flex flex-col sm:flex-row gap-2'>
-                                                     <Button onClick={() => handleOpenDelegateDialog(task)}>
-                                                        <Briefcase className="mr-2 h-4 w-4" />
-                                                        Delegate to Manager
-                                                    </Button>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="font-headline flex items-center gap-2"><ShieldAlert /> Mandatory Health Dept. Tasks</CardTitle>
+                                <CardDescription>Review, complete, and submit required tasks from the Health Department.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Accordion type="single" collapsible className="w-full">
+                                    {healthDeptTasks.map(task => (
+                                        <AccordionItem value={`task-${task.id}`} key={task.id}>
+                                            <AccordionTrigger className="hover:no-underline text-left">
+                                                <div className="flex w-full items-center justify-between pr-4 gap-4">
+                                                    <div className='text-left'>
+                                                        <p className="font-semibold">{task.description}</p>
+                                                        <p className="text-xs text-muted-foreground">Source: {task.source}</p>
+                                                    </div>
+                                                    <Badge variant={task.status === 'Submitted' ? 'default' : task.status === 'Pending' ? 'destructive' : 'secondary'} className='whitespace-nowrap shrink-0'>
+                                                        {task.status === 'PendingOwnerApproval' ? 'Pending Your Approval' : task.status}
+                                                    </Badge>
                                                 </div>
-                                            )}
-                                            {task.status === 'Delegated' && (
-                                                <p className='text-sm text-muted-foreground italic'>This task has been delegated to {task.delegatedTo} and is pending their action.</p>
-                                            )}
-                                             {task.status === 'PendingOwnerApproval' && (
-                                                <div className='flex items-center gap-4'>
-                                                     <p className='text-sm text-muted-foreground'>Manager {task.delegatedTo} has submitted proof for your review.</p>
-                                                    <Button onClick={() => handleOpenReviewDialog(task)}>
-                                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                                        Review & Approve
-                                                    </Button>
+                                            </AccordionTrigger>
+                                            <AccordionContent>
+                                                <div className='p-4 bg-muted/50 rounded-md m-1 space-y-4'>
+                                                    {task.status === 'Pending' && (
+                                                        <div className='flex flex-col sm:flex-row gap-2'>
+                                                             <Button onClick={() => handleOpenDelegateDialog(task)}>
+                                                                <Briefcase className="mr-2 h-4 w-4" />
+                                                                Delegate to Manager
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                    {task.status === 'Delegated' && (
+                                                        <p className='text-sm text-muted-foreground italic'>This task has been delegated to {task.delegatedTo} and is pending their action.</p>
+                                                    )}
+                                                     {task.status === 'PendingOwnerApproval' && (
+                                                        <div className='flex items-center gap-4'>
+                                                             <p className='text-sm text-muted-foreground'>Manager {task.delegatedTo} has submitted proof for your review.</p>
+                                                            <Button onClick={() => handleOpenReviewDialog(task)}>
+                                                                <CheckCircle className="mr-2 h-4 w-4" />
+                                                                Review & Approve
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                    {task.status === 'Submitted' && (
+                                                        <p className='text-sm text-muted-foreground italic'>This task has already been submitted.</p>
+                                                    )}
                                                 </div>
-                                            )}
-                                            {task.status === 'Submitted' && (
-                                                <p className='text-sm text-muted-foreground italic'>This task has already been submitted.</p>
-                                            )}
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
-                    </CardContent>
-                </Card>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            </CardContent>
+                        </Card>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Review and delegate mandatory tasks from the health department.</p></TooltipContent>
+                </Tooltip>
                 
                 {/* AI Assignment Dialog */}
                 <Dialog open={!!selectedAlert} onOpenChange={(open) => !open && closeAssignmentDialog()}>

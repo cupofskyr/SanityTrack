@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -30,6 +30,7 @@ import StaffMealManager from '@/components/staff-meal-manager';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { translateText } from '@/ai/flows/translate-text-flow';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },
@@ -381,256 +382,282 @@ export default function ManagerDashboard() {
     };
 
     return (
+        <TooltipProvider>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Printer /> Monthly Reporting</CardTitle>
-                    <CardDescription>Generate a printable report of this month's activities to share with the owner or for your records.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button><Printer className="mr-2 h-4 w-4" /> Generate Monthly Report</Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl">
-                             <DialogHeader>
-                                <DialogTitle className="font-headline text-2xl">Monthly Activity Report</DialogTitle>
-                                <DialogDescription>
-                                  Summary for {format(new Date(), 'MMMM yyyy')}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="py-4 space-y-6">
-                                <Card>
-                                    <CardHeader><CardTitle className="text-lg">Team Performance</CardTitle></CardHeader>
-                                    <CardContent>
-                                        <Table>
-                                        <TableHeader><TableRow><TableHead>Member</TableHead><TableHead>Tasks Completed</TableHead><TableHead>Completion Rate</TableHead></TableRow></TableHeader>
-                                        <TableBody>
-                                            {teamMembers.map(member => (
-                                            <TableRow key={member.name}>
-                                                <TableCell>{member.name}</TableCell>
-                                                <TableCell>{member.tasksCompleted}/{member.tasksCompleted + member.tasksPending}</TableCell>
-                                                <TableCell><Progress value={member.progress} className="h-2" /></TableCell>
-                                            </TableRow>
-                                            ))}
-                                        </TableBody>
-                                        </Table>
-                                    </CardContent>
-                                </Card>
-                                 <Card>
-                                    <CardHeader><CardTitle className="text-lg">High-Priority Issues Handled</CardTitle></CardHeader>
-                                    <CardContent>
-                                        <Table>
-                                            <TableHeader><TableRow><TableHead>Issue</TableHead><TableHead>Category</TableHead><TableHead>Resolution Notes</TableHead></TableRow></TableHeader>
-                                            <TableBody>
-                                                {highPriorityIssues.length > 0 ? highPriorityIssues.map(issue => (
-                                                <TableRow key={issue.id}>
-                                                    <TableCell>{issue.description}</TableCell>
-                                                    <TableCell><Badge variant="outline">{issue.category}</Badge></TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground">{issue.resolutionNotes || 'N/A'}</TableCell>
-                                                </TableRow>
-                                                )) : <TableRow><TableCell colSpan={3} className="text-center">No high-priority issues recorded this month.</TableCell></TableRow>}
-                                            </TableBody>
-                                        </Table>
-                                    </CardContent>
-                                </Card>
-                              </div>
-                               <DialogFooter className="sm:justify-between items-center gap-4">
-                                <Alert className="text-left max-w-md">
-                                  <AlertCircle className="h-4 w-4" />
-                                  <AlertTitle>For Your Records</AlertTitle>
-                                  <AlertDescription>
-                                    In a production app, this report could be automatically generated and emailed to you and the owner monthly.
-                                  </AlertDescription>
-                                </Alert>
-                                <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print Report</Button>
-                              </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </CardContent>
-            </Card>
-            
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Users /> Team Overview</CardTitle>
-                    <CardDescription>Track the performance and task completion of your team members.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {teamMembers.map(member => (
-                        <div key={member.name}>
-                            <div className="flex justify-between items-center mb-1">
-                                <span className="font-medium">{member.name}</span>
-                                <span className="text-sm text-muted-foreground">{member.tasksCompleted} / {member.tasksCompleted + member.tasksPending} tasks</span>
-                            </div>
-                            <Progress value={member.progress} className="h-2" />
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><Printer /> Monthly Reporting</CardTitle>
+                            <CardDescription>Generate a printable report of this month's activities to share with the owner or for your records.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button><Printer className="mr-2 h-4 w-4" /> Generate Monthly Report</Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl">
+                                     <DialogHeader>
+                                        <DialogTitle className="font-headline text-2xl">Monthly Activity Report</DialogTitle>
+                                        <DialogDescription>
+                                          Summary for {format(new Date(), 'MMMM yyyy')}
+                                        </DialogDescription>
+                                      </DialogHeader>
+                                      <div className="py-4 space-y-6">
+                                        <Card>
+                                            <CardHeader><CardTitle className="text-lg">Team Performance</CardTitle></CardHeader>
+                                            <CardContent>
+                                                <Table>
+                                                <TableHeader><TableRow><TableHead>Member</TableHead><TableHead>Tasks Completed</TableHead><TableHead>Completion Rate</TableHead></TableRow></TableHeader>
+                                                <TableBody>
+                                                    {teamMembers.map(member => (
+                                                    <TableRow key={member.name}>
+                                                        <TableCell>{member.name}</TableCell>
+                                                        <TableCell>{member.tasksCompleted}/{member.tasksCompleted + member.tasksPending}</TableCell>
+                                                        <TableCell><Progress value={member.progress} className="h-2" /></TableCell>
+                                                    </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                                </Table>
+                                            </CardContent>
+                                        </Card>
+                                         <Card>
+                                            <CardHeader><CardTitle className="text-lg">High-Priority Issues Handled</CardTitle></CardHeader>
+                                            <CardContent>
+                                                <Table>
+                                                    <TableHeader><TableRow><TableHead>Issue</TableHead><TableHead>Category</TableHead><TableHead>Resolution Notes</TableHead></TableRow></TableHeader>
+                                                    <TableBody>
+                                                        {highPriorityIssues.length > 0 ? highPriorityIssues.map(issue => (
+                                                        <TableRow key={issue.id}>
+                                                            <TableCell>{issue.description}</TableCell>
+                                                            <TableCell><Badge variant="outline">{issue.category}</Badge></TableCell>
+                                                            <TableCell className="text-xs text-muted-foreground">{issue.resolutionNotes || 'N/A'}</TableCell>
+                                                        </TableRow>
+                                                        )) : <TableRow><TableCell colSpan={3} className="text-center">No high-priority issues recorded this month.</TableCell></TableRow>}
+                                                    </TableBody>
+                                                </Table>
+                                            </CardContent>
+                                        </Card>
+                                      </div>
+                                       <DialogFooter className="sm:justify-between items-center gap-4">
+                                        <Alert className="text-left max-w-md">
+                                          <AlertCircle className="h-4 w-4" />
+                                          <AlertTitle>For Your Records</AlertTitle>
+                                          <AlertDescription>
+                                            In a production app, this report could be automatically generated and emailed to you and the owner monthly.
+                                          </AlertDescription>
+                                        </Alert>
+                                        <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print Report</Button>
+                                      </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent><p>Generate a printable report of this month's activities to share with the owner.</p></TooltipContent>
+            </Tooltip>
 
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><UserPlus /> Request New Hire</CardTitle>
-                    <CardDescription>Submit a request to the owner to post a job application for a new team member.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleRequestNewHire} className="grid gap-4">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="grid gap-2 md:col-span-2">
-                                <Label htmlFor="hire-role">Role</Label>
-                                <Input id="hire-role" placeholder="e.g., Line Cook, Barista" value={newHireRequest.role} onChange={(e) => setNewHireRequest({...newHireRequest, role: e.target.value})} required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="hire-shift">Shift Type</Label>
-                                <Select value={newHireRequest.shiftType} onValueChange={(val) => setNewHireRequest({...newHireRequest, shiftType: val})} required>
-                                    <SelectTrigger id="hire-shift"><SelectValue placeholder="Select type" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Full-time">Full-time</SelectItem>
-                                        <SelectItem value="Part-time">Part-time</SelectItem>
-                                        <SelectItem value="Contract">Contract</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="hire-urgency">Urgency</Label>
-                                <Select value={newHireRequest.urgency} onValueChange={(val) => setNewHireRequest({...newHireRequest, urgency: val})} required>
-                                    <SelectTrigger id="hire-urgency"><SelectValue placeholder="Select urgency" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Immediate">Immediate</SelectItem>
-                                        <SelectItem value="Within 2 Weeks">Within 2 Weeks</SelectItem>
-                                        <SelectItem value="Within 1 Month">Within 1 Month</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="hire-justification">Justification</Label>
-                            <Textarea
-                                id="hire-justification"
-                                placeholder="e.g., We are entering our busy season and need another person on the line to keep up with demand during peak hours."
-                                value={newHireRequest.justification}
-                                onChange={(e) => setNewHireRequest({ ...newHireRequest, justification: e.target.value })}
-                                required
-                                rows={3}
-                            />
-                        </div>
-                        <Button type="submit" className="w-full md:w-auto">
-                            <Send className="mr-2 h-4 w-4" />
-                            Send Request to Owner
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><ShieldAlert /> Delegated Health Dept. Tasks</CardTitle>
-                    <CardDescription>These are mandatory tasks assigned to you by the owner. Complete them and submit for final approval.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {delegatedTasks.length > 0 ? (
-                        <Accordion type="single" collapsible className="w-full">
-                            {delegatedTasks.map(task => (
-                                <AccordionItem value={`task-${task.id}`} key={task.id}>
-                                    <AccordionTrigger className="hover:no-underline text-left">
-                                        <div className="flex w-full items-center justify-between pr-4">
-                                            <div className='text-left'>
-                                                <p className="font-semibold">{translations[task.id] || task.description}</p>
-                                                <p className="text-xs text-muted-foreground">Source: {task.source}</p>
-                                            </div>
-                                            <Badge variant={task.status === 'Pending' ? 'destructive' : 'default'} className='whitespace-nowrap'>
-                                                {task.status === 'Pending' ? 'Action Required' : 'Pending Approval'}
-                                            </Badge>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                        <div className='p-4 bg-muted/50 rounded-md m-1 space-y-4'>
-                                            <div className="flex items-center gap-4">
-                                                {task.status === 'Pending' ? (
-                                                    <>
-                                                        <div>
-                                                            <Label className='text-xs text-muted-foreground'>Attach Proof of Completion</Label>
-                                                            <div className='mt-2'>
-                                                                <PhotoUploader />
-                                                            </div>
-                                                        </div>
-                                                        <Button onClick={() => handleManagerSubmitForApproval(task.id)}>
-                                                            <CheckCircle className="mr-2 h-4 w-4" />
-                                                            Submit for Owner Approval
-                                                        </Button>
-                                                    </>
-                                                ) : (
-                                                    <p className='text-sm text-muted-foreground italic'>This task is awaiting final approval from the owner. No further action is needed.</p>
-                                                )}
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleTranslate(task.id, task.description)}
-                                                    disabled={translatingId === task.id}
-                                                >
-                                                    {translatingId === task.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}
-                                                    {translatingId === task.id ? 'Translating...' : translations[task.id] ? 'Show Original' : 'Translate'}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><Users /> Team Overview</CardTitle>
+                            <CardDescription>Track the performance and task completion of your team members.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {teamMembers.map(member => (
+                                <div key={member.name}>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="font-medium">{member.name}</span>
+                                        <span className="text-sm text-muted-foreground">{member.tasksCompleted} / {member.tasksCompleted + member.tasksPending} tasks</span>
+                                    </div>
+                                    <Progress value={member.progress} className="h-2" />
+                                </div>
                             ))}
-                        </Accordion>
-                    ) : (
-                        <div className="text-center text-sm text-muted-foreground p-4">You have no delegated tasks from the owner.</div>
-                    )}
-                </CardContent>
-            </Card>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent><p>Track task completion and performance for each team member.</p></TooltipContent>
+            </Tooltip>
 
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><PlusCircle /> Create & Assign Manual Task</CardTitle>
-                    <CardDescription>
-                        Define new one-time or recurring tasks and assign them to a specific team member. For shift-based tasks, use the Equipment page.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleAddTask} className="grid gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="task-description">Task Description</Label>
-                            <Input id="task-description" placeholder="e.g., Sanitize all kitchen surfaces" value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} required />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="frequency">Frequency</Label>
-                                <Select value={taskFrequency} onValueChange={setTaskFrequency} required>
-                                    <SelectTrigger id="frequency">
-                                        <SelectValue placeholder="Select frequency" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="One-time">One-time</SelectItem>
-                                        <SelectItem value="Daily">Daily</SelectItem>
-                                        <SelectItem value="Weekly">Weekly</SelectItem>
-                                        <SelectItem value="Monthly">Monthly</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="assignee">Assign To</Label>
-                                <Select value={taskAssignee} onValueChange={setTaskAssignee} required>
-                                    <SelectTrigger id="assignee">
-                                        <SelectValue placeholder="Select employee" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {teamMembers.map(member => (
-                                            <SelectItem key={member.name} value={member.name}>{member.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="flex items-end">
-                                <Button type="submit" className="w-full">Add & Assign Task</Button>
-                            </div>
-                        </div>
-                    </form>
-                </CardContent>
-            </Card>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><UserPlus /> Request New Hire</CardTitle>
+                            <CardDescription>Submit a request to the owner to post a job application for a new team member.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleRequestNewHire} className="grid gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div className="grid gap-2 md:col-span-2">
+                                        <Label htmlFor="hire-role">Role</Label>
+                                        <Input id="hire-role" placeholder="e.g., Line Cook, Barista" value={newHireRequest.role} onChange={(e) => setNewHireRequest({...newHireRequest, role: e.target.value})} required />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="hire-shift">Shift Type</Label>
+                                        <Select value={newHireRequest.shiftType} onValueChange={(val) => setNewHireRequest({...newHireRequest, shiftType: val})} required>
+                                            <SelectTrigger id="hire-shift"><SelectValue placeholder="Select type" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Full-time">Full-time</SelectItem>
+                                                <SelectItem value="Part-time">Part-time</SelectItem>
+                                                <SelectItem value="Contract">Contract</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="hire-urgency">Urgency</Label>
+                                        <Select value={newHireRequest.urgency} onValueChange={(val) => setNewHireRequest({...newHireRequest, urgency: val})} required>
+                                            <SelectTrigger id="hire-urgency"><SelectValue placeholder="Select urgency" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Immediate">Immediate</SelectItem>
+                                                <SelectItem value="Within 2 Weeks">Within 2 Weeks</SelectItem>
+                                                <SelectItem value="Within 1 Month">Within 1 Month</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="hire-justification">Justification</Label>
+                                    <Textarea
+                                        id="hire-justification"
+                                        placeholder="e.g., We are entering our busy season and need another person on the line to keep up with demand during peak hours."
+                                        value={newHireRequest.justification}
+                                        onChange={(e) => setNewHireRequest({ ...newHireRequest, justification: e.target.value })}
+                                        required
+                                        rows={3}
+                                    />
+                                </div>
+                                <Button type="submit" className="w-full md:w-auto">
+                                    <Send className="mr-2 h-4 w-4" />
+                                    Send Request to Owner
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent><p>Submit a request to the owner to open a new job position.</p></TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><ShieldAlert /> Delegated Health Dept. Tasks</CardTitle>
+                            <CardDescription>These are mandatory tasks assigned to you by the owner. Complete them and submit for final approval.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {delegatedTasks.length > 0 ? (
+                                <Accordion type="single" collapsible className="w-full">
+                                    {delegatedTasks.map(task => (
+                                        <AccordionItem value={`task-${task.id}`} key={task.id}>
+                                            <AccordionTrigger className="hover:no-underline text-left">
+                                                <div className="flex w-full items-center justify-between pr-4">
+                                                    <div className='text-left'>
+                                                        <p className="font-semibold">{translations[task.id] || task.description}</p>
+                                                        <p className="text-xs text-muted-foreground">Source: {task.source}</p>
+                                                    </div>
+                                                    <Badge variant={task.status === 'Pending' ? 'destructive' : 'default'} className='whitespace-nowrap'>
+                                                        {task.status === 'Pending' ? 'Action Required' : 'Pending Approval'}
+                                                    </Badge>
+                                                </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent>
+                                                <div className='p-4 bg-muted/50 rounded-md m-1 space-y-4'>
+                                                    <div className="flex items-center gap-4">
+                                                        {task.status === 'Pending' ? (
+                                                            <>
+                                                                <div>
+                                                                    <Label className='text-xs text-muted-foreground'>Attach Proof of Completion</Label>
+                                                                    <div className='mt-2'>
+                                                                        <PhotoUploader />
+                                                                    </div>
+                                                                </div>
+                                                                <Button onClick={() => handleManagerSubmitForApproval(task.id)}>
+                                                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                                                    Submit for Owner Approval
+                                                                </Button>
+                                                            </>
+                                                        ) : (
+                                                            <p className='text-sm text-muted-foreground italic'>This task is awaiting final approval from the owner. No further action is needed.</p>
+                                                        )}
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleTranslate(task.id, task.description)}
+                                                            disabled={translatingId === task.id}
+                                                        >
+                                                            {translatingId === task.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}
+                                                            {translatingId === task.id ? 'Translating...' : translations[task.id] ? 'Show Original' : 'Translate'}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            ) : (
+                                <div className="text-center text-sm text-muted-foreground p-4">You have no delegated tasks from the owner.</div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent><p>Complete mandatory tasks assigned by the owner.</p></TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><PlusCircle /> Create & Assign Manual Task</CardTitle>
+                            <CardDescription>
+                                Define new one-time or recurring tasks and assign them to a specific team member. For shift-based tasks, use the Equipment page.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleAddTask} className="grid gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="task-description">Task Description</Label>
+                                    <Input id="task-description" placeholder="e.g., Sanitize all kitchen surfaces" value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} required />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="frequency">Frequency</Label>
+                                        <Select value={taskFrequency} onValueChange={setTaskFrequency} required>
+                                            <SelectTrigger id="frequency">
+                                                <SelectValue placeholder="Select frequency" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="One-time">One-time</SelectItem>
+                                                <SelectItem value="Daily">Daily</SelectItem>
+                                                <SelectItem value="Weekly">Weekly</SelectItem>
+                                                <SelectItem value="Monthly">Monthly</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="assignee">Assign To</Label>
+                                        <Select value={taskAssignee} onValueChange={setTaskAssignee} required>
+                                            <SelectTrigger id="assignee">
+                                                <SelectValue placeholder="Select employee" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {teamMembers.map(member => (
+                                                    <SelectItem key={member.name} value={member.name}>{member.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex items-end">
+                                        <Button type="submit" className="w-full">Add & Assign Task</Button>
+                                    </div>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent><p>Assign one-time or recurring tasks to your team.</p></TooltipContent>
+            </Tooltip>
 
             <Card className="lg:col-span-3">
                 <CardHeader>
@@ -671,168 +698,182 @@ export default function ManagerDashboard() {
                 </CardContent>
             </Card>
 
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><UtensilsCrossed /> Staff Meal Log</CardTitle>
-                    <CardDescription>
-                        Review meals logged by employees. The policy allows for 2 items per shift.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Employee</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Items Logged</TableHead>
-                                <TableHead className="text-right">Item Count</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {staffMealLogs.map((log) => (
-                            <TableRow key={log.id}>
-                                <TableCell className="font-medium">{log.employee}</TableCell>
-                                <TableCell>{log.date}</TableCell>
-                                <TableCell>{log.items}</TableCell>
-                                <TableCell className="text-right">
-                                    <Badge variant={log.itemsCount >= 2 ? "destructive" : "outline"}>{log.itemsCount}</Badge>
-                                </TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-                <CardFooter>
-                    <Dialog open={isMealInsightDialogOpen} onOpenChange={setIsMealInsightDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" onClick={handleAiMealAnalysis}>
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                Get AI Insight on Meal Logs
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle className="font-headline flex items-center gap-2">
-                                    <Sparkles className="text-primary h-5 w-5" />
-                                    AI Meal Log Insight
-                                </DialogTitle>
-                            </DialogHeader>
-                            {aiMealInsight ? (
-                                <div className="py-4 space-y-4">
-                                    <Alert>
-                                        <AlertTitle>{aiMealInsight.title}</AlertTitle>
-                                        <AlertDescription>{aiMealInsight.description}</AlertDescription>
-                                    </Alert>
-                                </div>
-                            ) : (
-                                <div className="py-4 text-center text-muted-foreground">Click the button to get an AI insight.</div>
-                            )}
-                            <DialogFooter>
-                                <Button type="button" variant="secondary" onClick={() => setIsMealInsightDialogOpen(false)}>Close</Button>
-                                <Button onClick={handleSendMealInsight} disabled={!aiMealInsight}>
-                                    <Send className="mr-2 h-4 w-4" />
-                                    Send Reminder to Employee
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </CardFooter>
-            </Card>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><UtensilsCrossed /> Staff Meal Log</CardTitle>
+                            <CardDescription>
+                                Review meals logged by employees. The policy allows for 2 items per shift.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Employee</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Items Logged</TableHead>
+                                        <TableHead className="text-right">Item Count</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {staffMealLogs.map((log) => (
+                                    <TableRow key={log.id}>
+                                        <TableCell className="font-medium">{log.employee}</TableCell>
+                                        <TableCell>{log.date}</TableCell>
+                                        <TableCell>{log.items}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge variant={log.itemsCount >= 2 ? "destructive" : "outline"}>{log.itemsCount}</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                        <CardFooter>
+                            <Dialog open={isMealInsightDialogOpen} onOpenChange={setIsMealInsightDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" onClick={handleAiMealAnalysis}>
+                                        <Sparkles className="mr-2 h-4 w-4" />
+                                        Get AI Insight on Meal Logs
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle className="font-headline flex items-center gap-2">
+                                            <Sparkles className="text-primary h-5 w-5" />
+                                            AI Meal Log Insight
+                                        </DialogTitle>
+                                    </DialogHeader>
+                                    {aiMealInsight ? (
+                                        <div className="py-4 space-y-4">
+                                            <Alert>
+                                                <AlertTitle>{aiMealInsight.title}</AlertTitle>
+                                                <AlertDescription>{aiMealInsight.description}</AlertDescription>
+                                            </Alert>
+                                        </div>
+                                    ) : (
+                                        <div className="py-4 text-center text-muted-foreground">Click the button to get an AI insight.</div>
+                                    )}
+                                    <DialogFooter>
+                                        <Button type="button" variant="secondary" onClick={() => setIsMealInsightDialogOpen(false)}>Close</Button>
+                                        <Button onClick={handleSendMealInsight} disabled={!aiMealInsight}>
+                                            <Send className="mr-2 h-4 w-4" />
+                                            Send Reminder to Employee
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </CardFooter>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent><p>Review employee meal logs and identify policy violations.</p></TooltipContent>
+            </Tooltip>
 
             <StaffMealManager />
-
-            <Card className="lg:col-span-3" id="ai-issue-analyzer-card">
-                 <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Zap className="text-primary"/> AI Issue Analyzer</CardTitle>
-                    <CardDescription>Enter a reported issue to have the AI categorize it. Emergencies will be added to the High-Priority list below.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Form {...issueForm}>
-                        <form onSubmit={issueForm.handleSubmit(handleAnalyzeIssue)} className="space-y-4">
-                            <FormField
-                                control={issueForm.control}
-                                name="description"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>New Issue Description</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="e.g., There's a large pool of water forming under the main sink..." {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Button type="submit" disabled={isAnalyzing}>
-                                {isAnalyzing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Analyze with AI
-                            </Button>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3" id="ai-issue-analyzer-card">
+                         <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><Zap className="text-primary"/> AI Issue Analyzer</CardTitle>
+                            <CardDescription>Enter a reported issue to have the AI categorize it. Emergencies will be added to the High-Priority list below.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Form {...issueForm}>
+                                <form onSubmit={issueForm.handleSubmit(handleAnalyzeIssue)} className="space-y-4">
+                                    <FormField
+                                        control={issueForm.control}
+                                        name="description"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>New Issue Description</FormLabel>
+                                            <FormControl>
+                                                <Textarea placeholder="e.g., There's a large pool of water forming under the main sink..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <Button type="submit" disabled={isAnalyzing}>
+                                        {isAnalyzing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Analyze with AI
+                                    </Button>
+                                </form>
+                            </Form>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent><p>Use AI to categorize issues and identify emergencies.</p></TooltipContent>
+            </Tooltip>
             
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><CalendarClock /> Schedule Internal Meeting</CardTitle>
-                    <CardDescription>Prototype for Google Calendar integration. Schedule a meeting and a simulated invite will be sent.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <form onSubmit={handleScheduleMeeting} className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="meeting-title">Meeting Title</Label>
-                            <Input id="meeting-title" placeholder="Q3 Planning Session" value={meetingDetails.title} onChange={(e) => setMeetingDetails({...meetingDetails, title: e.target.value})} required/>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="grid gap-2">
-                                <Label>Date</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant={"outline"}
-                                            className={cn("justify-start text-left font-normal", !meetingDetails.date && "text-muted-foreground")}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {meetingDetails.date ? format(meetingDetails.date, "PPP") : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                            mode="single"
-                                            selected={meetingDetails.date}
-                                            onSelect={(date) => setMeetingDetails({...meetingDetails, date: date || new Date()})}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="meeting-time">Time</Label>
-                                <Input id="meeting-time" type="time" value={meetingDetails.time} onChange={(e) => setMeetingDetails({...meetingDetails, time: e.target.value})} required/>
-                            </div>
-                             <div className="grid gap-2">
-                                <Label htmlFor="meeting-attendee">Attendee</Label>
-                                <Select value={meetingDetails.attendee} onValueChange={(val) => setMeetingDetails({...meetingDetails, attendee: val})} required>
-                                    <SelectTrigger id="meeting-attendee">
-                                        <SelectValue placeholder="Select team member" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {/* In a real app, you might want to select multiple attendees */}
-                                        <SelectItem value="Owner">Owner</SelectItem>
-                                        {teamMembers.map(member => (
-                                            <SelectItem key={member.name} value={member.name}>{member.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="meeting-description">Description / Agenda (Optional)</Label>
-                            <Textarea id="meeting-description" placeholder="Discuss Q3 goals, review new health protocols..." value={meetingDetails.description} onChange={(e) => setMeetingDetails({...meetingDetails, description: e.target.value})} />
-                        </div>
-                        <Button type="submit">Schedule Meeting</Button>
-                     </form>
-                </CardContent>
-            </Card>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><CalendarClock /> Schedule Internal Meeting</CardTitle>
+                            <CardDescription>Prototype for Google Calendar integration. Schedule a meeting and a simulated invite will be sent.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <form onSubmit={handleScheduleMeeting} className="space-y-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="meeting-title">Meeting Title</Label>
+                                    <Input id="meeting-title" placeholder="Q3 Planning Session" value={meetingDetails.title} onChange={(e) => setMeetingDetails({...meetingDetails, title: e.target.value})} required/>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label>Date</Label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant={"outline"}
+                                                    className={cn("justify-start text-left font-normal", !meetingDetails.date && "text-muted-foreground")}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {meetingDetails.date ? format(meetingDetails.date, "PPP") : <span>Pick a date</span>}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={meetingDetails.date}
+                                                    onSelect={(date) => setMeetingDetails({...meetingDetails, date: date || new Date()})}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="meeting-time">Time</Label>
+                                        <Input id="meeting-time" type="time" value={meetingDetails.time} onChange={(e) => setMeetingDetails({...meetingDetails, time: e.target.value})} required/>
+                                    </div>
+                                     <div className="grid gap-2">
+                                        <Label htmlFor="meeting-attendee">Attendee</Label>
+                                        <Select value={meetingDetails.attendee} onValueChange={(val) => setMeetingDetails({...meetingDetails, attendee: val})} required>
+                                            <SelectTrigger id="meeting-attendee">
+                                                <SelectValue placeholder="Select team member" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {/* In a real app, you might want to select multiple attendees */}
+                                                <SelectItem value="Owner">Owner</SelectItem>
+                                                {teamMembers.map(member => (
+                                                    <SelectItem key={member.name} value={member.name}>{member.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="meeting-description">Description / Agenda (Optional)</Label>
+                                    <Textarea id="meeting-description" placeholder="Discuss Q3 goals, review new health protocols..." value={meetingDetails.description} onChange={(e) => setMeetingDetails({...meetingDetails, description: e.target.value})} />
+                                </div>
+                                <Button type="submit">Schedule Meeting</Button>
+                             </form>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent><p>Schedule a meeting with a team member (simulates Google Calendar).</p></TooltipContent>
+            </Tooltip>
 
             <Card className="lg:col-span-3">
                 <CardHeader>
@@ -879,121 +920,130 @@ export default function ManagerDashboard() {
                 </CardContent>
             </Card>
 
-
-            <Card className="lg:col-span-2">
-                 <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-accent"/> High-Priority Issues</CardTitle>
-                    <CardDescription>Critical issues identified by the AI that require immediate attention.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    {highPriorityIssues.length > 0 ? (
-                        highPriorityIssues.map(issue => {
-                            const contact = findContact(issue.contactType);
-                            return (
-                                <Alert key={issue.id} variant="destructive" className="bg-accent/10 border-accent text-accent [&>svg]:text-accent">
-                                    <Flag className="h-4 w-4" />
-                                    <AlertTitle className="font-bold">{issue.description}</AlertTitle>
-                                    <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                                       <div>
-                                            <p>Reported by: {issue.reportedBy}</p>
-                                            <div className="font-semibold">AI Category: <Badge variant="outline" className="text-accent border-accent">{issue.category}</Badge></div>
-                                       </div>
-                                       <div className="mt-2 sm:mt-0 flex gap-2">
-                                            {contact ? (
-                                                 <Button size="sm" asChild>
-                                                    <a href={`tel:${contact.phone}`}>
-                                                        <Phone className="mr-2 h-4 w-4" /> Call {contact.name}
-                                                    </a>
-                                                 </Button>
-                                            ) : (
-                                                <Button size="sm" asChild>
-                                                    <Link href={`https://www.thumbtack.com/s/${issue.contactType.toLowerCase().replace(' ', '-')}/near-me/`} target="_blank">
-                                                        <ExternalLink className="mr-2 h-4 w-4" /> Find
-                                                    </Link>
-                                                </Button>
-                                            )}
-                                             <Button size="sm" variant="secondary" onClick={() => handleOpenNotesDialog(issue)}>
-                                                <MessageSquare className="mr-2 h-4 w-4" />
-                                                {issue.resolutionNotes ? 'Edit Notes' : 'Add Notes'}
-                                            </Button>
-                                       </div>
-                                    </AlertDescription>
-                                </Alert>
-                            )
-                        })
-                    ) : (
-                        <div className="text-center text-sm text-muted-foreground p-4">No high-priority issues detected. Use the analyzer above.</div>
-                    )}
-                </CardContent>
-            </Card>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-2">
+                         <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-accent"/> High-Priority Issues</CardTitle>
+                            <CardDescription>Critical issues identified by the AI that require immediate attention.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {highPriorityIssues.length > 0 ? (
+                                highPriorityIssues.map(issue => {
+                                    const contact = findContact(issue.contactType);
+                                    return (
+                                        <Alert key={issue.id} variant="destructive" className="bg-accent/10 border-accent text-accent [&>svg]:text-accent">
+                                            <Flag className="h-4 w-4" />
+                                            <AlertTitle className="font-bold">{issue.description}</AlertTitle>
+                                            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                               <div>
+                                                    <p>Reported by: {issue.reportedBy}</p>
+                                                    <div className="font-semibold">AI Category: <Badge variant="outline" className="text-accent border-accent">{issue.category}</Badge></div>
+                                               </div>
+                                               <div className="mt-2 sm:mt-0 flex gap-2">
+                                                    {contact ? (
+                                                         <Button size="sm" asChild>
+                                                            <a href={`tel:${contact.phone}`}>
+                                                                <Phone className="mr-2 h-4 w-4" /> Call {contact.name}
+                                                            </a>
+                                                         </Button>
+                                                    ) : (
+                                                        <Button size="sm" asChild>
+                                                            <Link href={`https://www.thumbtack.com/s/${issue.contactType.toLowerCase().replace(' ', '-')}/near-me/`} target="_blank">
+                                                                <ExternalLink className="mr-2 h-4 w-4" /> Find
+                                                            </Link>
+                                                        </Button>
+                                                    )}
+                                                     <Button size="sm" variant="secondary" onClick={() => handleOpenNotesDialog(issue)}>
+                                                        <MessageSquare className="mr-2 h-4 w-4" />
+                                                        {issue.resolutionNotes ? 'Edit Notes' : 'Add Notes'}
+                                                    </Button>
+                                               </div>
+                                            </AlertDescription>
+                                        </Alert>
+                                    )
+                                })
+                            ) : (
+                                <div className="text-center text-sm text-muted-foreground p-4">No high-priority issues detected. Use the analyzer above.</div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent><p>A list of critical issues that require immediate action.</p></TooltipContent>
+            </Tooltip>
             
-            <Card className="lg:col-span-1">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Wrench /> Service Contacts</CardTitle>
-                    <CardDescription>Your list of trusted service professionals.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Dialog open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="w-full mb-4" variant="outline">
-                                <PlusCircle className="mr-2 h-4 w-4"/> Add Contact
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle className="font-headline">Add New Service Contact</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={handleAddContact}>
-                                <div className="grid gap-4 py-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="contact-name">Contact Name</Label>
-                                        <Input id="contact-name" value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})} placeholder="e.g., Joe's Plumbing" required />
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-1">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><Wrench /> Service Contacts</CardTitle>
+                            <CardDescription>Your list of trusted service professionals.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Dialog open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="w-full mb-4" variant="outline">
+                                        <PlusCircle className="mr-2 h-4 w-4"/> Add Contact
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle className="font-headline">Add New Service Contact</DialogTitle>
+                                    </DialogHeader>
+                                    <form onSubmit={handleAddContact}>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="contact-name">Contact Name</Label>
+                                                <Input id="contact-name" value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})} placeholder="e.g., Joe's Plumbing" required />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="contact-type">Service Type</Label>
+                                                <Select value={newContact.type} onValueChange={value => setNewContact({...newContact, type: value})} required>
+                                                    <SelectTrigger id="contact-type">
+                                                        <SelectValue placeholder="Select service type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Plumber">Plumber</SelectItem>
+                                                        <SelectItem value="Electrician">Electrician</SelectItem>
+                                                        <SelectItem value="Pest Control">Pest Control</SelectItem>
+                                                        <SelectItem value="HVAC">HVAC</SelectItem>
+                                                        <SelectItem value="General Maintenance">General Maintenance</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="contact-phone">Phone Number</Label>
+                                                <Input id="contact-phone" value={newContact.phone} onChange={e => setNewContact({...newContact, phone: e.target.value})} placeholder="e.g., 555-123-4567" required />
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button type="submit">Save Contact</Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                            <div className="space-y-2">
+                                {contacts.length > 0 ? contacts.map(c => (
+                                     <div key={c.id} className="flex items-center justify-between rounded-md border p-3">
+                                        <div>
+                                            <p className="font-semibold">{c.name}</p>
+                                            <p className="text-sm text-muted-foreground">{c.type}</p>
+                                        </div>
+                                        <Button variant="ghost" size="icon" asChild>
+                                           <a href={`tel:${c.phone}`} aria-label={`Call ${c.name}`}>
+                                               <Phone className="h-4 w-4" />
+                                           </a>
+                                        </Button>
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="contact-type">Service Type</Label>
-                                        <Select value={newContact.type} onValueChange={value => setNewContact({...newContact, type: value})} required>
-                                            <SelectTrigger id="contact-type">
-                                                <SelectValue placeholder="Select service type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Plumber">Plumber</SelectItem>
-                                                <SelectItem value="Electrician">Electrician</SelectItem>
-                                                <SelectItem value="Pest Control">Pest Control</SelectItem>
-                                                <SelectItem value="HVAC">HVAC</SelectItem>
-                                                <SelectItem value="General Maintenance">General Maintenance</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="contact-phone">Phone Number</Label>
-                                        <Input id="contact-phone" value={newContact.phone} onChange={e => setNewContact({...newContact, phone: e.target.value})} placeholder="e.g., 555-123-4567" required />
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button type="submit">Save Contact</Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
-                    <div className="space-y-2">
-                        {contacts.length > 0 ? contacts.map(c => (
-                             <div key={c.id} className="flex items-center justify-between rounded-md border p-3">
-                                <div>
-                                    <p className="font-semibold">{c.name}</p>
-                                    <p className="text-sm text-muted-foreground">{c.type}</p>
-                                </div>
-                                <Button variant="ghost" size="icon" asChild>
-                                   <a href={`tel:${c.phone}`} aria-label={`Call ${c.name}`}>
-                                       <Phone className="h-4 w-4" />
-                                   </a>
-                                </Button>
+                                )) : (
+                                    <p className="text-sm text-center text-muted-foreground p-4">No contacts added yet.</p>
+                                )}
                             </div>
-                        )) : (
-                            <p className="text-sm text-center text-muted-foreground p-4">No contacts added yet.</p>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent><p>Your list of trusted plumbers, electricians, and other professionals.</p></TooltipContent>
+            </Tooltip>
 
             <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
                 <DialogContent>
@@ -1061,5 +1111,6 @@ export default function ManagerDashboard() {
                 </DialogContent>
             </Dialog>
         </div>
+        </TooltipProvider>
     );
 }

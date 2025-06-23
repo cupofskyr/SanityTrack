@@ -17,6 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { analyzePhotoIssue } from '@/ai/flows/analyze-photo-issue-flow';
 import { translateText } from "@/ai/flows/translate-text-flow";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 const initialTasks = [
@@ -252,6 +253,7 @@ export default function EmployeeDashboard() {
 
 
   return (
+    <TooltipProvider>
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
        {directMessage && (
             <Alert variant="destructive" className="lg:col-span-2 bg-accent/10 border-accent/50 text-accent [&>svg]:text-accent">
@@ -266,31 +268,38 @@ export default function EmployeeDashboard() {
                 </AlertDescription>
             </Alert>
         )}
-       <Card className="lg:col-span-2">
-            <CardHeader className="flex-row items-start justify-between">
-                <div>
-                    <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Message from the Manager</CardTitle>
-                    <CardDescription>Your manager's daily briefing and focus for the team.</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleTranslateBriefing} disabled={isTranslatingBriefing}>
-                    {isTranslatingBriefing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}
-                    {translatedBriefing ? 'Show Original' : 'Translate'}
-                </Button>
-            </CardHeader>
-            <CardContent>
-                <Alert>
-                    <AlertTitle className="font-semibold">{translatedBriefing ? translatedBriefing.title : briefing.title}</AlertTitle>
-                    <AlertDescription>
-                        <p className="mb-2">{translatedBriefing ? translatedBriefing.message : briefing.message}</p>
-                        <p className="font-semibold text-xs mb-1">Today's Focus:</p>
-                        <ul className="list-disc list-inside text-xs">
-                            {briefing.tasks.map((task, i) => <li key={i}>{task}</li>)}
-                        </ul>
-                    </AlertDescription>
-                </Alert>
-                <p className="text-xs text-muted-foreground mt-2 text-center">This is an example briefing. Your manager can post new messages daily.</p>
-            </CardContent>
-        </Card>
+      <Tooltip>
+        <TooltipTrigger asChild>
+           <Card className="lg:col-span-2">
+                <CardHeader className="flex-row items-start justify-between">
+                    <div>
+                        <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Message from the Manager</CardTitle>
+                        <CardDescription>Your manager's daily briefing and focus for the team.</CardDescription>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleTranslateBriefing} disabled={isTranslatingBriefing}>
+                        {isTranslatingBriefing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}
+                        {translatedBriefing ? 'Show Original' : 'Translate'}
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    <Alert>
+                        <AlertTitle className="font-semibold">{translatedBriefing ? translatedBriefing.title : briefing.title}</AlertTitle>
+                        <AlertDescription>
+                            <p className="mb-2">{translatedBriefing ? translatedBriefing.message : briefing.message}</p>
+                            <p className="font-semibold text-xs mb-1">Today's Focus:</p>
+                            <ul className="list-disc list-inside text-xs">
+                                {briefing.tasks.map((task, i) => <li key={i}>{task}</li>)}
+                            </ul>
+                        </AlertDescription>
+                    </Alert>
+                    <p className="text-xs text-muted-foreground mt-2 text-center">This is an example briefing. Your manager can post new messages daily.</p>
+                </CardContent>
+            </Card>
+        </TooltipTrigger>
+        <TooltipContent>
+            <p>Check here for daily announcements and focus tasks.</p>
+        </TooltipContent>
+      </Tooltip>
 
         <Alert className="lg:col-span-2">
             <AlertCircle className="h-4 w-4" />
@@ -299,368 +308,413 @@ export default function EmployeeDashboard() {
             Please ensure you clock in and out for every shift using the Time Clock. All staff meals must also be logged. Failure to accurately record your hours and meals may result in payment delays for this pay period.
             </AlertDescription>
         </Alert>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Card className="lg:col-span-2">
+            <CardHeader className="flex-row justify-between items-start">
+              <CardTitle className="font-headline flex items-center gap-2"><Clock /> Time Clock</CardTitle>
+              <Dialog open={isOvertimeDialogOpen} onOpenChange={setIsOvertimeDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="sm"><Timer className="mr-2 h-4 w-4"/> Request Overtime</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="font-headline">Request Overtime</DialogTitle>
+                        <DialogDescription>
+                            All overtime must be approved by the owner. Please provide a reason and duration.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleRequestOvertime}>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="overtime-hours">Overtime Hours Requested</Label>
+                                <Input
+                                id="overtime-hours"
+                                type="number"
+                                placeholder="e.g., 2"
+                                value={overtimeHours}
+                                onChange={(e) => setOvertimeHours(e.target.value)}
+                                required
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="overtime-reason">Reason for Overtime</Label>
+                                <Textarea
+                                id="overtime-reason"
+                                placeholder="e.g., Needed to finish deep cleaning the kitchen after a busy night."
+                                value={overtimeReason}
+                                onChange={(e) => setOvertimeReason(e.target.value)}
+                                required
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="submit">Submit for Approval</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="text-center md:text-left">
+                        <p className="text-lg font-semibold">{isClockedIn ? "You are clocked in." : "You are clocked out."}</p>
+                        {lastClockIn && isClockedIn && (
+                            <p className="text-sm text-muted-foreground">
+                                Clocked in at {lastClockIn.toLocaleTimeString()}
+                            </p>
+                        )}
+                    </div>
+                    <div className="flex gap-2">
+                        <Button onClick={handleClockIn} disabled={isClockedIn} className="w-32">Clock In</Button>
+                        <Button onClick={handleClockOut} disabled={!isClockedIn} variant="destructive" className="w-32">Clock Out</Button>
+                    </div>
+                </div>
+                 <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Manual Clock-In</AlertTitle>
+                    <AlertDescription>
+                        Automatic location-based clock-in is not possible in web applications due to browser privacy and technical limitations. Please clock in and out manually.
+                    </AlertDescription>
+                </Alert>
+            </CardContent>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent>
+            <p>Clock in and out for every shift here.</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> My Tasks</CardTitle>
+              <CardDescription>Tasks assigned to you. Complete them to maintain our standards.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task</TableHead>
+                    <TableHead>Area</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tasks.map((task) => (
+                    <TableRow key={task.id}>
+                      <TableCell className="font-medium">{task.name}</TableCell>
+                      <TableCell>{task.area}</TableCell>
+                      <TableCell>
+                        <Badge variant={task.priority === "High" ? "destructive" : "secondary"}>{task.priority}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{task.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">Complete Task</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle className="font-headline">Complete: {task.name}</DialogTitle>
+                              <DialogDescription>
+                                Upload a photo as proof of completion. This helps us track our quality standards.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <PhotoUploader />
+                            <DialogFooter>
+                              <Button type="submit" className="bg-primary hover:bg-primary/90">Submit Completion</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent>
+            <p>A list of tasks assigned directly to you.</p>
+        </TooltipContent>
+      </Tooltip>
+      
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="font-headline flex items-center gap-2"><CalendarDays /> My Schedule & Availability</CardTitle>
+              <CardDescription>View your upcoming shifts and set your unavailable days for the next scheduling period.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 className="font-semibold mb-2 text-sm">Set Unavailability</h3>
+                    <div className="rounded-md border">
+                        <Calendar
+                            mode="multiple"
+                            min={0}
+                            selected={unavailableDays}
+                            onSelect={setUnavailableDays}
+                            className="p-0"
+                        />
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        You have marked {unavailableDays?.length || 0} day(s) as unavailable.
+                    </p>
+                </div>
+                <div>
+                    <h3 className="font-semibold mb-2 text-sm">Upcoming Shifts</h3>
+                    <div className="border rounded-md p-4 space-y-2 min-h-[290px] flex items-center justify-center">
+                        <p className="text-muted-foreground text-center text-sm">Your schedule will appear here once published by the manager.</p>
+                    </div>
+                </div>
+            </CardContent>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent>
+            <p>View your shifts and set days you're unavailable.</p>
+        </TooltipContent>
+      </Tooltip>
 
-      <Card className="lg:col-span-2">
-        <CardHeader className="flex-row justify-between items-start">
-          <CardTitle className="font-headline flex items-center gap-2"><Clock /> Time Clock</CardTitle>
-          <Dialog open={isOvertimeDialogOpen} onOpenChange={setIsOvertimeDialogOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="sm"><Timer className="mr-2 h-4 w-4"/> Request Overtime</Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle className="font-headline">Request Overtime</DialogTitle>
+    <Tooltip>
+        <TooltipTrigger asChild>
+            <Card>
+                <CardHeader>
+                  <CardTitle className="font-headline flex items-center gap-2"><User /> My Profile</CardTitle>
+                  <CardDescription>Your contact information for scheduling and communication.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground flex items-center gap-2"><User className="h-4 w-4"/> Full Name</span>
+                        <span className="font-semibold">John Doe (Demo)</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground flex items-center gap-2"><Mail className="h-4 w-4"/> Email</span>
+                        <span className="font-semibold">john.doe@example.com</span>
+                    </div>
+                     <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground flex items-center gap-2"><Phone className="h-4 w-4"/> Phone</span>
+                        <span className="font-semibold">555-123-4567</span>
+                    </div>
+                    <Button variant="outline" className="w-full" disabled>Edit Profile</Button>
+                </CardContent>
+              </Card>
+        </TooltipTrigger>
+        <TooltipContent><p>Your basic contact information.</p></TooltipContent>
+    </Tooltip>
+
+      <Tooltip>
+          <TooltipTrigger asChild>
+              <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><UtensilsCrossed /> Staff Meal Log</CardTitle>
+                    <CardDescription>Log your meals for the shift. Limit: {mealLimit} items.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between rounded-lg border p-3">
+                            <div>
+                                <p className="text-sm font-medium">Logged Items</p>
+                                <p className="text-2xl font-bold">{loggedMeals.length} / {mealLimit}</p>
+                            </div>
+                            <Dialog open={isMealLogDialogOpen} onOpenChange={setIsMealLogDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button disabled={loggedMeals.length >= mealLimit}>
+                                        <PlusCircle className="mr-2 h-4 w-4" /> Log Meal
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle className="font-headline">Log Staff Meal</DialogTitle>
+                                        <DialogDescription>
+                                            Describe the item(s) you are taking for your meal and upload a photo.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <form onSubmit={handleLogMeal}>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="meal-photo">Photo of Meal</Label>
+                                                <PhotoUploader onPhotoDataChange={setNewMealPhoto} />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="meal-description">Meal Description</Label>
+                                                <Textarea
+                                                    id="meal-description"
+                                                    placeholder="e.g., Turkey sandwich and a bag of chips"
+                                                    value={newMealDescription}
+                                                    onChange={(e) => setNewMealDescription(e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button type="submit">Log Meal</Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                        <div className="space-y-2">
+                            <h4 className="text-sm font-medium">Your Logged Meals Today</h4>
+                            {loggedMeals.length > 0 ? (
+                                <ul className="list-disc list-inside text-sm text-muted-foreground">
+                                    {loggedMeals.map(meal => <li key={meal.id}>{meal.description}</li>)}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center pt-2">You haven't logged any meals yet.</p>
+                            )}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent><p>Log your staff meals for each shift as per company policy.</p></TooltipContent>
+      </Tooltip>
+      <Tooltip>
+          <TooltipTrigger asChild>
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline flex items-center gap-2"><CheckCircle /> Completed Recently</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task</TableHead>
+                    <TableHead className="text-right">Completed At</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {completedTasks.map((task) => (
+                    <TableRow key={task.id}>
+                      <TableCell>{task.name}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{task.completedAt}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+          </TooltipTrigger>
+          <TooltipContent><p>A list of tasks you've recently completed.</p></TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+          <TooltipTrigger asChild>
+          <Card>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle /> Open Issues</CardTitle>
+                <CardDescription>Issues you've reported that need attention.</CardDescription>
+              </div>
+              <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Report Issue</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="font-headline">Report a New Issue</DialogTitle>
                     <DialogDescription>
-                        All overtime must be approved by the owner. Please provide a reason and duration.
+                      Take a photo or describe the issue you've found. The AI can help generate a description from the photo.
                     </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleRequestOvertime}>
+                  </DialogHeader>
+                  <form onSubmit={handleReportIssue}>
                     <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="overtime-hours">Overtime Hours Requested</Label>
-                            <Input
-                            id="overtime-hours"
-                            type="number"
-                            placeholder="e.g., 2"
-                            value={overtimeHours}
-                            onChange={(e) => setOvertimeHours(e.target.value)}
-                            required
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="overtime-reason">Reason for Overtime</Label>
-                            <Textarea
-                            id="overtime-reason"
-                            placeholder="e.g., Needed to finish deep cleaning the kitchen after a busy night."
-                            value={overtimeReason}
-                            onChange={(e) => setOvertimeReason(e.target.value)}
-                            required
-                            />
-                        </div>
+                      <div className="space-y-2">
+                         <Label>Photo of Issue</Label>
+                         <PhotoUploader onPhotoDataChange={setPhotoForAnalysis} />
+                      </div>
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={handleAnalyzePhoto}
+                        disabled={!photoForAnalysis || isAnalyzingPhoto}
+                      >
+                        {isAnalyzingPhoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4 text-primary" />}
+                        Analyze Photo to Generate Description
+                      </Button>
+    
+                      <div className="grid gap-2">
+                        <Label htmlFor="issue-description">Issue Description</Label>
+                        <Textarea
+                          id="issue-description"
+                          placeholder="e.g., Water puddle near the entrance. Or, let the AI generate this from a photo."
+                          value={newIssueDescription}
+                          onChange={(e) => setNewIssueDescription(e.target.value)}
+                          required
+                        />
+                      </div>
                     </div>
                     <DialogFooter>
-                        <Button type="submit">Submit for Approval</Button>
+                      <Button type="submit">Submit Report</Button>
                     </DialogFooter>
-                </form>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="text-center md:text-left">
-                    <p className="text-lg font-semibold">{isClockedIn ? "You are clocked in." : "You are clocked out."}</p>
-                    {lastClockIn && isClockedIn && (
-                        <p className="text-sm text-muted-foreground">
-                            Clocked in at {lastClockIn.toLocaleTimeString()}
-                        </p>
-                    )}
-                </div>
-                <div className="flex gap-2">
-                    <Button onClick={handleClockIn} disabled={isClockedIn} className="w-32">Clock In</Button>
-                    <Button onClick={handleClockOut} disabled={!isClockedIn} variant="destructive" className="w-32">Clock Out</Button>
-                </div>
-            </div>
-             <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Manual Clock-In</AlertTitle>
-                <AlertDescription>
-                    Automatic location-based clock-in is not possible in web applications due to browser privacy and technical limitations. Please clock in and out manually.
-                </AlertDescription>
-            </Alert>
-        </CardContent>
-      </Card>
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> My Tasks</CardTitle>
-          <CardDescription>Tasks assigned to you. Complete them to maintain our standards.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Task</TableHead>
-                <TableHead>Area</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tasks.map((task) => (
-                <TableRow key={task.id}>
-                  <TableCell className="font-medium">{task.name}</TableCell>
-                  <TableCell>{task.area}</TableCell>
-                  <TableCell>
-                    <Badge variant={task.priority === "High" ? "destructive" : "secondary"}>{task.priority}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{task.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">Complete Task</Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle className="font-headline">Complete: {task.name}</DialogTitle>
-                          <DialogDescription>
-                            Upload a photo as proof of completion. This helps us track our quality standards.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <PhotoUploader />
-                        <DialogFooter>
-                          <Button type="submit" className="bg-primary hover:bg-primary/90">Submit Completion</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-      
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><CalendarDays /> My Schedule & Availability</CardTitle>
-          <CardDescription>View your upcoming shifts and set your unavailable days for the next scheduling period.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-6">
-            <div>
-                <h3 className="font-semibold mb-2 text-sm">Set Unavailability</h3>
-                <div className="rounded-md border">
-                    <Calendar
-                        mode="multiple"
-                        min={0}
-                        selected={unavailableDays}
-                        onSelect={setUnavailableDays}
-                        className="p-0"
-                    />
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                    You have marked {unavailableDays?.length || 0} day(s) as unavailable.
-                </p>
-            </div>
-            <div>
-                <h3 className="font-semibold mb-2 text-sm">Upcoming Shifts</h3>
-                <div className="border rounded-md p-4 space-y-2 min-h-[290px] flex items-center justify-center">
-                    <p className="text-muted-foreground text-center text-sm">Your schedule will appear here once published by the manager.</p>
-                </div>
-            </div>
-        </CardContent>
-      </Card>
-
-    <Card>
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><User /> My Profile</CardTitle>
-          <CardDescription>Your contact information for scheduling and communication.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-2"><User className="h-4 w-4"/> Full Name</span>
-                <span className="font-semibold">John Doe (Demo)</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-2"><Mail className="h-4 w-4"/> Email</span>
-                <span className="font-semibold">john.doe@example.com</span>
-            </div>
-             <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-2"><Phone className="h-4 w-4"/> Phone</span>
-                <span className="font-semibold">555-123-4567</span>
-            </div>
-            <Button variant="outline" className="w-full" disabled>Edit Profile</Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><UtensilsCrossed /> Staff Meal Log</CardTitle>
-            <CardDescription>Log your meals for the shift. Limit: {mealLimit} items.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div className="space-y-4">
-                <div className="flex items-center justify-between rounded-lg border p-3">
-                    <div>
-                        <p className="text-sm font-medium">Logged Items</p>
-                        <p className="text-2xl font-bold">{loggedMeals.length} / {mealLimit}</p>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+            <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {issues.map((issue) => (
+                    <TableRow key={issue.id}>
+                      <TableCell>{issue.description}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline">{issue.status}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+          </TooltipTrigger>
+          <TooltipContent><p>Report new issues you find in the workplace.</p></TooltipContent>
+      </Tooltip>
+      <Tooltip>
+          <TooltipTrigger asChild>
+          <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><Star /> Recent Customer Feedback</CardTitle>
+                <CardDescription>Approved reviews from recent guests, curated by management.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {reviews.length > 0 ? reviews.map((review) => (
+                <div key={review.id} className="p-3 border rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-1 mb-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                        key={i}
+                        className={`h-4 w-4 ${i < review.rating ? 'text-accent' : 'text-muted-foreground/30'}`}
+                        fill="currentColor"
+                        />
+                    ))}
                     </div>
-                    <Dialog open={isMealLogDialogOpen} onOpenChange={setIsMealLogDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button disabled={loggedMeals.length >= mealLimit}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Log Meal
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle className="font-headline">Log Staff Meal</DialogTitle>
-                                <DialogDescription>
-                                    Describe the item(s) you are taking for your meal and upload a photo.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <form onSubmit={handleLogMeal}>
-                                <div className="grid gap-4 py-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="meal-photo">Photo of Meal</Label>
-                                        <PhotoUploader onPhotoDataChange={setNewMealPhoto} />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="meal-description">Meal Description</Label>
-                                        <Textarea
-                                            id="meal-description"
-                                            placeholder="e.g., Turkey sandwich and a bag of chips"
-                                            value={newMealDescription}
-                                            onChange={(e) => setNewMealDescription(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button type="submit">Log Meal</Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                    <blockquote className="text-sm italic border-l-2 pl-3">"{review.comment}"</blockquote>
+                    <p className="text-xs text-right text-muted-foreground mt-2">- {review.author}</p>
                 </div>
-                <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Your Logged Meals Today</h4>
-                    {loggedMeals.length > 0 ? (
-                        <ul className="list-disc list-inside text-sm text-muted-foreground">
-                            {loggedMeals.map(meal => <li key={meal.id}>{meal.description}</li>)}
-                        </ul>
-                    ) : (
-                        <p className="text-sm text-muted-foreground text-center pt-2">You haven't logged any meals yet.</p>
-                    )}
-                </div>
-            </div>
-        </CardContent>
-    </Card>
+                )) : (
+                     <div className="text-center text-sm text-muted-foreground p-4">No reviews have been featured by management yet.</div>
+                )}
+            </CardContent>
+        </Card>
+          </TooltipTrigger>
+          <TooltipContent><p>See what customers are saying about their experience.</p></TooltipContent>
+      </Tooltip>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><CheckCircle /> Completed Recently</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Task</TableHead>
-                <TableHead className="text-right">Completed At</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {completedTasks.map((task) => (
-                <TableRow key={task.id}>
-                  <TableCell>{task.name}</TableCell>
-                  <TableCell className="text-right text-muted-foreground">{task.completedAt}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between">
-          <div>
-            <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle /> Open Issues</CardTitle>
-            <CardDescription>Issues you've reported that need attention.</CardDescription>
-          </div>
-          <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Report Issue</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="font-headline">Report a New Issue</DialogTitle>
-                <DialogDescription>
-                  Take a photo or describe the issue you've found. The AI can help generate a description from the photo.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleReportIssue}>
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2">
-                     <Label>Photo of Issue</Label>
-                     <PhotoUploader onPhotoDataChange={setPhotoForAnalysis} />
-                  </div>
-                  
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleAnalyzePhoto}
-                    disabled={!photoForAnalysis || isAnalyzingPhoto}
-                  >
-                    {isAnalyzingPhoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4 text-primary" />}
-                    Analyze Photo to Generate Description
-                  </Button>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="issue-description">Issue Description</Label>
-                    <Textarea
-                      id="issue-description"
-                      placeholder="e.g., Water puddle near the entrance. Or, let the AI generate this from a photo."
-                      value={newIssueDescription}
-                      onChange={(e) => setNewIssueDescription(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit">Submit Report</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-        <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {issues.map((issue) => (
-                <TableRow key={issue.id}>
-                  <TableCell>{issue.description}</TableCell>
-                  <TableCell className="text-right">
-                    <Badge variant="outline">{issue.status}</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><Star /> Recent Customer Feedback</CardTitle>
-            <CardDescription>Approved reviews from recent guests, curated by management.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            {reviews.length > 0 ? reviews.map((review) => (
-            <div key={review.id} className="p-3 border rounded-lg bg-muted/50">
-                <div className="flex items-center gap-1 mb-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                    key={i}
-                    className={`h-4 w-4 ${i < review.rating ? 'text-accent' : 'text-muted-foreground/30'}`}
-                    fill="currentColor"
-                    />
-                ))}
-                </div>
-                <blockquote className="text-sm italic border-l-2 pl-3">"{review.comment}"</blockquote>
-                <p className="text-xs text-right text-muted-foreground mt-2">- {review.author}</p>
-            </div>
-            )) : (
-                 <div className="text-center text-sm text-muted-foreground p-4">No reviews have been featured by management yet.</div>
-            )}
-        </CardContent>
-    </Card>
     </div>
+    </TooltipProvider>
   );
 }
