@@ -28,7 +28,8 @@ import {
   ShieldCheck,
   BookOpen,
   GraduationCap,
-  Languages
+  Languages,
+  UserCog
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -157,7 +158,7 @@ export default function DashboardLayout({
                 <span className="ml-auto text-xs text-muted-foreground">English</span>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <ShieldCheck className="mr-2 h-4 w-4" />
+                <UserCog className="mr-2 h-4 w-4" />
                 <span>Permissions</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

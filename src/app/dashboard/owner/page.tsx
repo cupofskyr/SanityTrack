@@ -29,7 +29,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { postJob, type JobPostingInput } from '@/ai/flows/post-job-flow';
 
 
-type TeamMember = { name: string; role: "Manager" | "Employee"; location: string };
+type TeamMember = {
+    id: number;
+    name: string;
+    role: "Manager" | "Employee";
+    location: string;
+};
 type Location = { id: number; name: string; manager: string; inspectionCode: string; toastApiKey?: string; };
 type HealthTaskStatus = 'Pending' | 'Delegated' | 'PendingOwnerApproval' | 'Submitted';
 type HealthTask = { id: number; description: string; source: string; status: HealthTaskStatus; delegatedTo?: string; attachment?: { url: string; name: string; }; };
@@ -98,6 +103,9 @@ export default function OwnerDashboard() {
     const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
     const [requestToReject, setRequestToReject] = useState<HiringRequest | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+    const [selectedUserForPermissions, setSelectedUserForPermissions] = useState<TeamMember | null>(null);
+
 
     // Onboarding Form State
     const [newLocationName, setNewLocationName] = useState('');
@@ -202,6 +210,7 @@ export default function OwnerDashboard() {
             toastApiKey: newToastKey,
         };
         const newManager: TeamMember = {
+            id: 1,
             name: newManagerName,
             role: "Manager",
             location: newLocationName,
@@ -244,6 +253,7 @@ export default function OwnerDashboard() {
             toastApiKey: newLocationData.toastKey,
         };
         const newManager: TeamMember = {
+            id: teamMembers.length > 0 ? Math.max(...teamMembers.map(tm => tm.id)) + 1 : 1,
             name: newLocationData.managerName,
             role: "Manager",
             location: newLocationData.name,
@@ -380,7 +390,7 @@ export default function OwnerDashboard() {
         setAssignmentResult(null);
         setIsAssigning(true);
         try {
-            const teamForLocation = teamMembers.filter(tm => tm.location === location);
+            const teamForLocation = teamMembers.filter(tm => tm.location === location && (tm.role === "Manager" || tm.role === "Employee"));
             const result = await suggestTaskAssignment({ issueDescription, teamMembers: teamForLocation });
             setAssignmentResult(result);
         } catch (error) {
@@ -494,6 +504,26 @@ export default function OwnerDashboard() {
         });
         // Reset form
         setMeetingDetails({ title: '', date: new Date(), time: '', attendee: '', description: '' });
+    };
+
+    const handleOpenPermissionsDialog = (user: TeamMember) => {
+        setSelectedUserForPermissions(user);
+        setIsPermissionsDialogOpen(true);
+    };
+
+    const handleSavePermissions = () => {
+        if (!selectedUserForPermissions) return;
+
+        setTeamMembers(teamMembers.map(tm =>
+            tm.id === selectedUserForPermissions.id ? selectedUserForPermissions : tm
+        ));
+
+        toast({
+            title: 'Permissions Updated',
+            description: `${selectedUserForPermissions.name}'s role has been changed to ${selectedUserForPermissions.role}.`,
+        });
+        setIsPermissionsDialogOpen(false);
+        setSelectedUserForPermissions(null);
     };
 
 
@@ -735,6 +765,44 @@ export default function OwnerDashboard() {
                         </Table>
                     </CardContent>
                 </Card>
+
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Card>
+                            <CardHeader className="flex flex-row items-start justify-between">
+                                <div>
+                                    <CardTitle className="font-headline flex items-center gap-2"><UserCog /> Team & Permissions</CardTitle>
+                                    <CardDescription>Manage user roles and permissions across all locations.</CardDescription>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Name</TableHead>
+                                            <TableHead>Location</TableHead>
+                                            <TableHead>Role</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {teamMembers.map((member) => (
+                                            <TableRow key={member.id}>
+                                                <TableCell className="font-medium">{member.name}</TableCell>
+                                                <TableCell>{member.location}</TableCell>
+                                                <TableCell><Badge variant={member.role === 'Manager' ? 'default' : 'secondary'}>{member.role}</Badge></TableCell>
+                                                <TableCell className="text-right">
+                                                   <Button variant="outline" size="sm" onClick={() => handleOpenPermissionsDialog(member)}>Manage</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Manage user roles across your organization.</p></TooltipContent>
+                 </Tooltip>
                  
                  <Tooltip>
                      <TooltipTrigger asChild>
@@ -1141,6 +1209,43 @@ export default function OwnerDashboard() {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
+
+                {/* Manage Permissions Dialog */}
+                 <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className='font-headline'>Manage Permissions for {selectedUserForPermissions?.name}</DialogTitle>
+                            <DialogDescription>
+                                Change the user's role below. Changes will take effect immediately.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="role-select">User Role</Label>
+                                <Select
+                                    value={selectedUserForPermissions?.role}
+                                    onValueChange={(newRole: "Manager" | "Employee") => {
+                                        if (selectedUserForPermissions) {
+                                            setSelectedUserForPermissions({ ...selectedUserForPermissions, role: newRole });
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger id="role-select">
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Manager">Manager</SelectItem>
+                                        <SelectItem value="Employee">Employee</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="secondary" onClick={() => setIsPermissionsDialogOpen(false)}>Cancel</Button>
+                            <Button onClick={handleSavePermissions}>Save Changes</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
             </div>
         </TooltipProvider>
