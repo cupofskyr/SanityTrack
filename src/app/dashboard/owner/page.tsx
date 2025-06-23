@@ -189,6 +189,7 @@ export default function OwnerDashboard() {
         setCrucialAlerts([
             { id: 1, location: newLocationName, description: "Main freezer unit is offline. Temperature rising rapidly." },
             { id: 2, location: newLocationName, description: "POS system is down. Cannot process credit card payments." },
+            { id: 3, location: newLocationName, type: 'overtime', description: "John Doe has requested 2 hours of overtime for deep cleaning." }
         ]);
     };
 
