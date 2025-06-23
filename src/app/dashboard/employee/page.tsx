@@ -329,13 +329,6 @@ export default function EmployeeDashboard() {
         </TooltipContent>
       </Tooltip>
 
-        <Alert className="lg:col-span-2">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Important Reminders from Management</AlertTitle>
-            <AlertDescription>
-            Please ensure you clock in and out for every shift using the Time Clock. All staff meals must also be logged. Failure to accurately record your hours and meals may result in payment delays for this pay period.
-            </AlertDescription>
-        </Alert>
       <Tooltip>
         <TooltipTrigger asChild>
           <Card className="lg:col-span-2">
