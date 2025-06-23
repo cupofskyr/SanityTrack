@@ -34,10 +34,11 @@ const initialIssues = [
 ];
 
 const initialReviews = [
-  { id: 1, rating: 5, comment: "The service was incredibly fast and friendly! The smoothie was delicious.", author: "Happy Customer" },
-  { id: 2, rating: 4, comment: "Great place, very clean. My order took a little long, but it was worth the wait.", author: "Visitor" },
-  { id: 3, rating: 5, comment: "I love coming here. The staff always remembers my order!", author: "A Regular" },
+    { id: 1, rating: 5, comment: "The service was incredibly fast and friendly! The smoothie was delicious.", author: "Happy Customer" },
+    { id: 2, rating: 4, comment: "Great place, very clean. My order took a little long, but it was worth the wait.", author: "Visitor" },
+    { id: 3, rating: 5, comment: "I love coming here. The staff always remembers my order!", author: "A Regular" },
 ];
+
 
 export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState(initialTasks);
@@ -358,10 +359,10 @@ export default function EmployeeDashboard() {
       <Card>
         <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Star /> Recent Customer Feedback</CardTitle>
-            <CardDescription>Approved reviews from recent guests.</CardDescription>
+            <CardDescription>Approved reviews from recent guests, curated by management.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-            {reviews.map((review) => (
+            {reviews.length > 0 ? reviews.map((review) => (
             <div key={review.id} className="p-3 border rounded-lg bg-muted/50">
                 <div className="flex items-center gap-1 mb-2">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -375,9 +376,13 @@ export default function EmployeeDashboard() {
                 <blockquote className="text-sm italic border-l-2 pl-3">"{review.comment}"</blockquote>
                 <p className="text-xs text-right text-muted-foreground mt-2">- {review.author}</p>
             </div>
-            ))}
+            )) : (
+                 <div className="text-center text-sm text-muted-foreground p-4">No reviews have been featured by management yet.</div>
+            )}
         </CardContent>
-        </Card>
+    </Card>
     </div>
   );
 }
+
+    

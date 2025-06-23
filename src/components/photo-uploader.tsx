@@ -10,9 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 
-export default function PhotoUploader() {
-  const [preview, setPreview] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
+type PhotoUploaderProps = {
+  readOnly?: boolean;
+  initialPreview?: { url: string; name: string };
+};
+
+export default function PhotoUploader({ readOnly = false, initialPreview }: PhotoUploaderProps) {
+  const [preview, setPreview] = useState<string | null>(initialPreview?.url || null);
+  const [fileName, setFileName] = useState<string | null>(initialPreview?.name || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -20,6 +25,13 @@ export default function PhotoUploader() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (initialPreview) {
+      setPreview(initialPreview.url);
+      setFileName(initialPreview.name);
+    }
+  }, [initialPreview]);
 
   useEffect(() => {
     if (isCameraOpen) {
@@ -56,7 +68,6 @@ export default function PhotoUploader() {
       getCameraPermission();
 
       return () => {
-        // Stop camera stream when component unmounts or dialog is closed
         if (videoRef.current && videoRef.current.srcObject) {
             const stream = videoRef.current.srcObject as MediaStream;
             stream.getTracks().forEach(track => track.stop());
@@ -102,6 +113,16 @@ export default function PhotoUploader() {
     }
   };
 
+  if (readOnly && preview) {
+    return (
+      <div className="w-full">
+        <div className="relative w-full h-96 rounded-lg overflow-hidden border">
+          <Image src={preview} alt="Image preview" layout="fill" objectFit="contain" data-ai-hint="proof document"/>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <Input
@@ -111,6 +132,7 @@ export default function PhotoUploader() {
         className="hidden"
         ref={fileInputRef}
         id="photo-upload"
+        disabled={readOnly}
       />
       
       {!preview ? (
@@ -175,3 +197,5 @@ export default function PhotoUploader() {
     </div>
   );
 }
+
+    

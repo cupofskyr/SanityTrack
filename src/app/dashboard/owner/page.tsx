@@ -2,8 +2,8 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -12,15 +12,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { suggestTaskAssignment, type SuggestTaskAssignmentOutput } from '@/ai/flows/suggest-task-assignment-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import PhotoUploader from '@/components/photo-uploader';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // --- MOCK DATA ---
 const teamMembers = [
@@ -29,17 +25,29 @@ const teamMembers = [
   { name: "John Doe", role: "Employee" as const },
   { name: "Jane Smith", role: "Employee" as const },
 ];
+const managers = teamMembers.filter(m => m.role === 'Manager');
 
 const crucialAlerts = [
     { id: 1, location: "Downtown Cafe", description: "Main freezer unit is offline. Temperature rising rapidly." },
     { id: 2, location: "Uptown Bistro", description: "Guest reported seeing a rodent in the main dining area." },
     { id: 3, location: "Downtown Cafe", description: "POS system is down. Cannot process credit card payments." },
+    { id: 4, location: "Uptown Bistro", description: "Proposed weekly schedule has 2 employees in overtime.", type: 'overtime' },
 ];
 
-const initialHealthDeptTasks = [
-    { id: 1, description: "Verify all employee food handler certifications are up to date.", source: "City Health Inspector", status: "Pending" as const },
-    { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: "Pending" as const },
-    { id: 3, description: "Quarterly pest control inspection report.", source: "City Ordinance 23B", status: "Submitted" as const },
+type HealthTaskStatus = 'Pending' | 'Delegated' | 'PendingOwnerApproval' | 'Submitted';
+type HealthTask = {
+    id: number;
+    description: string;
+    source: string;
+    status: HealthTaskStatus;
+    delegatedTo?: string;
+    attachment?: { url: string; name: string; };
+};
+
+const initialHealthDeptTasks: HealthTask[] = [
+    { id: 1, description: "Verify all employee food handler certifications are up to date.", source: "City Health Inspector", status: "Pending" },
+    { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: "Delegated", delegatedTo: 'Casey Lee' },
+    { id: 3, description: "Quarterly pest control inspection report.", source: "City Ordinance 23B", status: "Submitted" },
 ];
 
 const initialRequests = [
@@ -59,11 +67,17 @@ export default function OwnerDashboard() {
     const { toast } = useToast();
     const [requests, setRequests] = useState(initialRequests);
     const [memo, setMemo] = useState("Finalize Q3 budget by Friday. Follow up with vendor about new coffee machine.");
-    const [healthDeptTasks, setHealthDeptTasks] = useState(initialHealthDeptTasks);
+    const [healthDeptTasks, setHealthDeptTasks] = useState<HealthTask[]>(initialHealthDeptTasks);
     
     const [isAssigning, setIsAssigning] = useState(false);
     const [assignmentResult, setAssignmentResult] = useState<SuggestTaskAssignmentOutput | null>(null);
     const [selectedAlert, setSelectedAlert] = useState<string | null>(null);
+
+    const [isDelegateDialogOpen, setDelegateDialogOpen] = useState(false);
+    const [isReviewDialogOpen, setReviewDialogOpen] = useState(false);
+    const [isContactManagerOpen, setContactManagerOpen] = useState(false);
+    const [selectedTask, setSelectedTask] = useState<HealthTask | null>(null);
+    const [selectedManager, setSelectedManager] = useState('');
 
     const handleRequest = (requestId: number, approved: boolean) => {
         const request = requests.find(r => r.id === requestId);
@@ -90,9 +104,8 @@ export default function OwnerDashboard() {
                 title: 'AI Error',
                 description: 'Could not generate an assignment suggestion.',
             });
-            setIsAssigning(false); // Close dialog on error
+            setIsAssigning(false); 
         }
-        // Keep dialog open on success, setIsLoading(false) is in the Dialog onOpenChange
     };
 
     const closeAssignmentDialog = () => {
@@ -101,15 +114,51 @@ export default function OwnerDashboard() {
         setSelectedAlert(null);
     }
     
-    const handleSubmitToHealthDept = (taskId: number) => {
-        setHealthDeptTasks(tasks => tasks.map(task => 
-            task.id === taskId ? { ...task, status: 'Submitted' } : task
+    const handleOpenDelegateDialog = (task: HealthTask) => {
+        setSelectedTask(task);
+        setDelegateDialogOpen(true);
+    };
+
+    const handleDelegateTask = () => {
+        if (!selectedTask || !selectedManager) return;
+        setHealthDeptTasks(tasks => tasks.map(t => 
+            t.id === selectedTask.id ? { ...t, status: 'Delegated', delegatedTo: selectedManager } : t
         ));
         toast({
-            title: "Submission Sent (Simulated)",
+            title: 'Task Delegated',
+            description: `"${selectedTask.description}" has been delegated to ${selectedManager}.`,
+        });
+        setDelegateDialogOpen(false);
+        setSelectedManager('');
+        setSelectedTask(null);
+    };
+
+    const handleOpenReviewDialog = (task: HealthTask) => {
+        setSelectedTask(task);
+        setReviewDialogOpen(true);
+    };
+
+    const handleApproveAndSubmit = () => {
+        if (!selectedTask) return;
+        setHealthDeptTasks(tasks => tasks.map(task => 
+            task.id === selectedTask.id ? { ...task, status: 'Submitted' } : task
+        ));
+        toast({
+            title: "Submission Approved & Sent",
             description: "The compliance document has been submitted to the health department.",
         });
+        setReviewDialogOpen(false);
+        setSelectedTask(null);
     };
+
+    const handleSendMessage = () => {
+        toast({
+            title: "Message Sent (Simulated)",
+            description: "Your message has been sent to the manager."
+        });
+        setContactManagerOpen(false);
+    }
+
 
     return (
         <TooltipProvider>
@@ -169,10 +218,17 @@ export default function OwnerDashboard() {
                                     <AlertTriangle className="h-4 w-4 !text-accent" />
                                     <AlertTitle className="font-bold flex justify-between items-center">
                                         <span>{alert.location}</span>
-                                        <Button size="sm" variant="secondary" onClick={() => handleSuggestAssignment(alert.description)}>
-                                            <Sparkles className="mr-2 h-4 w-4"/>
-                                            AI Assign
-                                        </Button>
+                                        {alert.type === 'overtime' ? (
+                                            <Button size="sm" variant="secondary" onClick={() => setContactManagerOpen(true)}>
+                                                <MessageSquare className="mr-2 h-4 w-4"/>
+                                                Contact Manager
+                                            </Button>
+                                        ) : (
+                                            <Button size="sm" variant="secondary" onClick={() => handleSuggestAssignment(alert.description)}>
+                                                <Sparkles className="mr-2 h-4 w-4"/>
+                                                AI Assign
+                                            </Button>
+                                        )}
                                     </AlertTitle>
                                     <AlertDescription>
                                         {alert.description}
@@ -281,32 +337,39 @@ export default function OwnerDashboard() {
                             {healthDeptTasks.map(task => (
                                 <AccordionItem value={`task-${task.id}`} key={task.id}>
                                     <AccordionTrigger className="hover:no-underline text-left">
-                                        <div className="flex w-full items-center justify-between pr-4">
+                                        <div className="flex w-full items-center justify-between pr-4 gap-4">
                                             <div className='text-left'>
                                                 <p className="font-semibold">{task.description}</p>
                                                 <p className="text-xs text-muted-foreground">Source: {task.source}</p>
                                             </div>
-                                            <Badge variant={task.status === 'Submitted' ? 'default' : 'destructive'} className='whitespace-nowrap'>
-                                                {task.status}
+                                            <Badge variant={task.status === 'Submitted' ? 'default' : task.status === 'Pending' ? 'destructive' : 'secondary'} className='whitespace-nowrap shrink-0'>
+                                                {task.status === 'PendingOwnerApproval' ? 'Pending Your Approval' : task.status}
                                             </Badge>
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent>
                                         <div className='p-4 bg-muted/50 rounded-md m-1 space-y-4'>
-                                            {task.status === 'Pending' ? (
-                                                <>
-                                                    <div>
-                                                        <Label className='text-xs text-muted-foreground'>Attach Proof of Completion</Label>
-                                                        <div className='mt-2'>
-                                                            <PhotoUploader />
-                                                        </div>
-                                                    </div>
-                                                    <Button onClick={() => handleSubmitToHealthDept(task.id)}>
-                                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                                        Submit to Health Dept. (Simulated)
+                                            {task.status === 'Pending' && (
+                                                <div className='flex flex-col sm:flex-row gap-2'>
+                                                     <Button onClick={() => handleOpenDelegateDialog(task)}>
+                                                        <Briefcase className="mr-2 h-4 w-4" />
+                                                        Delegate to Manager
                                                     </Button>
-                                                </>
-                                            ) : (
+                                                </div>
+                                            )}
+                                            {task.status === 'Delegated' && (
+                                                <p className='text-sm text-muted-foreground italic'>This task has been delegated to {task.delegatedTo} and is pending their action.</p>
+                                            )}
+                                             {task.status === 'PendingOwnerApproval' && (
+                                                <div className='flex items-center gap-4'>
+                                                     <p className='text-sm text-muted-foreground'>Manager {task.delegatedTo} has submitted proof for your review.</p>
+                                                    <Button onClick={() => handleOpenReviewDialog(task)}>
+                                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                                        Review & Approve
+                                                    </Button>
+                                                </div>
+                                            )}
+                                            {task.status === 'Submitted' && (
                                                 <p className='text-sm text-muted-foreground italic'>This task has already been submitted.</p>
                                             )}
                                         </div>
@@ -353,7 +416,82 @@ export default function OwnerDashboard() {
                     </DialogContent>
                 </Dialog>
 
+                {/* Delegate Task Dialog */}
+                <Dialog open={isDelegateDialogOpen} onOpenChange={setDelegateDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className='font-headline'>Delegate Task</DialogTitle>
+                            <DialogDescription>Assign this mandatory task to a manager to complete.</DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label>Task</Label>
+                                <p className='text-sm text-muted-foreground border p-2 rounded-md bg-muted/50'>{selectedTask?.description}</p>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="manager-select">Assign to Manager</Label>
+                                <Select onValueChange={setSelectedManager}>
+                                    <SelectTrigger id="manager-select">
+                                        <SelectValue placeholder="Select a manager" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {managers.map(m => <SelectItem key={m.name} value={m.name}>{m.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="secondary" onClick={() => setDelegateDialogOpen(false)}>Cancel</Button>
+                            <Button onClick={handleDelegateTask} disabled={!selectedManager}>Delegate Task</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Review Submission Dialog */}
+                 <Dialog open={isReviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+                    <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle className='font-headline'>Review Manager's Submission</DialogTitle>
+                            <DialogDescription>Review the attached proof for "{selectedTask?.description}" before submitting to the health department.</DialogDescription>
+                        </DialogHeader>
+                        <div className='py-4'>
+                            <PhotoUploader readOnly initialPreview={selectedTask?.attachment} />
+                        </div>
+                        <DialogFooter>
+                            <Button variant="secondary" onClick={() => setReviewDialogOpen(false)}>Close</Button>
+                            <Button onClick={handleApproveAndSubmit}>Approve & Submit</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                 {/* Contact Manager Dialog */}
+                 <Dialog open={isContactManagerOpen} onOpenChange={setContactManagerOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className='font-headline'>Contact Manager about Overtime</DialogTitle>
+                            <DialogDescription>Send a message to the responsible manager. AI can help draft a professional message.</DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-2">
+                            <Label htmlFor="message">Your Message</Label>
+                             <Textarea
+                                id="message"
+                                placeholder="e.g., I see the new schedule has two employees in overtime. Can we explore alternatives to manage costs?"
+                                rows={4}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                <span className='font-bold'>AI Tip:</span> You could ask the AI to "draft a polite but firm email to a manager about avoiding unnecessary overtime."
+                            </p>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="secondary" onClick={() => setContactManagerOpen(false)}>Cancel</Button>
+                            <Button onClick={handleSendMessage}>Send Message (Simulated)</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
             </div>
         </TooltipProvider>
     );
 }
+
+    

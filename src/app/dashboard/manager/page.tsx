@@ -8,20 +8,22 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2 } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle } from "lucide-react";
 import AIRecommendationForm from "@/components/ai-recommendation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { analyzeIssue } from '@/ai/flows/analyze-issue-flow';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import PhotoUploader from '@/components/photo-uploader';
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },
@@ -37,10 +39,22 @@ const initialContacts = [
 type Contact = { id: number; name: string; type: string; phone: string; };
 type ManagedTask = { id: number; description: string; frequency: string; assignee: string; };
 type HighPriorityIssue = { id: number; description: string; reportedBy: string; category: string; contactType: string; };
+type DelegatedTask = {
+    id: number;
+    description: string;
+    source: string;
+    status: 'Pending' | 'PendingOwnerApproval';
+    attachmentUrl?: string;
+};
 
 const issueAnalyzerSchema = z.object({
   description: z.string().min(10, "Please provide a detailed description."),
 });
+
+// Mock data for delegated tasks. In a real app, this would come from a database.
+const initialDelegatedTasks: DelegatedTask[] = [
+    { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: 'Pending' },
+];
 
 export default function ManagerDashboard() {
     const { toast } = useToast();
@@ -66,6 +80,20 @@ export default function ManagerDashboard() {
         resolver: zodResolver(issueAnalyzerSchema),
         defaultValues: { description: "" },
     });
+
+    const [delegatedTasks, setDelegatedTasks] = useState<DelegatedTask[]>(initialDelegatedTasks);
+
+    const handleManagerSubmitForApproval = (taskId: number, attachment: {url: string, name: string}) => {
+        setDelegatedTasks(tasks => tasks.map(task => 
+            task.id === taskId 
+            ? { ...task, status: 'PendingOwnerApproval', attachmentUrl: attachment.url } 
+            : task
+        ));
+        toast({
+            title: "Submission Sent for Review",
+            description: "Your completed task has been sent to the owner for final approval.",
+        });
+    };
 
     async function handleAnalyzeIssue(values: z.infer<typeof issueAnalyzerSchema>) {
         setIsAnalyzing(true);
@@ -167,6 +195,57 @@ export default function ManagerDashboard() {
                             <Progress value={member.progress} className="h-2" />
                         </div>
                     ))}
+                </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><ShieldAlert /> Delegated Health Dept. Tasks</CardTitle>
+                    <CardDescription>These are mandatory tasks assigned to you by the owner. Complete them and submit for final approval.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {delegatedTasks.length > 0 ? (
+                        <Accordion type="single" collapsible className="w-full">
+                            {delegatedTasks.map(task => (
+                                <AccordionItem value={`task-${task.id}`} key={task.id}>
+                                    <AccordionTrigger className="hover:no-underline text-left">
+                                        <div className="flex w-full items-center justify-between pr-4">
+                                            <div className='text-left'>
+                                                <p className="font-semibold">{task.description}</p>
+                                                <p className="text-xs text-muted-foreground">Source: {task.source}</p>
+                                            </div>
+                                            <Badge variant={task.status === 'Pending' ? 'destructive' : 'default'} className='whitespace-nowrap'>
+                                                {task.status === 'Pending' ? 'Action Required' : 'Pending Approval'}
+                                            </Badge>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <div className='p-4 bg-muted/50 rounded-md m-1 space-y-4'>
+                                            {task.status === 'Pending' ? (
+                                                <>
+                                                    <div>
+                                                        <Label className='text-xs text-muted-foreground'>Attach Proof of Completion</Label>
+                                                        <div className='mt-2'>
+                                                            {/* In a real app, the onUploadSuccess prop would be used to handle the uploaded file */}
+                                                            <PhotoUploader />
+                                                        </div>
+                                                    </div>
+                                                    <Button onClick={() => handleManagerSubmitForApproval(task.id, {url: 'https://placehold.co/600x400.png', name: 'proof.png'})}>
+                                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                                        Submit for Owner Approval
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <p className='text-sm text-muted-foreground italic'>This task is awaiting final approval from the owner. No further action is needed.</p>
+                                            )}
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    ) : (
+                        <div className="text-center text-sm text-muted-foreground p-4">You have no delegated tasks from the owner.</div>
+                    )}
                 </CardContent>
             </Card>
 
@@ -412,3 +491,5 @@ export default function ManagerDashboard() {
         </div>
     );
 }
+
+    
