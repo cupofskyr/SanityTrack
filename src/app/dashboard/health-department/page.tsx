@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Toolti
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil, Mail, BrainCircuit, MessageSquare } from "lucide-react";
+import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil, Mail, BrainCircuit, MessageSquare, Check, X, ThumbsUp } from "lucide-react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,17 +64,20 @@ type ComplianceTask = {
     id: number;
     description: string;
     frequency: string;
-    type: string;
-    location?: string; // Optional location
+    type: 'Mandatory' | 'Optional' | 'Manager Suggestion';
+    location?: string;
+    status: 'Approved' | 'Pending Approval';
+    source: string;
 };
 
 export default function HealthDeptDashboard() {
   const { toast } = useToast();
   const [recentReports, setRecentReports] = useState<Report[]>(initialReports);
   const [complianceTasks, setComplianceTasks] = useState<ComplianceTask[]>([
-    { id: 1, description: "Weekly restroom deep clean", frequency: "Weekly", type: "Mandatory", location: "All" },
-    { id: 2, description: "Monthly fire safety check", frequency: "Monthly", type: "Mandatory", location: "All" },
-    { id: 3, description: "Verify temperature logs for all coolers", frequency: "Daily", type: "Mandatory", location: "Downtown" },
+    { id: 1, description: "Weekly restroom deep clean", frequency: "Weekly", type: "Mandatory", location: "All", status: "Approved", source: "Health Dept." },
+    { id: 2, description: "Monthly fire safety check", frequency: "Monthly", type: "Mandatory", location: "All", status: "Approved", source: "Health Dept." },
+    { id: 3, description: "Verify temperature logs for all coolers", frequency: "Daily", type: "Mandatory", location: "Downtown", status: "Approved", source: "Health Dept." },
+    { id: 4, description: 'Check sanitizer concentration daily', frequency: 'Daily', type: 'Manager Suggestion', location: 'Downtown', status: 'Pending Approval', source: 'Alex Ray (Manager)' },
   ]);
   
   const [linkedJurisdictions, setLinkedJurisdictions] = useState(["Downtown", "Uptown"]);
@@ -89,12 +92,14 @@ export default function HealthDeptDashboard() {
   
   // State for task management dialogs
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
-  const [currentTask, setCurrentTask] = useState<{ id: number | null; description: string; frequency: string; type: string; location: string }>({
+  const [currentTask, setCurrentTask] = useState<{ id: number | null; description: string; frequency: string; type: ComplianceTask['type']; location: string; status: ComplianceTask['status']; source: string; }>({
     id: null,
     description: '',
     frequency: '',
     type: 'Mandatory',
     location: 'All',
+    status: 'Approved',
+    source: 'Health Dept.',
   });
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<ComplianceTask | null>(null);
@@ -142,9 +147,9 @@ export default function HealthDeptDashboard() {
   
   const handleOpenDialog = (task: ComplianceTask | null) => {
     if (task) {
-        setCurrentTask({ ...task, type: task.type || 'Mandatory', location: task.location || 'All' });
+        setCurrentTask(task);
     } else {
-        setCurrentTask({ id: null, description: '', frequency: '', type: 'Mandatory', location: 'All' });
+        setCurrentTask({ id: null, description: '', frequency: '', type: 'Mandatory', location: 'All', status: 'Approved', source: 'Health Dept.' });
     }
     setIsTaskDialogOpen(true);
   };
@@ -321,6 +326,23 @@ export default function HealthDeptDashboard() {
     toast({
         title: "Status Updated",
         description: `The report status has been changed to "${newStatus}".`,
+    });
+  };
+
+  const handleApproveTask = (taskId: number) => {
+    setComplianceTasks(tasks => tasks.map(t => t.id === taskId ? { ...t, status: 'Approved', type: 'Mandatory' } : t));
+    toast({
+        title: "Task Approved",
+        description: "The manager's suggested task has been added to the compliance list."
+    });
+  };
+
+  const handleRejectTask = (taskId: number) => {
+    setComplianceTasks(tasks => tasks.filter(t => t.id !== taskId));
+    toast({
+        variant: 'secondary',
+        title: "Task Rejected",
+        description: "The manager's suggestion has been removed."
     });
   };
 
@@ -529,7 +551,7 @@ export default function HealthDeptDashboard() {
           <div>
             <CardTitle className="font-headline flex items-center gap-2"><FileCheck /> Defined Compliance Tasks</CardTitle>
             <CardDescription>
-                This is the master list of all recurring compliance tasks for all locations. Add, edit, or remove tasks as needed.
+                This is the master list of all recurring compliance tasks. Approve manager suggestions or add new tasks manually.
             </CardDescription>
           </div>
            <Button onClick={() => handleOpenDialog(null)}>
@@ -541,38 +563,53 @@ export default function HealthDeptDashboard() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50%]">Description</TableHead>
+                <TableHead className="w-[40%]">Description</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Frequency</TableHead>
-                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {complianceTasks.length > 0 ? (
                 complianceTasks.map((task) => (
-                  <TableRow key={task.id}>
+                  <TableRow key={task.id} className={task.status === 'Pending Approval' ? 'bg-primary/5' : ''}>
                     <TableCell className="font-medium">{task.description}</TableCell>
+                    <TableCell>{task.source}</TableCell>
                     <TableCell>{task.location}</TableCell>
                     <TableCell>{task.frequency}</TableCell>
                     <TableCell>
-                      <Badge variant={task.type === 'Mandatory' ? 'destructive' : 'secondary'}>{task.type}</Badge>
+                      <Badge variant={task.status === 'Approved' ? 'default' : 'secondary'}>{task.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}>
-                            <Pencil className="h-4 w-4" />
-                            <span className="sr-only">Edit Task</span>
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(task)}>
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Remove Task</span>
-                        </Button>
+                        {task.status === 'Approved' ? (
+                            <>
+                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}>
+                                    <Pencil className="h-4 w-4" />
+                                    <span className="sr-only">Edit Task</span>
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(task)}>
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Remove Task</span>
+                                </Button>
+                            </>
+                        ) : (
+                             <div className="flex justify-end gap-2">
+                                <Button size="sm" onClick={() => handleApproveTask(task.id)}>
+                                    <Check className="mr-2 h-4 w-4" /> Approve
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleRejectTask(task.id)}>
+                                    <X className="mr-2 h-4 w-4" /> Reject
+                                </Button>
+                            </div>
+                        )}
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
                     No compliance tasks defined yet. Click "Add New Task" to begin.
                   </TableCell>
                 </TableRow>
@@ -612,7 +649,7 @@ export default function HealthDeptDashboard() {
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="task-location">For Location</Label>
-                        <Select value={currentTask.location} onValueChange={(val) => setCurrentTask({ ...currentTask, location: val })} required>
+                        <Select value={currentTask.location} onValueChange={(val) => setCurrentTask({ ...currentTask, location: val || 'All' })} required>
                         <SelectTrigger id="task-location">
                             <SelectValue placeholder="Select location" />
                         </SelectTrigger>
@@ -625,7 +662,7 @@ export default function HealthDeptDashboard() {
                 </div>
                 <div className="grid gap-2">
                     <Label>Type</Label>
-                    <RadioGroup value={currentTask.type} onValueChange={(val) => setCurrentTask({ ...currentTask, type: val })} className="flex items-center gap-4 pt-2">
+                    <RadioGroup value={currentTask.type} onValueChange={(val) => setCurrentTask({ ...currentTask, type: val as ComplianceTask['type'] })} className="flex items-center gap-4 pt-2">
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="Mandatory" id="mandatory" />
                         <Label htmlFor="mandatory" className="font-normal">Mandatory</Label>

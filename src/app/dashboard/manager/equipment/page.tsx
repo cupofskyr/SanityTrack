@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
-import { ListTodo, PlusCircle, X, Sparkles, Trash2, Pencil } from 'lucide-react';
+import { ListTodo, PlusCircle, X, Sparkles, Trash2, Pencil, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ type Task = {
 
 type ManagedTask = Task & {
     id: number;
+    status: 'Local' | 'Pending Approval' | 'Approved';
 };
 
 export default function EquipmentPage() {
@@ -58,6 +59,7 @@ export default function EquipmentPage() {
         const newManagedTask: ManagedTask = {
             ...taskToAdd,
             id: (managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) : 0) + 1,
+            status: 'Local',
         };
 
         setManagedTasks(prevTasks => [...prevTasks, newManagedTask]);
@@ -65,7 +67,7 @@ export default function EquipmentPage() {
 
         toast({
             title: "Task Added!",
-            description: `"${taskToAdd.description}" has been added to the master list.`,
+            description: `"${taskToAdd.description}" has been added as a local task.`,
         });
     };
 
@@ -120,6 +122,7 @@ export default function EquipmentPage() {
                 id: (managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) : 0) + 1,
                 description: currentTask.description,
                 frequency: currentTask.frequency,
+                status: 'Local',
             };
             setManagedTasks(prevTasks => [...prevTasks, newManagedTask]);
             toast({
@@ -128,6 +131,14 @@ export default function EquipmentPage() {
             });
         }
         setIsTaskDialogOpen(false);
+    };
+
+    const handleSubmitForApproval = (taskId: number) => {
+        setManagedTasks(tasks => tasks.map(t => t.id === taskId ? { ...t, status: 'Pending Approval' } : t));
+        toast({
+            title: "Submitted for Review",
+            description: "The task has been sent to the Health Department for approval."
+        });
     };
 
     return (
@@ -183,7 +194,7 @@ export default function EquipmentPage() {
                     <div>
                         <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> Master Task List</CardTitle>
                         <CardDescription>
-                            This is the master list of recurring tasks. Add, edit, or remove tasks as needed.
+                            This is the master list of recurring tasks. Submit local tasks to the Health Department for official approval.
                         </CardDescription>
                     </div>
                     <Button onClick={() => handleOpenDialog(null)}>
@@ -195,8 +206,9 @@ export default function EquipmentPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[65%]">Task Description</TableHead>
+                                <TableHead className="w-[50%]">Task Description</TableHead>
                                 <TableHead>Frequency</TableHead>
+                                <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -208,15 +220,35 @@ export default function EquipmentPage() {
                                     <TableCell>
                                         <Badge variant="secondary">{task.frequency}</Badge>
                                     </TableCell>
+                                    <TableCell>
+                                        <Badge variant={
+                                            task.status === 'Approved' ? 'default' :
+                                            task.status === 'Pending Approval' ? 'secondary' :
+                                            'outline'
+                                        }>{task.status}</Badge>
+                                    </TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}>
-                                            <Pencil className="h-4 w-4" />
-                                            <span className="sr-only">Edit Task</span>
-                                        </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveTask(task.id)}>
-                                            <Trash2 className="h-4 w-4" />
-                                            <span className="sr-only">Remove Task</span>
-                                        </Button>
+                                        {task.status === 'Local' && (
+                                            <div className="flex gap-2 justify-end">
+                                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}>
+                                                    <Pencil className="h-4 w-4" />
+                                                    <span className="sr-only">Edit Task</span>
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveTask(task.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                    <span className="sr-only">Remove Task</span>
+                                                </Button>
+                                                 <Button size="sm" onClick={() => handleSubmitForApproval(task.id)}>
+                                                    <Send className="mr-2 h-4 w-4"/> Submit
+                                                </Button>
+                                            </div>
+                                        )}
+                                        {task.status === 'Pending Approval' && (
+                                            <span className="text-xs text-muted-foreground italic">Awaiting Health Dept. review</span>
+                                        )}
+                                        {task.status === 'Approved' && (
+                                             <span className="text-xs text-muted-foreground italic">Official compliance task</span>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                                 ))
@@ -256,7 +288,6 @@ export default function EquipmentPage() {
                             <Select
                                 value={currentTask.frequency}
                                 onValueChange={(value) => setCurrentTask({ ...currentTask, frequency: value })}
-                                required
                             >
                                 <SelectTrigger id="task-frequency">
                                     <SelectValue placeholder="Select frequency" />
