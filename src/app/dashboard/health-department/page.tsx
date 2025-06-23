@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Toolti
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil } from "lucide-react";
+import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil, Mail } from "lucide-react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from '@/components/ui/textarea';
 import { processInspectionReport } from '@/ai/flows/process-inspection-report-flow';
 import { type ProcessInspectionReportOutput } from '@/ai/schemas/inspection-report-schemas';
+import { generateInquiry, type GenerateInquiryOutput } from '@/ai/flows/generate-inquiry-flow';
 import { format } from 'date-fns';
 
 const complianceData = [
@@ -37,12 +38,13 @@ const chartConfig = {
   },
 }
 
-const recentReports = [
-  { id: 1, issue: "Water puddle near entrance", location: "Downtown", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown" },
-  { id: 2, issue: "Table not cleaned properly", location: "Uptown", date: "2024-05-20", status: "Resolved", jurisdiction: "Uptown" },
-  { id: 3, issue: "Soap dispenser empty", location: "Downtown", date: "2024-05-19", status: "Resolved", jurisdiction: "Downtown" },
-  { id: 4, issue: "Strange smell from vent", location: "Uptown", date: "2024-05-18", status: "Under Investigation", jurisdiction: "Uptown" },
+const initialReports = [
+  { id: 1, issue: "Water puddle near entrance", location: "Downtown", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown", owner: "Alex Ray" },
+  { id: 2, issue: "Table not cleaned properly", location: "Uptown", date: "2024-05-20", status: "Resolved", jurisdiction: "Uptown", owner: "Casey Lee" },
+  { id: 3, issue: "Soap dispenser empty", location: "Downtown", date: "2024-05-19", status: "Resolved", jurisdiction: "Downtown", owner: "Alex Ray" },
+  { id: 4, issue: "Strange smell from vent", location: "Uptown", date: "2024-05-18", status: "Reported", jurisdiction: "Uptown", owner: "Casey Lee" },
 ];
+type Report = typeof initialReports[0];
 
 type ComplianceTask = {
     id: number;
@@ -54,6 +56,7 @@ type ComplianceTask = {
 
 export default function HealthDeptDashboard() {
   const { toast } = useToast();
+  const [recentReports, setRecentReports] = useState(initialReports);
   const [complianceTasks, setComplianceTasks] = useState<ComplianceTask[]>([
     { id: 1, description: "Weekly restroom deep clean", frequency: "Weekly", type: "Mandatory", location: "All" },
     { id: 2, description: "Monthly fire safety check", frequency: "Monthly", type: "Mandatory", location: "All" },
@@ -81,7 +84,12 @@ export default function HealthDeptDashboard() {
   });
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<ComplianceTask | null>(null);
-
+  
+  // State for AI Inquiry Dialog
+  const [isContactOwnerDialogOpen, setContactOwnerDialogOpen] = useState(false);
+  const [selectedReportForContact, setSelectedReportForContact] = useState<Report | null>(null);
+  const [aiMessage, setAiMessage] = useState<GenerateInquiryOutput | null>(null);
+  const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
 
   const handleLinkEstablishment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,7 +207,7 @@ export default function HealthDeptDashboard() {
   const filteredReports = useMemo(() => {
     if (selectedJurisdiction === 'All') return recentReports;
     return recentReports.filter(report => report.jurisdiction === selectedJurisdiction);
-  }, [selectedJurisdiction]);
+  }, [selectedJurisdiction, recentReports]);
   
   const filteredComplianceData = useMemo(() => {
     if (selectedJurisdiction === 'All') {
@@ -219,6 +227,49 @@ export default function HealthDeptDashboard() {
     }
     return complianceData.filter(data => data.jurisdiction === selectedJurisdiction);
   }, [selectedJurisdiction]);
+  
+  const handleInvestigateReport = (reportId: number) => {
+    setRecentReports(reports => reports.map(r => r.id === reportId ? { ...r, status: 'Under Investigation' } : r));
+    toast({
+        title: 'Report Flagged',
+        description: 'The report status has been updated to "Under Investigation".',
+    });
+  };
+
+  const handleOpenContactOwnerDialog = async (report: Report) => {
+    setSelectedReportForContact(report);
+    setContactOwnerDialogOpen(true);
+    setIsGeneratingMessage(true);
+    setAiMessage(null);
+    try {
+        const result = await generateInquiry({
+            guestReport: report.issue,
+            locationName: report.location,
+            ownerName: report.owner,
+        });
+        setAiMessage(result);
+    } catch (error) {
+        console.error(error);
+        toast({
+            variant: 'destructive',
+            title: 'AI Error',
+            description: 'Could not generate the message.',
+        });
+    } finally {
+        setIsGeneratingMessage(false);
+    }
+  };
+
+  const handleSendMessageAndCreateTask = () => {
+    if (!selectedReportForContact) return;
+    setContactOwnerDialogOpen(false);
+    toast({
+        title: "Message Sent & Task Created",
+        description: `The owner of ${selectedReportForContact.location} has been notified and a mandatory task was created.`,
+    });
+    // In a real app, this would also trigger a database update to create the task.
+    setRecentReports(reports => reports.map(r => r.id === selectedReportForContact.id ? { ...r, status: 'Owner Notified' } : r));
+  };
 
 
   return (
@@ -384,7 +435,8 @@ export default function HealthDeptDashboard() {
                 <TableHead>Issue</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead className="text-right">Status</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -393,13 +445,23 @@ export default function HealthDeptDashboard() {
                   <TableCell className="font-medium">{report.issue}</TableCell>
                   <TableCell>{report.location}</TableCell>
                   <TableCell>{report.date}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
                     <Badge variant={report.status === 'Under Investigation' ? 'destructive' : 'outline'}>{report.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right space-x-1">
+                     <Button size="sm" variant="outline" onClick={() => handleInvestigateReport(report.id)} disabled={report.status === 'Under Investigation'}>
+                        <AlertCircle className="mr-2 h-4 w-4" />
+                        Investigate
+                     </Button>
+                     <Button size="sm" onClick={() => handleOpenContactOwnerDialog(report)}>
+                        <Mail className="mr-2 h-4 w-4" />
+                        Contact Owner
+                     </Button>
                   </TableCell>
                 </TableRow>
               )) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     No reports found for the "{selectedJurisdiction}" jurisdiction.
                   </TableCell>
                 </TableRow>
@@ -544,6 +606,45 @@ export default function HealthDeptDashboard() {
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Contact Owner AI Dialog */}
+      <Dialog open={isContactOwnerDialogOpen} onOpenChange={setContactOwnerDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle className='font-headline'>Contact Location Owner</DialogTitle>
+                  <DialogDescription>
+                    The AI will generate a professional message regarding the issue: "{selectedReportForContact?.issue}". You can edit it before sending.
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="py-4 space-y-4">
+                  {isGeneratingMessage ? (
+                       <div className="flex items-center justify-center p-8 space-x-2">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                            <p className="text-muted-foreground">AI is drafting the message...</p>
+                        </div>
+                  ) : aiMessage ? (
+                      <div className="space-y-4">
+                          <div className="grid gap-2">
+                              <Label htmlFor="ai-subject">Email Subject</Label>
+                              <Input id="ai-subject" value={aiMessage.subject} readOnly/>
+                          </div>
+                          <div className="grid gap-2">
+                              <Label htmlFor="ai-message">Message Body</Label>
+                              <Textarea id="ai-message" defaultValue={aiMessage.messageBody} rows={8}/>
+                          </div>
+                      </div>
+                  ) : (
+                      <p className="text-destructive text-center">Failed to generate a message.</p>
+                  )}
+              </div>
+              <DialogFooter>
+                  <Button variant="secondary" onClick={() => setContactOwnerDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleSendMessageAndCreateTask} disabled={isGeneratingMessage || !aiMessage}>
+                      Send Message & Create Task
+                  </Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
 
     </div>
   );
