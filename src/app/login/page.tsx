@@ -2,8 +2,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/icons';
 import { Megaphone } from 'lucide-react';
 
@@ -20,26 +18,19 @@ export default function LoginPage() {
             <CardDescription className="pt-2">Proactive Sanitation & Hygiene Management</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" placeholder="you@example.com" required />
+            <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-center">
+              <p className="text-sm font-semibold text-primary">Demo Access</p>
+              <p className="text-xs text-muted-foreground">
+                This is a prototype. Select a role below to access its dashboard. Real authentication is not implemented.
+              </p>
+              <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
+                  <Button asChild size="sm"><Link href="/dashboard/owner">Owner</Link></Button>
+                  <Button asChild size="sm"><Link href="/dashboard/manager">Manager</Link></Button>
+                  <Button asChild size="sm"><Link href="/dashboard/employee">Employee</Link></Button>
+                  <Button asChild size="sm"><Link href="/dashboard/health-department">Inspector</Link></Button>
               </div>
-              <div className="space-y-2">
-                 <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link href="#" className="text-sm font-medium text-primary hover:underline">
-                        Forgot password?
-                    </Link>
-                </div>
-                <Input id="password" type="password" required />
-              </div>
-              <Button type="submit" asChild className="w-full">
-                {/* In a real app, this would perform authentication. Here we link to a default dashboard */}
-                <Link href="/dashboard/owner">Login to Your Dashboard</Link>
-              </Button>
-            </form>
-            
+            </div>
+
             <p className="text-center text-sm text-muted-foreground">
               Don't have an account?{' '}
               <Link href="/signup" className="font-medium text-primary hover:underline">
