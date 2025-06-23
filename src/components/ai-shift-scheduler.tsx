@@ -1,21 +1,22 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, eachDayOfInterval, getDay } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle } from "lucide-react";
+import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle, Send, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generateSchedule, type GenerateScheduleInput, type GenerateScheduleOutput } from "@/ai/flows/ai-shift-planner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -58,14 +59,21 @@ export default function AIShiftScheduler() {
     const [shiftTime, setShiftTime] = useState({ startTime: '09:00', endTime: '17:00' });
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<GenerateScheduleOutput | null>(null);
+    const [isPublished, setIsPublished] = useState(false);
     const { toast } = useToast();
 
-    // In a real app, this would be controlled by the owner's approval action.
-    // For this demo, we'll assume the schedule is pre-approved to make it testable.
-    const isScheduleApproved = true;
+    useEffect(() => {
+        // Clear published state if shifts change
+        setIsPublished(false);
+    }, [shifts]);
 
     const handleAddShiftsToRoster = (e: React.FormEvent) => {
         e.preventDefault();
+        if (isPublished) {
+            toast({ variant: "destructive", title: "Schedule Published", description: "Clear the roster to create a new schedule." });
+            return;
+        }
+
         if (!dateRange?.from || !dateRange?.to) {
             toast({ variant: "destructive", title: "Missing Date Range", description: "Please select a start and end date." });
             return;
@@ -88,13 +96,12 @@ export default function AIShiftScheduler() {
                 };
             });
         
-        // Avoid duplicates by using a Map
         const shiftMap = new Map<string, Shift>();
         shifts.forEach(s => shiftMap.set(s.id, s));
         newShifts.forEach(s => shiftMap.set(s.id, s));
 
         setShifts(Array.from(shiftMap.values()));
-        setResult(null); // Clear previous AI results when creating new shifts
+        setResult(null);
 
         toast({
             title: "Shifts Added",
@@ -103,6 +110,7 @@ export default function AIShiftScheduler() {
     };
 
     const handleDeleteShift = (shiftId: string) => {
+        if (isPublished) return;
         setShifts(shifts.filter(s => s.id !== shiftId));
     };
 
@@ -111,14 +119,16 @@ export default function AIShiftScheduler() {
             prev.includes(dayValue) ? prev.filter(d => d !== dayValue) : [...prev, dayValue]
         );
     };
+    
+    const handleManualAssignment = (shiftId: string, employeeName: string) => {
+        setShifts(shifts.map(shift => 
+            shift.id === shiftId ? { ...shift, assignedTo: employeeName === 'unassign' ? undefined : employeeName } : shift
+        ));
+    };
 
     const handleGenerateSchedule = async () => {
         if (shifts.length === 0) {
              toast({ variant: "destructive", title: "No Shifts", description: "Please create shifts before generating a schedule." });
-            return;
-        }
-        if (!isScheduleApproved) {
-            toast({ variant: "destructive", title: "Approval Required", description: "The owner must approve the proposed shifts before the AI can generate a schedule." });
             return;
         }
         setIsLoading(true);
@@ -135,8 +145,7 @@ export default function AIShiftScheduler() {
             const response = await generateSchedule(input);
             setResult(response);
             
-            // Create a fresh copy of shifts to update, clearing previous assignments
-            const updatedShifts = shifts.map(shift => ({...shift, assignedTo: undefined}));
+            const updatedShifts = [...shifts];
 
             response.assignments.forEach(assignment => {
                 const shiftIndex = updatedShifts.findIndex(s => s.id === assignment.shiftId);
@@ -159,6 +168,8 @@ export default function AIShiftScheduler() {
     const handleClearRoster = () => {
         setShifts([]);
         setResult(null);
+        setIsPublished(false);
+        localStorage.removeItem('published-schedule'); // Clear from employee view
         toast({
             title: "Roster Cleared",
             description: "All shifts have been removed from the roster.",
@@ -166,6 +177,14 @@ export default function AIShiftScheduler() {
         });
     };
 
+    const handlePublish = () => {
+        setIsPublished(true);
+        localStorage.setItem('published-schedule', JSON.stringify(shifts));
+        toast({
+            title: "Schedule Published!",
+            description: "The schedule is now live and visible to all employees on their dashboards."
+        });
+    };
 
     return (
         <div className="space-y-6">
@@ -189,6 +208,7 @@ export default function AIShiftScheduler() {
                                                 "justify-start text-left font-normal",
                                                 !dateRange && "text-muted-foreground"
                                             )}
+                                            disabled={isPublished}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
                                             {dateRange?.from ? (
@@ -226,6 +246,7 @@ export default function AIShiftScheduler() {
                                                 id={day.id}
                                                 checked={selectedDays.includes(day.value)}
                                                 onCheckedChange={() => handleDayToggle(day.value)}
+                                                disabled={isPublished}
                                             />
                                             <label
                                                 htmlFor={day.id}
@@ -241,14 +262,14 @@ export default function AIShiftScheduler() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="start-time">Start Time</Label>
-                                <Input id="start-time" type="time" value={shiftTime.startTime} onChange={e => setShiftTime({...shiftTime, startTime: e.target.value})} required/>
+                                <Input id="start-time" type="time" value={shiftTime.startTime} onChange={e => setShiftTime({...shiftTime, startTime: e.target.value})} required disabled={isPublished}/>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="end-time">End Time</Label>
-                                <Input id="end-time" type="time" value={shiftTime.endTime} onChange={e => setShiftTime({...shiftTime, endTime: e.target.value})} required/>
+                                <Input id="end-time" type="time" value={shiftTime.endTime} onChange={e => setShiftTime({...shiftTime, endTime: e.target.value})} required disabled={isPublished}/>
                             </div>
                              <div className="flex items-end">
-                                <Button type="submit" className="w-full">Add Shifts to Roster</Button>
+                                <Button type="submit" className="w-full" disabled={isPublished}>Add Shifts to Roster</Button>
                             </div>
                         </div>
                     </form>
@@ -257,14 +278,20 @@ export default function AIShiftScheduler() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">2. Generate Schedule</CardTitle>
-                    <CardDescription>Use the AI to automatically generate a schedule based on employee availability.</CardDescription>
+                    <CardTitle className="text-lg">2. Generate & Refine Schedule</CardTitle>
+                    <CardDescription>Use AI to generate a baseline schedule, then manually adjust assignments as needed before publishing.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button onClick={handleGenerateSchedule} disabled={isLoading || shifts.length === 0 || !isScheduleApproved}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Generate AI Schedule
-                    </Button>
+                     <div className="flex flex-wrap gap-2">
+                        <Button onClick={handleGenerateSchedule} disabled={isLoading || shifts.length === 0 || isPublished}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Generate AI Schedule
+                        </Button>
+                        <Button onClick={handlePublish} disabled={shifts.length === 0 || isPublished} className="bg-accent hover:bg-accent/90">
+                            <Send className="mr-2 h-4 w-4" />
+                            {isPublished ? 'Schedule Published' : 'Publish Schedule'}
+                        </Button>
+                     </div>
                      {result && (
                         <Alert className="mt-4">
                             <UserCheck className="h-4 w-4" />
@@ -286,19 +313,25 @@ export default function AIShiftScheduler() {
                         <div className="flex items-center gap-2">
                             <List /> Shift Roster
                         </div>
-                        <Button variant="outline" size="sm" onClick={handleClearRoster} disabled={shifts.length === 0}>
-                            Clear Roster
-                        </Button>
+                        {!isPublished ? (
+                            <Button variant="outline" size="sm" onClick={handleClearRoster} disabled={shifts.length === 0}>
+                                Clear Roster
+                            </Button>
+                        ) : (
+                            <Button variant="outline" size="sm" onClick={handleClearRoster}>
+                                <Pencil className="mr-2 h-4 w-4" /> Create New Schedule
+                            </Button>
+                        )}
                      </CardTitle>
-                    <CardDescription>Overview of all created shifts and their assignments.</CardDescription>
+                    <CardDescription>Overview of all created shifts and their assignments. Once published, the schedule is locked.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {shifts.length > 0 && isScheduleApproved && (
+                    {isPublished && (
                         <Alert variant="default" className="mb-4 bg-primary/10 border-primary text-primary [&>svg]:text-primary">
                             <CheckCircle className="h-4 w-4" />
-                            <AlertTitle>Ready to Generate</AlertTitle>
+                            <AlertTitle>Schedule is Live</AlertTitle>
                             <AlertDescription>
-                                The shifts below are ready. Click "Generate AI Schedule" above to get assignments.
+                                This schedule has been published and is visible to employees. To make changes, create a new schedule.
                             </AlertDescription>
                         </Alert>
                     )}
@@ -307,7 +340,7 @@ export default function AIShiftScheduler() {
                             <TableRow>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Time</TableHead>
-                                <TableHead>Assigned To</TableHead>
+                                <TableHead className="w-[200px]">Assigned To</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -317,14 +350,26 @@ export default function AIShiftScheduler() {
                                     <TableCell>{format(parseDate(shift.date), 'PPP')}</TableCell>
                                     <TableCell>{shift.startTime} - {shift.endTime}</TableCell>
                                     <TableCell>
-                                        {shift.assignedTo ? (
-                                            <Badge variant="default">{shift.assignedTo}</Badge>
-                                        ) : (
-                                            <Badge variant="secondary">Unassigned</Badge>
-                                        )}
+                                        <Select
+                                            value={shift.assignedTo || 'unassign'}
+                                            onValueChange={(employeeName) => handleManualAssignment(shift.id, employeeName)}
+                                            disabled={isPublished}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Assign Employee" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="unassign">
+                                                    <span className="text-muted-foreground">Unassigned</span>
+                                                </SelectItem>
+                                                {employees.map(emp => (
+                                                    <SelectItem key={emp.name} value={emp.name}>{emp.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteShift(shift.id)}>
+                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteShift(shift.id)} disabled={isPublished}>
                                             <Trash2 className="h-4 w-4" />
                                             <span className="sr-only">Delete shift</span>
                                         </Button>

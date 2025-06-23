@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { analyzePhotoIssue } from '@/ai/flows/analyze-photo-issue-flow';
 import { translateText } from "@/ai/flows/translate-text-flow";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { format } from "date-fns";
 
 
 const initialTasks = [
@@ -54,6 +55,15 @@ const initialBriefing = {
     ]
 };
 
+type Shift = {
+    id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    assignedTo?: string;
+};
+
+
 export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState(initialTasks);
   const [completedTasks, setCompletedTasks] = useState(initialCompletedTasks);
@@ -85,6 +95,19 @@ export default function EmployeeDashboard() {
   const [briefing, setBriefing] = useState(initialBriefing);
   const [translatedBriefing, setTranslatedBriefing] = useState<{title: string, message: string} | null>(null);
   const [isTranslatingBriefing, setIsTranslatingBriefing] = useState(false);
+  
+  const [mySchedule, setMySchedule] = useState<Shift[]>([]);
+  const employeeName = "John Doe"; // In a real app, this would come from user context
+
+  useEffect(() => {
+    // This effect simulates fetching the schedule from a shared source (localStorage)
+    const publishedScheduleJSON = localStorage.getItem('published-schedule');
+    if (publishedScheduleJSON) {
+        const allShifts: Shift[] = JSON.parse(publishedScheduleJSON);
+        const userShifts = allShifts.filter(shift => shift.assignedTo === employeeName);
+        setMySchedule(userShifts);
+    }
+  }, []);
 
 
   useEffect(() => {
@@ -249,6 +272,11 @@ export default function EmployeeDashboard() {
     } finally {
         setIsTranslatingBriefing(false);
     }
+  };
+
+  const parseDate = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
   };
 
 
@@ -469,8 +497,29 @@ export default function EmployeeDashboard() {
                 </div>
                 <div>
                     <h3 className="font-semibold mb-2 text-sm">Upcoming Shifts</h3>
-                    <div className="border rounded-md p-4 space-y-2 min-h-[290px] flex items-center justify-center">
-                        <p className="text-muted-foreground text-center text-sm">Your schedule will appear here once published by the manager.</p>
+                    <div className="border rounded-md p-4 space-y-2 min-h-[290px]">
+                        {mySchedule.length > 0 ? (
+                           <Table>
+                               <TableHeader>
+                                   <TableRow>
+                                       <TableHead>Date</TableHead>
+                                       <TableHead>Shift</TableHead>
+                                   </TableRow>
+                               </TableHeader>
+                               <TableBody>
+                                   {mySchedule.sort((a,b) => a.date.localeCompare(b.date)).map(shift => (
+                                       <TableRow key={shift.id}>
+                                           <TableCell className="font-medium">{format(parseDate(shift.date), "EEE, MMM dd")}</TableCell>
+                                           <TableCell>{shift.startTime} - {shift.endTime}</TableCell>
+                                       </TableRow>
+                                   ))}
+                               </TableBody>
+                           </Table>
+                        ) : (
+                             <div className="flex items-center justify-center h-full">
+                                <p className="text-muted-foreground text-center text-sm">Your schedule will appear here once published by the manager.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </CardContent>
@@ -491,7 +540,7 @@ export default function EmployeeDashboard() {
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground flex items-center gap-2"><User className="h-4 w-4"/> Full Name</span>
-                        <span className="font-semibold">John Doe (Demo)</span>
+                        <span className="font-semibold">{employeeName} (Demo)</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground flex items-center gap-2"><Mail className="h-4 w-4"/> Email</span>
