@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +42,26 @@ export default function EmployeeDashboard() {
   const [unavailableDays, setUnavailableDays] = useState<Date[] | undefined>([]);
   const { toast } = useToast();
 
+  const [isClockedIn, setIsClockedIn] = useState(false);
+  const [lastClockIn, setLastClockIn] = useState<Date | null>(null);
+
+  const handleClockIn = () => {
+    setIsClockedIn(true);
+    setLastClockIn(new Date());
+    toast({
+      title: "Clocked In",
+      description: `You clocked in at ${new Date().toLocaleTimeString()}. Welcome!`,
+    });
+  };
+
+  const handleClockOut = () => {
+    setIsClockedIn(false);
+    toast({
+      title: "Clocked Out",
+      description: `You clocked out at ${new Date().toLocaleTimeString()}. Have a great day!`,
+    });
+  };
+
   const handleReportIssue = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newIssueDescription.trim()) {
@@ -68,6 +88,26 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2"><Clock /> Time Clock</CardTitle>
+          <CardDescription>Clock in when you start your shift and clock out when you leave. Automatic location-based tracking is not available in this web version.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="text-center md:text-left">
+                <p className="text-lg font-semibold">{isClockedIn ? "You are clocked in." : "You are clocked out."}</p>
+                {lastClockIn && isClockedIn && (
+                    <p className="text-sm text-muted-foreground">
+                        Clocked in at {lastClockIn.toLocaleTimeString()}
+                    </p>
+                )}
+            </div>
+            <div className="flex gap-2">
+                <Button onClick={handleClockIn} disabled={isClockedIn} className="w-32">Clock In</Button>
+                <Button onClick={handleClockOut} disabled={!isClockedIn} variant="destructive" className="w-32">Clock Out</Button>
+            </div>
+        </CardContent>
+      </Card>
       <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> My Tasks</CardTitle>
