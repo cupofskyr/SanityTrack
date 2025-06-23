@@ -708,58 +708,6 @@ export default function OwnerDashboard() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-accent"/> Pending Manager Approvals</CardTitle>
-                        <CardDescription>
-                            Review and approve or reject requests from your team managers.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {requests.length > 0 ? (
-                            requests.map((request) => (
-                                <Tooltip key={request.id}>
-                                    <TooltipTrigger asChild>
-                                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-default">
-                                            <div className="mb-4 sm:mb-0">
-                                                <div className="flex items-center gap-3">
-                                                    <Badge variant={request.type === 'Overtime' ? 'secondary' : 'default'}>{request.type}</Badge>
-                                                    <p className="font-semibold">{request.description}</p>
-                                                </div>
-                                                <p className="text-sm text-muted-foreground mt-1 pl-1">{request.details}</p>
-                                            </div>
-                                            <div className="flex gap-2 self-end sm:self-center">
-                                                <Button size="sm" onClick={() => handleRequest(request.id, true)}>
-                                                    <CheckCircle className="mr-2 h-4 w-4"/> Approve
-                                                </Button>
-                                                <Button size="sm" variant="destructive" onClick={() => handleRequest(request.id, false)}>
-                                                    <XCircle className="mr-2 h-4 w-4"/> Reject
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <div className="grid gap-2 text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                <span className="font-semibold">Location:</span>
-                                                <span>{request.location}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <UserCog className="h-4 w-4 text-muted-foreground" />
-                                                <span className="font-semibold">Manager:</span>
-                                                <span>{request.manager}</span>
-                                            </div>
-                                        </div>
-                                    </TooltipContent>
-                                </Tooltip>
-                            ))
-                        ) : (
-                            <p className="text-sm text-muted-foreground text-center py-4">No pending approvals.</p>
-                        )}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
                         <CardTitle className="font-headline flex items-center gap-2"><ShieldAlert /> Mandatory Health Dept. Tasks</CardTitle>
                         <CardDescription>Review, complete, and submit required tasks from the Health Department.</CardDescription>
                     </CardHeader>
