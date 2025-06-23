@@ -25,6 +25,7 @@ import {
   CalendarDays,
   Boxes,
   Wrench,
+  ShieldCheck,
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -136,6 +137,10 @@ export default function DashboardLayout({
               <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                <span>Permissions</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
