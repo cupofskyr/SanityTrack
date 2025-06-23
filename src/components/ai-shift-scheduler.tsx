@@ -64,7 +64,7 @@ export default function AIShiftScheduler() {
     // For this demo, we'll assume the schedule is pre-approved to make it testable.
     const isScheduleApproved = true;
 
-    const handleCreateShifts = (e: React.FormEvent) => {
+    const handleAddShiftsToRoster = (e: React.FormEvent) => {
         e.preventDefault();
         if (!dateRange?.from || !dateRange?.to) {
             toast({ variant: "destructive", title: "Missing Date Range", description: "Please select a start and end date." });
@@ -97,7 +97,7 @@ export default function AIShiftScheduler() {
         setResult(null); // Clear previous AI results when creating new shifts
 
         toast({
-            title: "Shifts Created",
+            title: "Shifts Added",
             description: `Added ${newShifts.length} new shifts to the roster.`,
         });
     };
@@ -155,16 +155,29 @@ export default function AIShiftScheduler() {
             setIsLoading(false);
         }
     };
+    
+    const handleClearRoster = () => {
+        setShifts([]);
+        setResult(null);
+        toast({
+            title: "Roster Cleared",
+            description: "All shifts have been removed from the roster.",
+            variant: "secondary"
+        });
+    };
+
 
     return (
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">1. Create Shifts</CardTitle>
-                    <CardDescription>Select a date range, shift times, and days of the week to create a roster.</CardDescription>
+                    <CardTitle className="text-lg">1. Add Shifts to Roster</CardTitle>
+                    <CardDescription>
+                        Define a set of shifts (e.g., 'Morning Shift') and add them to the roster. You can repeat this to add multiple shift types (e.g., 'Evening Shift') for the same days.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleCreateShifts} className="space-y-6">
+                    <form onSubmit={handleAddShiftsToRoster} className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                              <div className="grid gap-2">
                                 <Label>Scheduling Period</Label>
@@ -235,7 +248,7 @@ export default function AIShiftScheduler() {
                                 <Input id="end-time" type="time" value={shiftTime.endTime} onChange={e => setShiftTime({...shiftTime, endTime: e.target.value})} required/>
                             </div>
                              <div className="flex items-end">
-                                <Button type="submit" className="w-full">Create Shifts</Button>
+                                <Button type="submit" className="w-full">Add Shifts to Roster</Button>
                             </div>
                         </div>
                     </form>
@@ -273,7 +286,7 @@ export default function AIShiftScheduler() {
                         <div className="flex items-center gap-2">
                             <List /> Shift Roster
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => { setShifts([]); setResult(null); }} disabled={shifts.length === 0}>
+                        <Button variant="outline" size="sm" onClick={handleClearRoster} disabled={shifts.length === 0}>
                             Clear Roster
                         </Button>
                      </CardTitle>
