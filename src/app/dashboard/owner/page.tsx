@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Link as LinkIcon, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -17,13 +17,14 @@ import PhotoUploader from '@/components/photo-uploader';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 // --- MOCK DATA ---
 const teamMembers = [
-  { name: "Alex Ray", role: "Manager" as const },
-  { name: "Casey Lee", role: "Manager" as const },
-  { name: "John Doe", role: "Employee" as const },
-  { name: "Jane Smith", role: "Employee" as const },
+  { name: "Alex Ray", role: "Manager" as const, location: "Downtown Cafe" },
+  { name: "Casey Lee", role: "Manager" as const, location: "Uptown Bistro" },
+  { name: "John Doe", role: "Employee" as const, location: "Downtown Cafe" },
+  { name: "Jane Smith", role: "Employee" as const, location: "Uptown Bistro" },
 ];
 const managers = teamMembers.filter(m => m.role === 'Manager');
 
@@ -61,6 +62,11 @@ const overtimeWatchlist = [
   { id: 2, name: "Jane Smith", location: "Uptown Bistro", hours: 39, limit: 40 },
   { id: 3, name: "Casey Lee", location: "Uptown Bistro", hours: 35, limit: 40 },
 ];
+
+const locations = [
+    { id: 1, name: "Downtown Cafe", manager: "Alex Ray" },
+    { id: 2, name: "Uptown Bistro", manager: "Casey Lee" }
+];
 // --- END MOCK DATA ---
 
 export default function OwnerDashboard() {
@@ -76,8 +82,12 @@ export default function OwnerDashboard() {
     const [isDelegateDialogOpen, setDelegateDialogOpen] = useState(false);
     const [isReviewDialogOpen, setReviewDialogOpen] = useState(false);
     const [isContactManagerOpen, setContactManagerOpen] = useState(false);
+    const [isInspectionLinkOpen, setInspectionLinkOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<HealthTask | null>(null);
     const [selectedManager, setSelectedManager] = useState('');
+    const [selectedLocationForLink, setSelectedLocationForLink] = useState<string | null>(null);
+    
+    const inspectionLink = selectedLocationForLink ? `${window.location.origin}/dashboard/health-department/claim?location=${encodeURIComponent(selectedLocationForLink)}` : '';
 
     const handleRequest = (requestId: number, approved: boolean) => {
         const request = requests.find(r => r.id === requestId);
@@ -90,12 +100,13 @@ export default function OwnerDashboard() {
         });
     };
 
-    const handleSuggestAssignment = async (issueDescription: string) => {
+    const handleSuggestAssignment = async (issueDescription: string, location: string) => {
         setSelectedAlert(issueDescription);
         setAssignmentResult(null);
         setIsAssigning(true);
         try {
-            const result = await suggestTaskAssignment({ issueDescription, teamMembers });
+            const teamForLocation = teamMembers.filter(tm => tm.location === location);
+            const result = await suggestTaskAssignment({ issueDescription, teamMembers: teamForLocation });
             setAssignmentResult(result);
         } catch (error) {
             console.error("Failed to get assignment suggestion:", error);
@@ -157,7 +168,20 @@ export default function OwnerDashboard() {
             description: "Your message has been sent to the manager."
         });
         setContactManagerOpen(false);
-    }
+    };
+
+    const handleOpenInspectionLinkDialog = (locationName: string) => {
+        setSelectedLocationForLink(locationName);
+        setInspectionLinkOpen(true);
+    };
+    
+    const copyLinkToClipboard = () => {
+        navigator.clipboard.writeText(inspectionLink);
+        toast({
+            title: "Link Copied!",
+            description: "The inspection link has been copied to your clipboard.",
+        });
+    };
 
 
     return (
@@ -205,6 +229,28 @@ export default function OwnerDashboard() {
                         </CardContent>
                     </Card>
                 </div>
+                 
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><MapPin/> My Locations</CardTitle>
+                        <CardDescription>Manage your locations and provide access to health inspectors.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 md:grid-cols-2">
+                        {locations.map(loc => (
+                            <div key={loc.id} className="flex items-center justify-between rounded-lg border p-4">
+                                <div>
+                                    <p className="font-semibold">{loc.name}</p>
+                                    <p className="text-sm text-muted-foreground">Manager: {loc.manager}</p>
+                                </div>
+                                <Button variant="outline" size="sm" onClick={() => handleOpenInspectionLinkDialog(loc.name)}>
+                                    <Share2 className="mr-2 h-4 w-4" />
+                                    Inspection Link
+                                </Button>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+
 
                 <div className="grid gap-6 lg:grid-cols-2">
                     <Card>
@@ -224,7 +270,7 @@ export default function OwnerDashboard() {
                                                 Contact Manager
                                             </Button>
                                         ) : (
-                                            <Button size="sm" variant="secondary" onClick={() => handleSuggestAssignment(alert.description)}>
+                                            <Button size="sm" variant="secondary" onClick={() => handleSuggestAssignment(alert.description, alert.location)}>
                                                 <Sparkles className="mr-2 h-4 w-4"/>
                                                 AI Assign
                                             </Button>
@@ -488,8 +534,31 @@ export default function OwnerDashboard() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                
+                {/* Inspection Link Dialog */}
+                <Dialog open={isInspectionLinkOpen} onOpenChange={setInspectionLinkOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className="font-headline">Health Dept. Inspection Link</DialogTitle>
+                            <DialogDescription>
+                                Share this link with an on-site inspector to grant them temporary access to this location's compliance data.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-2">
+                            <Label htmlFor="inspection-link-input">Shareable Link</Label>
+                            <div className="flex gap-2">
+                                <Input id="inspection-link-input" value={inspectionLink} readOnly />
+                                <Button onClick={copyToClipboard} size="sm">Copy</Button>
+                            </div>
+                        </div>
+                         <DialogFooter>
+                            <Button variant="secondary" onClick={() => setInspectionLinkOpen(false)}>Close</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
             </div>
         </TooltipProvider>
     );
 }
+
