@@ -12,6 +12,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { suggestTaskAssignment, type SuggestTaskAssignmentOutput } from '@/ai/flows/suggest-task-assignment-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import PhotoUploader from '@/components/photo-uploader';
+import { Label } from '@/components/ui/label';
 
 // --- MOCK DATA ---
 const teamMembers = [
@@ -27,9 +35,10 @@ const crucialAlerts = [
     { id: 3, location: "Downtown Cafe", description: "POS system is down. Cannot process credit card payments." },
 ];
 
-const healthDeptTasks = [
-    { id: 1, description: "Verify all employee food handler certifications are up to date.", source: "City Health Inspector" },
-    { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a" },
+const initialHealthDeptTasks = [
+    { id: 1, description: "Verify all employee food handler certifications are up to date.", source: "City Health Inspector", status: "Pending" as const },
+    { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: "Pending" as const },
+    { id: 3, description: "Quarterly pest control inspection report.", source: "City Ordinance 23B", status: "Submitted" as const },
 ];
 
 const initialRequests = [
@@ -43,6 +52,7 @@ export default function OwnerDashboard() {
     const { toast } = useToast();
     const [requests, setRequests] = useState(initialRequests);
     const [memo, setMemo] = useState("Finalize Q3 budget by Friday. Follow up with vendor about new coffee machine.");
+    const [healthDeptTasks, setHealthDeptTasks] = useState(initialHealthDeptTasks);
     
     const [isAssigning, setIsAssigning] = useState(false);
     const [assignmentResult, setAssignmentResult] = useState<SuggestTaskAssignmentOutput | null>(null);
@@ -83,6 +93,16 @@ export default function OwnerDashboard() {
         setAssignmentResult(null);
         setSelectedAlert(null);
     }
+    
+    const handleSubmitToHealthDept = (taskId: number) => {
+        setHealthDeptTasks(tasks => tasks.map(task => 
+            task.id === taskId ? { ...task, status: 'Submitted' } : task
+        ));
+        toast({
+            title: "Submission Sent (Simulated)",
+            description: "The compliance document has been submitted to the health department.",
+        });
+    };
 
     return (
         <TooltipProvider>
@@ -224,18 +244,49 @@ export default function OwnerDashboard() {
                     </CardContent>
                 </Card>
 
-                 <Card>
+                <Card>
                     <CardHeader>
                         <CardTitle className="font-headline flex items-center gap-2"><ShieldAlert /> Mandatory Health Dept. Tasks</CardTitle>
-                        <CardDescription>These are active, non-negotiable tasks assigned by the Health Department.</CardDescription>
+                        <CardDescription>Review, complete, and submit required tasks from the Health Department.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                        {healthDeptTasks.map(task => (
-                             <div key={task.id} className="flex items-start justify-between rounded-lg border p-4">
-                                <p className="text-sm">{task.description}</p>
-                                <Badge variant="outline" className="text-xs whitespace-nowrap">{task.source}</Badge>
-                            </div>
-                        ))}
+                    <CardContent>
+                        <Accordion type="single" collapsible className="w-full">
+                            {healthDeptTasks.map(task => (
+                                <AccordionItem value={`task-${task.id}`} key={task.id}>
+                                    <AccordionTrigger className="hover:no-underline text-left">
+                                        <div className="flex w-full items-center justify-between pr-4">
+                                            <div className='text-left'>
+                                                <p className="font-semibold">{task.description}</p>
+                                                <p className="text-xs text-muted-foreground">Source: {task.source}</p>
+                                            </div>
+                                            <Badge variant={task.status === 'Submitted' ? 'default' : 'destructive'} className='whitespace-nowrap'>
+                                                {task.status}
+                                            </Badge>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <div className='p-4 bg-muted/50 rounded-md m-1 space-y-4'>
+                                            {task.status === 'Pending' ? (
+                                                <>
+                                                    <div>
+                                                        <Label className='text-xs text-muted-foreground'>Attach Proof of Completion</Label>
+                                                        <div className='mt-2'>
+                                                            <PhotoUploader />
+                                                        </div>
+                                                    </div>
+                                                    <Button onClick={() => handleSubmitToHealthDept(task.id)}>
+                                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                                        Submit to Health Dept. (Simulated)
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <p className='text-sm text-muted-foreground italic'>This task has already been submitted.</p>
+                                            )}
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
                     </CardContent>
                 </Card>
 
