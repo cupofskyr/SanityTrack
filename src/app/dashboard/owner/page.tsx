@@ -1,23 +1,35 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
-import LiveReviews from '@/components/live-reviews';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, RefreshCw, Loader2, MapPin, UserCog, Building, Users } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import { suggestTaskAssignment, type SuggestTaskAssignmentOutput } from '@/ai/flows/suggest-task-assignment-flow';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 // --- MOCK DATA ---
-const locations = [
-  { id: 'loc_1', name: "Downtown Cafe", manager: "Alex Ray" },
-  { id: 'loc_2', name: "Uptown Bistro", manager: "Casey Lee" },
-  { id: 'loc_3', name: "Seaside Smoothies", manager: "Jordan Pat" },
+const teamMembers = [
+  { name: "Alex Ray", role: "Manager" as const },
+  { name: "Casey Lee", role: "Manager" as const },
+  { name: "John Doe", role: "Employee" as const },
+  { name: "Jane Smith", role: "Employee" as const },
+];
+
+const crucialAlerts = [
+    { id: 1, location: "Downtown Cafe", description: "Main freezer unit is offline. Temperature rising rapidly." },
+    { id: 2, location: "Uptown Bistro", description: "Guest reported seeing a rodent in the main dining area." },
+    { id: 3, location: "Downtown Cafe", description: "POS system is down. Cannot process credit card payments." },
+];
+
+const healthDeptTasks = [
+    { id: 1, description: "Verify all employee food handler certifications are up to date.", source: "City Health Inspector" },
+    { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a" },
 ];
 
 const initialRequests = [
@@ -29,34 +41,12 @@ const initialRequests = [
 
 export default function OwnerDashboard() {
     const { toast } = useToast();
-    const [selectedLocation, setSelectedLocation] = useState(locations[0]);
     const [requests, setRequests] = useState(initialRequests);
-    const [revenueData, setRevenueData] = useState<ToastPOSData | null>(null);
-    const [isLoadingRevenue, setIsLoadingRevenue] = useState(true);
-
-    const handleFetchRevenue = async (locationName: string) => {
-        setIsLoadingRevenue(true);
-        setRevenueData(null);
-        try {
-            const data = await fetchToastData({ location: locationName });
-            setRevenueData(data);
-        } catch (error) {
-            console.error(error);
-            toast({
-                variant: 'destructive',
-                title: 'Failed to fetch revenue data',
-                description: 'Could not connect to the POS system.',
-            })
-        } finally {
-            setIsLoadingRevenue(false);
-        }
-    };
-
-    useEffect(() => {
-        if (selectedLocation) {
-            handleFetchRevenue(selectedLocation.name);
-        }
-    }, [selectedLocation]);
+    const [memo, setMemo] = useState("Finalize Q3 budget by Friday. Follow up with vendor about new coffee machine.");
+    
+    const [isAssigning, setIsAssigning] = useState(false);
+    const [assignmentResult, setAssignmentResult] = useState<SuggestTaskAssignmentOutput | null>(null);
+    const [selectedAlert, setSelectedAlert] = useState<string | null>(null);
 
     const handleRequest = (requestId: number, approved: boolean) => {
         const request = requests.find(r => r.id === requestId);
@@ -69,169 +59,222 @@ export default function OwnerDashboard() {
         });
     };
 
-    const filteredRequests = requests.filter(r => r.location === selectedLocation.name);
+    const handleSuggestAssignment = async (issueDescription: string) => {
+        setSelectedAlert(issueDescription);
+        setAssignmentResult(null);
+        setIsAssigning(true);
+        try {
+            const result = await suggestTaskAssignment({ issueDescription, teamMembers });
+            setAssignmentResult(result);
+        } catch (error) {
+            console.error("Failed to get assignment suggestion:", error);
+            toast({
+                variant: 'destructive',
+                title: 'AI Error',
+                description: 'Could not generate an assignment suggestion.',
+            });
+            setIsAssigning(false); // Close dialog on error
+        }
+        // Keep dialog open on success, setIsLoading(false) is in the Dialog onOpenChange
+    };
+
+    const closeAssignmentDialog = () => {
+        setIsAssigning(false);
+        setAssignmentResult(null);
+        setSelectedAlert(null);
+    }
 
     return (
         <TooltipProvider>
             <div className="space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2"><Building /> My Locations</CardTitle>
-                        <CardDescription>Select a location to view its specific dashboard. In a full app, you could add or edit locations here.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {locations.map(loc => (
-                             <Card 
-                                key={loc.id}
-                                className={cn(
-                                    "cursor-pointer hover:shadow-md transition-shadow",
-                                    selectedLocation.id === loc.id && "ring-2 ring-primary shadow-lg"
-                                )}
-                                onClick={() => setSelectedLocation(loc)}
-                             >
-                                <CardHeader className="flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-lg font-medium">{loc.name}</CardTitle>
-                                    <Users className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground">Managed by: {loc.manager}</p>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </CardContent>
-                </Card>
-
-                <h2 className="text-2xl font-bold font-headline">Dashboard for: <span className="text-primary">{selectedLocation.name}</span></h2>
-                
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
-                                Total Revenue (Live)
+                                Company-Wide Revenue
                             </CardTitle>
-                            <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleFetchRevenue(selectedLocation.name)} disabled={isLoadingRevenue}>
-                                    {isLoadingRevenue ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                                    <span className="sr-only">Refresh Revenue Data</span>
-                                </Button>
-                                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            </div>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            {isLoadingRevenue ? (
-                                <div className="space-y-2">
-                                    <Skeleton className="h-8 w-3/4" />
-                                    <Skeleton className="h-4 w-1/2" />
-                                </div>
-                            ) : revenueData ? (
-                                <>
-                                    <div className="text-2xl font-bold">
-                                        ${revenueData.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        +{revenueData.changeFromLastMonth}% from last month
-                                    </p>
-                                </>
-                            ) : (
-                                <div className="text-sm text-destructive">Could not load data.</div>
-                            )}
+                            <div className="text-2xl font-bold">$125,430.89</div>
+                            <p className="text-xs text-muted-foreground">
+                                +18.3% from last month
+                            </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
-                            Overall Compliance
+                            Aggregate Compliance
                         </CardTitle>
                         <ShieldCheck className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                        <div className="text-2xl font-bold">92.5%</div>
+                        <div className="text-2xl font-bold">94.1%</div>
                         <p className="text-xs text-muted-foreground">
-                            +2.1% from last month
+                            +1.5% from last month
                         </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Customer Satisfaction</CardTitle>
+                        <CardTitle className="text-sm font-medium">Overall Customer Sat.</CardTitle>
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                        <div className="text-2xl font-bold">4.8/5 Stars</div>
+                        <div className="text-2xl font-bold">4.7/5 Stars</div>
                         <p className="text-xs text-muted-foreground">
-                            Based on recent reviews
+                            Across all locations
                         </p>
                         </CardContent>
                     </Card>
+                </div>
 
-                    <Card className="lg:col-span-3">
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <Card>
                         <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-accent"/> Pending Approvals for this Location</CardTitle>
-                            <CardDescription>
-                                Review and approve or reject requests from your team. Hover over an item for more details.
-                            </CardDescription>
+                            <CardTitle className="font-headline flex items-center gap-2 text-accent"><Megaphone /> Crucial Alerts</CardTitle>
+                            <CardDescription>High-priority issues from all locations that require immediate owner-level attention.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            {filteredRequests.length > 0 ? (
-                                filteredRequests.map((request) => (
-                                    <Tooltip key={request.id}>
-                                        <TooltipTrigger asChild>
-                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-default">
-                                                <div className="mb-4 sm:mb-0">
-                                                    <div className="flex items-center gap-3">
-                                                        <Badge variant={request.type === 'Overtime' ? 'secondary' : 'default'}>{request.type}</Badge>
-                                                        <p className="font-semibold">{request.description}</p>
-                                                    </div>
-                                                    <p className="text-sm text-muted-foreground mt-1 pl-1">{request.details}</p>
-                                                </div>
-                                                <div className="flex gap-2 self-end sm:self-center">
-                                                    <Button size="sm" onClick={() => handleRequest(request.id, true)}>
-                                                        <CheckCircle className="mr-2 h-4 w-4"/> Approve
-                                                    </Button>
-                                                    <Button size="sm" variant="destructive" onClick={() => handleRequest(request.id, false)}>
-                                                        <XCircle className="mr-2 h-4 w-4"/> Reject
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <div className="grid gap-2 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                    <span className="font-semibold">Location:</span>
-                                                    <span>{request.location}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <UserCog className="h-4 w-4 text-muted-foreground" />
-                                                    <span className="font-semibold">Manager:</span>
-                                                    <span>{request.manager}</span>
-                                                </div>
-                                            </div>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                ))
-                            ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">No pending approvals for {selectedLocation.name}.</p>
-                            )}
+                        <CardContent className="space-y-3">
+                            {crucialAlerts.map(alert => (
+                                <Alert key={alert.id} variant="destructive" className="bg-accent/10 border-accent/50">
+                                    <AlertTriangle className="h-4 w-4 !text-accent" />
+                                    <AlertTitle className="font-bold flex justify-between items-center">
+                                        <span>{alert.location}</span>
+                                        <Button size="sm" variant="secondary" onClick={() => handleSuggestAssignment(alert.description)}>
+                                            <Sparkles className="mr-2 h-4 w-4"/>
+                                            AI Assign
+                                        </Button>
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        {alert.description}
+                                    </AlertDescription>
+                                </Alert>
+                            ))}
                         </CardContent>
                     </Card>
-
-                    <div className="lg:col-span-3">
-                        <LiveReviews location={selectedLocation.name} />
-                    </div>
-
-                    <Card className="lg:col-span-3">
-                        <CardHeader>
-                            <CardTitle className="font-headline">Future Feature: Approve Reviews</CardTitle>
-                            <CardDescription>
-                                Once reviews are fetched, you'll be able to select which ones to display on the employee dashboard to motivate your team.
-                            </CardDescription>
+                    
+                    <Card>
+                         <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><ClipboardPen /> Owner's Memo Board</CardTitle>
+                            <CardDescription>Your private notepad for reminders and high-level strategy.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm text-muted-foreground">This feature would involve saving approved reviews to a database and then fetching them on the employee page. This creates a curated list of feedback to share with your staff.</p>
+                            <Textarea 
+                                value={memo}
+                                onChange={(e) => setMemo(e.target.value)}
+                                placeholder="Jot down your notes here..."
+                                rows={8}
+                                className="resize-none"
+                            />
                         </CardContent>
                     </Card>
                 </div>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-accent"/> Pending Manager Approvals</CardTitle>
+                        <CardDescription>
+                            Review and approve or reject requests from your team managers.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {requests.length > 0 ? (
+                            requests.map((request) => (
+                                <Tooltip key={request.id}>
+                                    <TooltipTrigger asChild>
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-default">
+                                            <div className="mb-4 sm:mb-0">
+                                                <div className="flex items-center gap-3">
+                                                    <Badge variant={request.type === 'Overtime' ? 'secondary' : 'default'}>{request.type}</Badge>
+                                                    <p className="font-semibold">{request.description}</p>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground mt-1 pl-1">{request.details}</p>
+                                            </div>
+                                            <div className="flex gap-2 self-end sm:self-center">
+                                                <Button size="sm" onClick={() => handleRequest(request.id, true)}>
+                                                    <CheckCircle className="mr-2 h-4 w-4"/> Approve
+                                                </Button>
+                                                <Button size="sm" variant="destructive" onClick={() => handleRequest(request.id, false)}>
+                                                    <XCircle className="mr-2 h-4 w-4"/> Reject
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <div className="grid gap-2 text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                <span className="font-semibold">Location:</span>
+                                                <span>{request.location}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <UserCog className="h-4 w-4 text-muted-foreground" />
+                                                <span className="font-semibold">Manager:</span>
+                                                <span>{request.manager}</span>
+                                            </div>
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ))
+                        ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">No pending approvals.</p>
+                        )}
+                    </CardContent>
+                </Card>
+
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><ShieldAlert /> Mandatory Health Dept. Tasks</CardTitle>
+                        <CardDescription>These are active, non-negotiable tasks assigned by the Health Department.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {healthDeptTasks.map(task => (
+                             <div key={task.id} className="flex items-start justify-between rounded-lg border p-4">
+                                <p className="text-sm">{task.description}</p>
+                                <Badge variant="outline" className="text-xs whitespace-nowrap">{task.source}</Badge>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+
+                {/* AI Assignment Dialog */}
+                <Dialog open={isAssigning} onOpenChange={(open) => !open && closeAssignmentDialog()}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className="font-headline flex items-center gap-2"><Sparkles className="text-primary"/> AI Assignment Suggestion</DialogTitle>
+                            <DialogDescription>
+                                For the issue: "{selectedAlert}"
+                            </DialogDescription>
+                        </DialogHeader>
+                            {!assignmentResult ? (
+                                <div className="flex items-center justify-center p-8 space-x-2">
+                                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                    <p className="text-muted-foreground">AI is thinking...</p>
+                                </div>
+                            ) : (
+                                <div className="py-4 space-y-4">
+                                     <Alert>
+                                        <UserCog className="h-4 w-4"/>
+                                        <AlertTitle>Suggested Assignee: {assignmentResult.suggestedAssignee}</AlertTitle>
+                                    </Alert>
+                                    <Alert variant="default" className="bg-primary/5 border-primary/20">
+                                        <Lightbulb className="h-4 w-4 !text-primary"/>
+                                        <AlertTitle className="text-primary">Reasoning</AlertTitle>
+                                        <AlertDescription>
+                                            {assignmentResult.reasoning}
+                                        </AlertDescription>
+                                    </Alert>
+                                </div>
+                            )}
+                        <DialogFooter>
+                            <Button variant="secondary" onClick={closeAssignmentDialog}>Close</Button>
+                            <Button disabled={!assignmentResult}>Assign & Notify (Simulated)</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
             </div>
         </TooltipProvider>
     );

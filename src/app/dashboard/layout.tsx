@@ -64,15 +64,19 @@ export default function DashboardLayout({
 
   const baseNavItems = [
     { href: getDashboardLink(), icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/taskboard", icon: ClipboardList, label: "Taskboard" },
   ];
+
+  // Owner does not get a taskboard
+  if (role !== 'Owner') {
+    baseNavItems.push({ href: "/taskboard", icon: ClipboardList, label: "Taskboard" });
+  }
 
   const managerNavItems = [
     { href: "/dashboard/manager/shifts", icon: CalendarDays, label: "Shift Planner" },
     { href: "/dashboard/manager/inventory", icon: Boxes, label: "Inventory & Counting" },
     { href: "/dashboard/manager/equipment", icon: Wrench, label: "Equipment Setup" },
   ];
-
+  
   const navItems = (role === "Manager" || role === "Owner") ? [...baseNavItems, ...managerNavItems] : baseNavItems;
 
 
