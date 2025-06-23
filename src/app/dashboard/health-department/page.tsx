@@ -1,10 +1,10 @@
 "use client"
 import { useState, useMemo } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon } from "lucide-react";
+import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2 } from "lucide-react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
+import { processInspectionReport, type ProcessInspectionReportOutput } from '@/ai/flows/process-inspection-report-flow';
+import { format } from 'date-fns';
 
 const complianceData = [
   { month: "Jan", score: 82, jurisdiction: "Downtown" },
@@ -31,26 +34,39 @@ const chartConfig = {
 }
 
 const recentReports = [
-  { id: 1, issue: "Water puddle near entrance", location: "Downtown Cafe", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown" },
-  { id: 2, issue: "Table not cleaned properly", location: "Uptown Bistro", date: "2024-05-20", status: "Resolved", jurisdiction: "Uptown" },
-  { id: 3, issue: "Soap dispenser empty", location: "Downtown Cafe", date: "2024-05-19", status: "Resolved", jurisdiction: "Downtown" },
-  { id: 4, issue: "Strange smell from vent", location: "Uptown Bistro", date: "2024-05-18", status: "Under Investigation", jurisdiction: "Uptown" },
+  { id: 1, issue: "Water puddle near entrance", location: "Downtown", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown" },
+  { id: 2, issue: "Table not cleaned properly", location: "Uptown", date: "2024-05-20", status: "Resolved", jurisdiction: "Uptown" },
+  { id: 3, issue: "Soap dispenser empty", location: "Downtown", date: "2024-05-19", status: "Resolved", jurisdiction: "Downtown" },
+  { id: 4, issue: "Strange smell from vent", location: "Uptown", date: "2024-05-18", status: "Under Investigation", jurisdiction: "Uptown" },
 ];
 
+type ComplianceTask = {
+    id: number;
+    description: string;
+    frequency: string;
+    type: string;
+    location?: string; // Optional location
+};
 
 export default function HealthDeptDashboard() {
   const { toast } = useToast();
-  const [complianceTasks, setComplianceTasks] = useState([
-    { id: 1, description: "Weekly restroom deep clean", frequency: "Weekly", type: "Mandatory" },
-    { id: 2, description: "Monthly fire safety check", frequency: "Monthly", type: "Mandatory" },
+  const [complianceTasks, setComplianceTasks] = useState<ComplianceTask[]>([
+    { id: 1, description: "Weekly restroom deep clean", frequency: "Weekly", type: "Mandatory", location: "All" },
+    { id: 2, description: "Monthly fire safety check", frequency: "Monthly", type: "Mandatory", location: "All" },
+    { id: 3, description: "Verify temperature logs for all coolers", frequency: "Daily", type: "Mandatory", location: "Downtown" },
   ]);
-  const [description, setDescription] = useState('');
-  const [frequency, setFrequency] = useState('');
-  const [type, setType] = useState('mandatory');
+  const [newTask, setNewTask] = useState({ description: '', frequency: '', type: 'mandatory', location: 'All' });
   
   const [linkedJurisdictions, setLinkedJurisdictions] = useState(["Downtown", "Uptown"]);
   const [selectedJurisdiction, setSelectedJurisdiction] = useState('All');
   const [newEstablishmentCode, setNewEstablishmentCode] = useState('');
+
+  // State for AI Report Processor
+  const [reportNotes, setReportNotes] = useState('');
+  const [reportLocation, setReportLocation] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingResult, setProcessingResult] = useState<ProcessInspectionReportOutput | null>(null);
+
 
   const handleLinkEstablishment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +100,7 @@ export default function HealthDeptDashboard() {
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description || !frequency) {
+    if (!newTask.description || !newTask.frequency) {
         toast({
           variant: "destructive",
           title: "Missing Information",
@@ -92,18 +108,53 @@ export default function HealthDeptDashboard() {
         })
         return;
     }
-    const newTask = {
-        id: complianceTasks.length + 1,
-        description,
-        frequency: frequency.charAt(0).toUpperCase() + frequency.slice(1),
-        type: type.charAt(0).toUpperCase() + type.slice(1),
+    const newId = complianceTasks.length > 0 ? Math.max(...complianceTasks.map(t => t.id)) + 1 : 1;
+    const taskToAdd = {
+        ...newTask,
+        id: newId,
+        frequency: newTask.frequency.charAt(0).toUpperCase() + newTask.frequency.slice(1),
+        type: newTask.type.charAt(0).toUpperCase() + newTask.type.slice(1),
     };
-    setComplianceTasks([newTask, ...complianceTasks]);
+    setComplianceTasks([taskToAdd, ...complianceTasks]);
     // Reset form
-    setDescription('');
-    setFrequency('');
-    setType('mandatory');
+    setNewTask({ description: '', frequency: '', type: 'mandatory', location: 'All' });
   };
+  
+  const handleProcessReport = async () => {
+    if (!reportNotes.trim() || !reportLocation) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Information',
+        description: 'Please provide inspection notes and select a location.',
+      });
+      return;
+    }
+    setIsProcessing(true);
+    setProcessingResult(null);
+    try {
+      const input = {
+        inspectionNotes: reportNotes,
+        locationName: reportLocation,
+        inspectionDate: format(new Date(), 'yyyy-MM-dd'),
+      };
+      const result = await processInspectionReport(input);
+      setProcessingResult(result);
+      toast({
+        title: 'AI Processing Complete',
+        description: 'Review the generated tasks below. Immediate tasks have been sent to the owner.',
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'AI Error',
+        description: 'Could not process the inspection report.',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
 
   const filteredReports = useMemo(() => {
     if (selectedJurisdiction === 'All') return recentReports;
@@ -228,6 +279,59 @@ export default function HealthDeptDashboard() {
           </ChartContainer>
         </CardContent>
       </Card>
+      
+      <Card className="border-primary bg-primary/5">
+        <CardHeader>
+          <CardTitle className="font-headline text-primary flex items-center gap-2"><Wand2 /> AI Inspection Report Processor</CardTitle>
+          <CardDescription>
+            Paste your inspection notes below. The AI will extract actionable tasks and suggest new compliance rules. The immediate tasks will be sent to the business owner automatically.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+             <div className="md:col-span-3 grid gap-2">
+              <Label htmlFor="inspection-notes">Inspection Notes</Label>
+              <Textarea id="inspection-notes" placeholder="e.g., Visited on 6/1. Back storage area had boxes blocking the hand-washing sink. Walk-in freezer door seal is torn. Observed employee not washing hands after handling trash. Otherwise, temps were good." value={reportNotes} onChange={(e) => setReportNotes(e.target.value)} required rows={4}/>
+            </div>
+             <div className="grid gap-2">
+              <Label htmlFor="report-location">Location</Label>
+              <Select value={reportLocation} onValueChange={setReportLocation} required>
+                <SelectTrigger id="report-location">
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {linkedJurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+           <Button onClick={handleProcessReport} disabled={isProcessing} className="w-full md:w-auto">
+                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Process with AI
+            </Button>
+            {processingResult && (
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">Immediate Tasks for Owner (Sent)</h4>
+                  {processingResult.immediateTasks.length > 0 ? (
+                    <ul className="list-disc list-inside text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
+                      {processingResult.immediateTasks.map((task, i) => <li key={i}>{task}</li>)}
+                    </ul>
+                  ) : <p className="text-sm text-muted-foreground italic">No immediate tasks generated.</p>}
+                </div>
+                 <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">Suggested New Recurring Tasks</h4>
+                  {processingResult.suggestedRecurringTasks.length > 0 ? (
+                    <ul className="list-disc list-inside text-sm text-muted-foreground bg-background/50 p-3 rounded-md">
+                      {processingResult.suggestedRecurringTasks.map((task, i) => <li key={i}>{task.description} ({task.frequency})</li>)}
+                    </ul>
+                  ) : <p className="text-sm text-muted-foreground italic">No new task suggestions.</p>}
+                </div>
+              </div>
+            )}
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader>
@@ -269,31 +373,44 @@ export default function HealthDeptDashboard() {
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2"><PlusCircle /> Add New Compliance Task</CardTitle>
           <CardDescription>
-            Define new weekly or monthly tasks for establishments to follow. These tasks apply to all jurisdictions.
+            Define new weekly or monthly tasks for establishments to follow.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAddTask} className="grid gap-6">
             <div className="grid gap-2">
               <Label htmlFor="task-description">Task Description</Label>
-              <Input id="task-description" placeholder="e.g., Verify all fire extinguishers are certified" value={description} onChange={(e) => setDescription(e.target.value)} required />
+              <Input id="task-description" placeholder="e.g., Verify all fire extinguishers are certified" value={newTask.description} onChange={(e) => setNewTask({...newTask, description: e.target.value})} required />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="frequency">Frequency</Label>
-                <Select value={frequency} onValueChange={setFrequency} required>
+                <Select value={newTask.frequency} onValueChange={(val) => setNewTask({...newTask, frequency: val})} required>
                   <SelectTrigger id="frequency">
                     <SelectValue placeholder="Select frequency" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="monthly">Monthly</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+               <div className="grid gap-2">
+                <Label htmlFor="task-location">For Location</Label>
+                <Select value={newTask.location} onValueChange={(val) => setNewTask({...newTask, location: val})} required>
+                  <SelectTrigger id="task-location">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                     <SelectItem value="All">All Jurisdictions</SelectItem>
+                     {linkedJurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid gap-2">
                 <Label>Type</Label>
-                <RadioGroup value={type} onValueChange={setType} className="flex items-center gap-4 pt-2">
+                <RadioGroup value={newTask.type} onValueChange={(val) => setNewTask({...newTask, type: val})} className="flex items-center gap-4 pt-2">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="mandatory" id="mandatory" />
                     <Label htmlFor="mandatory" className="font-normal">Mandatory</Label>
@@ -321,6 +438,7 @@ export default function HealthDeptDashboard() {
             <TableHeader>
               <TableRow>
                 <TableHead>Description</TableHead>
+                <TableHead>Location</TableHead>
                 <TableHead>Frequency</TableHead>
                 <TableHead className="text-right">Type</TableHead>
               </TableRow>
@@ -330,6 +448,7 @@ export default function HealthDeptDashboard() {
                 complianceTasks.map((task) => (
                   <TableRow key={task.id}>
                     <TableCell className="font-medium">{task.description}</TableCell>
+                    <TableCell>{task.location}</TableCell>
                     <TableCell>{task.frequency}</TableCell>
                     <TableCell className="text-right">
                       <Badge variant={task.type === 'Mandatory' ? 'destructive' : 'secondary'}>{task.type}</Badge>
@@ -338,7 +457,7 @@ export default function HealthDeptDashboard() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     No compliance tasks defined yet.
                   </TableCell>
                 </TableRow>

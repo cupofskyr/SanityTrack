@@ -54,6 +54,8 @@ const issueAnalyzerSchema = z.object({
 // Mock data for delegated tasks. In a real app, this would come from a database.
 const initialDelegatedTasks: DelegatedTask[] = [
     { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: 'Pending' },
+    { id: 3, description: "Clear blockage from back storage area hand-washing sink.", source: "Health Inspector Report (2024-07-01)", status: 'Pending' },
+
 ];
 
 export default function ManagerDashboard() {

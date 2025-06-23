@@ -50,6 +50,7 @@ const initialHealthDeptTasks: HealthTask[] = [
     { id: 1, description: "Verify all employee food handler certifications are up to date.", source: "City Health Inspector", status: "Pending" },
     { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: "Delegated", delegatedTo: 'Casey Lee' },
     { id: 3, description: "Quarterly pest control inspection report.", source: "City Ordinance 23B", status: "Submitted" },
+    { id: 4, description: "Fix leak under front-of-house sink.", source: "Health Inspector Report (2024-07-01)", status: "Pending" },
 ];
 
 const initialRequests = [
