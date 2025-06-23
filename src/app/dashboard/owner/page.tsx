@@ -733,7 +733,7 @@ export default function OwnerDashboard() {
                     <TooltipContent><p>Approve or reject hiring requests submitted by your managers.</p></TooltipContent>
                  </Tooltip>
 
-                 <Tooltip>
+                <Tooltip>
                     <TooltipTrigger asChild>
                         <Card>
                             <CardHeader>
