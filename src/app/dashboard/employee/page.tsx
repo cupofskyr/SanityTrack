@@ -233,6 +233,14 @@ export default function EmployeeDashboard() {
             </CardContent>
         </Card>
 
+        <Alert className="lg:col-span-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Important Reminders from Management</AlertTitle>
+            <AlertDescription>
+            Please ensure you clock in and out for every shift using the Time Clock. All staff meals must also be logged. Failure to accurately record your hours and meals may result in payment delays for this pay period.
+            </AlertDescription>
+        </Alert>
+
       <Card className="lg:col-span-2">
         <CardHeader className="flex-row justify-between items-start">
           <CardTitle className="font-headline flex items-center gap-2"><Clock /> Time Clock</CardTitle>
