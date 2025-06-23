@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Textarea } from '@/components/ui/textarea';
 import { suggestTaskAssignment, type SuggestTaskAssignmentOutput } from '@/ai/flows/suggest-task-assignment-flow';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import PhotoUploader from '@/components/photo-uploader';
@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
 import LiveReviews from '@/components/live-reviews';
+import { DialogTrigger } from '@/components/ui/dialog';
 
 type TeamMember = { name: string; role: "Manager" | "Employee"; location: string };
 type Location = { id: number; name: string; manager: string; inspectionCode: string; toastApiKey?: string; };
@@ -271,6 +272,20 @@ export default function OwnerDashboard() {
         toast({
             title: "Submission Approved & Sent",
             description: "The compliance document has been submitted to the health department.",
+        });
+        setReviewDialogOpen(false);
+        setSelectedTask(null);
+    };
+    
+    const handleRejectSubmission = () => {
+        if (!selectedTask) return;
+        setHealthDeptTasks(tasks => tasks.map(task => 
+            task.id === selectedTask.id ? { ...task, status: 'Delegated', attachment: undefined } : t
+        ));
+        toast({
+            variant: "destructive",
+            title: "Submission Rejected",
+            description: "The task has been sent back to the manager for resubmission.",
         });
         setReviewDialogOpen(false);
         setSelectedTask(null);
@@ -660,8 +675,13 @@ export default function OwnerDashboard() {
                             <PhotoUploader readOnly initialPreview={selectedTask?.attachment} />
                         </div>
                         <DialogFooter>
-                            <Button variant="secondary" onClick={() => setReviewDialogOpen(false)}>Close</Button>
-                            <Button onClick={handleApproveAndSubmit}>Approve & Submit</Button>
+                            <Button variant="secondary" onClick={() => setReviewDialogOpen(false)}>Cancel</Button>
+                            <Button variant="destructive" onClick={handleRejectSubmission}>
+                                <XCircle className="mr-2 h-4 w-4"/> Reject & Request Resubmission
+                            </Button>
+                            <Button onClick={handleApproveAndSubmit}>
+                                <CheckCircle className="mr-2 h-4 w-4"/> Approve & Submit
+                            </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -723,3 +743,5 @@ export default function OwnerDashboard() {
         </TooltipProvider>
     );
 }
+
+    
