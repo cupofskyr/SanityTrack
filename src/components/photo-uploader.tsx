@@ -13,9 +13,10 @@ import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 type PhotoUploaderProps = {
   readOnly?: boolean;
   initialPreview?: { url: string; name: string };
+  onPhotoDataChange?: (dataUrl: string | null) => void;
 };
 
-export default function PhotoUploader({ readOnly = false, initialPreview }: PhotoUploaderProps) {
+export default function PhotoUploader({ readOnly = false, initialPreview, onPhotoDataChange }: PhotoUploaderProps) {
   const [preview, setPreview] = useState<string | null>(initialPreview?.url || null);
   const [fileName, setFileName] = useState<string | null>(initialPreview?.name || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +33,13 @@ export default function PhotoUploader({ readOnly = false, initialPreview }: Phot
       setFileName(initialPreview.name);
     }
   }, [initialPreview]);
+
+  useEffect(() => {
+    // Notify parent component when the photo data changes
+    if (onPhotoDataChange) {
+      onPhotoDataChange(preview);
+    }
+  }, [preview, onPhotoDataChange]);
 
   useEffect(() => {
     let stream: MediaStream | null = null;

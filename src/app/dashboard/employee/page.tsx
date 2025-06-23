@@ -8,13 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone, Sparkles, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { analyzePhotoIssue } from '@/ai/flows/analyze-photo-issue-flow';
 
 
 const initialTasks = [
@@ -58,6 +59,9 @@ export default function EmployeeDashboard() {
   const [overtimeReason, setOvertimeReason] = useState("");
   const [overtimeHours, setOvertimeHours] = useState("");
 
+  const [photoForAnalysis, setPhotoForAnalysis] = useState<string | null>(null);
+  const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
+
   const handleClockIn = () => {
     setIsClockedIn(true);
     setLastClockIn(new Date());
@@ -92,12 +96,28 @@ export default function EmployeeDashboard() {
     };
     setIssues([newIssue, ...issues]);
     setNewIssueDescription("");
+    setPhotoForAnalysis(null);
     setIsReportDialogOpen(false);
     toast({
       title: "Issue Reported",
       description: "The new issue has been reported to the manager.",
     });
   };
+
+  const handleAnalyzePhoto = async () => {
+      if (!photoForAnalysis) return;
+      setIsAnalyzingPhoto(true);
+      try {
+        const { suggestion } = await analyzePhotoIssue({ photoDataUri: photoForAnalysis });
+        setNewIssueDescription(suggestion);
+        toast({ title: "AI Analysis Complete", description: "The issue description has been pre-filled." });
+      } catch (error) {
+        console.error(error);
+        toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not analyze the photo.' });
+      } finally {
+        setIsAnalyzingPhoto(false);
+      }
+    };
 
   const handleRequestOvertime = (e: React.FormEvent) => {
     e.preventDefault();
@@ -332,16 +352,32 @@ export default function EmployeeDashboard() {
               <DialogHeader>
                 <DialogTitle className="font-headline">Report a New Issue</DialogTitle>
                 <DialogDescription>
-                  Describe the issue you've found. This will be sent to the manager for review.
+                  Take a photo or describe the issue you've found. The AI can help generate a description from the photo.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleReportIssue}>
                 <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                     <Label>Photo of Issue</Label>
+                     <PhotoUploader onPhotoDataChange={setPhotoForAnalysis} />
+                  </div>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleAnalyzePhoto}
+                    disabled={!photoForAnalysis || isAnalyzingPhoto}
+                  >
+                    {isAnalyzingPhoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4 text-primary" />}
+                    Analyze Photo to Generate Description
+                  </Button>
+
                   <div className="grid gap-2">
                     <Label htmlFor="issue-description">Issue Description</Label>
                     <Textarea
                       id="issue-description"
-                      placeholder="e.g., Water puddle near the entrance"
+                      placeholder="e.g., Water puddle near the entrance. Or, let the AI generate this from a photo."
                       value={newIssueDescription}
                       onChange={(e) => setNewIssueDescription(e.target.value)}
                       required
