@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, ClipboardCheck, UserCog, HeartPulse, Crown } from 'lucide-react';
+import { User, ClipboardCheck, UserCog, HeartPulse, Crown, Megaphone } from 'lucide-react';
 import { Logo } from '@/components/icons';
 
 export default function LoginPage() {
@@ -17,40 +17,64 @@ export default function LoginPage() {
             <CardTitle className="font-headline text-3xl text-primary">SanityTrack 2.0</CardTitle>
             <CardDescription className="pt-2">Proactive Sanitation & Hygiene Management</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-center text-sm text-muted-foreground">Select your role to continue</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Button asChild variant="outline" size="lg" className="justify-start">
+          <CardContent className="space-y-6">
+            
+            <div className="space-y-2 text-center">
+                <p className="font-semibold">For Guests & Visitors</p>
+                <p className="text-sm text-muted-foreground">Notice an issue? Help us improve by submitting a report.</p>
+            </div>
+            <Button asChild size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                 <Link href="/guest/report">
-                  <User />
-                  Login as Guest
+                    <Megaphone className="mr-2 h-5 w-5" />
+                    Submit a Public Report
                 </Link>
-              </Button>
+            </Button>
+            
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                    Or
+                    </span>
+                </div>
+            </div>
+
+            <div className="space-y-2 text-center">
+                <p className="font-semibold">For Staff & Health Officials</p>
+                <p className="text-sm text-muted-foreground">Select your role to access your dashboard.</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Button asChild variant="outline" size="lg" className="justify-start">
                 <Link href="/dashboard/employee">
                   <ClipboardCheck />
-                  Login as Employee
+                  Employee Login
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="justify-start">
                 <Link href="/dashboard/manager">
                   <UserCog />
-                  Login as Manager
+                  Manager Login
                 </Link>
               </Button>
                <Button asChild variant="outline" size="lg" className="justify-start">
                 <Link href="/dashboard/owner">
                   <Crown />
-                  Login as Owner
+                  Owner Login
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="justify-start">
                 <Link href="/dashboard/health-department">
                   <HeartPulse />
-                  Login as Health Dept.
+                  Health Dept. Login
                 </Link>
               </Button>
             </div>
+             <p className="text-xs text-muted-foreground text-center pt-2">
+                Employees and Managers must be added to the system by their administrator to get login credentials.
+            </p>
           </CardContent>
         </Card>
       </div>

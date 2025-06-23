@@ -39,6 +39,14 @@ export default function GuestReportPage() {
                   <Label htmlFor="location">Location of Issue</Label>
                   <Input id="location" placeholder="e.g., Men's Restroom, Table 12" required />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email (Optional)</Label>
+                  <Input id="email" type="email" placeholder="you@example.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone (Optional)</Label>
+                  <Input id="phone" type="tel" placeholder="(555) 123-4567" />
+                </div>
               </div>
 
               <div className="space-y-2">
