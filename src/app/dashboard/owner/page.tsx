@@ -1,10 +1,9 @@
 
 "use client";
 
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Link as LinkIcon, Share2 } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -19,78 +18,149 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
+import LiveReviews from '@/components/live-reviews';
 
-// --- MOCK DATA ---
-const teamMembers = [
-  { name: "Alex Ray", role: "Manager" as const, location: "Downtown Cafe" },
-  { name: "Casey Lee", role: "Manager" as const, location: "Uptown Bistro" },
-  { name: "John Doe", role: "Employee" as const, location: "Downtown Cafe" },
-  { name: "Jane Smith", role: "Employee" as const, location: "Uptown Bistro" },
-];
-const managers = teamMembers.filter(m => m.role === 'Manager');
-
-const crucialAlerts = [
-    { id: 1, location: "Downtown Cafe", description: "Main freezer unit is offline. Temperature rising rapidly." },
-    { id: 2, location: "Uptown Bistro", description: "Guest reported seeing a rodent in the main dining area." },
-    { id: 3, location: "Downtown Cafe", description: "POS system is down. Cannot process credit card payments." },
-    { id: 4, location: "Uptown Bistro", description: "Proposed weekly schedule has 2 employees in overtime.", type: 'overtime' },
-];
-
+type TeamMember = { name: string; role: "Manager" | "Employee"; location: string };
+type Location = { id: number; name: string; manager: string; inspectionCode: string; toastApiKey?: string; };
 type HealthTaskStatus = 'Pending' | 'Delegated' | 'PendingOwnerApproval' | 'Submitted';
-type HealthTask = {
-    id: number;
-    description: string;
-    source: string;
-    status: HealthTaskStatus;
-    delegatedTo?: string;
-    attachment?: { url: string; name: string; };
-};
+type HealthTask = { id: number; description: string; source: string; status: HealthTaskStatus; delegatedTo?: string; attachment?: { url: string; name: string; }; };
 
 const initialHealthDeptTasks: HealthTask[] = [
     { id: 1, description: "Verify all employee food handler certifications are up to date.", source: "City Health Inspector", status: "Pending" },
-    { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: "Delegated", delegatedTo: 'Casey Lee' },
-    { id: 3, description: "Clear blockage from back storage area hand-washing sink.", source: "Health Inspector Report (2024-07-01)", status: "PendingOwnerApproval", delegatedTo: "Alex Ray", attachment: { url: "https://placehold.co/600x400.png", name: "sink-fixed.png"} },
     { id: 4, description: "Quarterly pest control inspection report.", source: "City Ordinance 23B", status: "Submitted" },
 ];
 
-const initialRequests = [
-  { id: 1, type: "Shift Change", description: "Manager proposed 45 shifts for the upcoming week.", details: "Mon-Fri, 9am-5pm", manager: "Alex Ray", location: "Downtown Cafe" },
-  { id: 2, type: "Overtime", description: "John Doe requested 2 hours of overtime.", details: "Reason: Deep clean kitchen after busy weekend.", manager: "Alex Ray", location: "Downtown Cafe" },
-  { id: 3, type: "Overtime", description: "Sam Smith requested 3 hours of overtime.", details: "Reason: Cover for sick colleague.", manager: "Casey Lee", location: "Uptown Bistro" },
-];
-
-const overtimeWatchlist = [
-  { id: 1, name: "John Doe", location: "Downtown Cafe", hours: 38, limit: 40 },
-  { id: 2, name: "Jane Smith", location: "Uptown Bistro", hours: 39, limit: 40 },
-  { id: 3, name: "Casey Lee", location: "Uptown Bistro", hours: 35, limit: 40 },
-];
-
-const locations = [
-    { id: 1, name: "Downtown Cafe", manager: "Alex Ray", inspectionCode: "DC-1A3B" },
-    { id: 2, name: "Uptown Bistro", manager: "Casey Lee", inspectionCode: "UB-9Z8Y" }
-];
-// --- END MOCK DATA ---
-
 export default function OwnerDashboard() {
     const { toast } = useToast();
-    const [requests, setRequests] = useState(initialRequests);
+    
+    // --- STATE MANAGEMENT ---
+    const [locations, setLocations] = useState<Location[]>([]);
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+    const [requests, setRequests] = useState<any[]>([]);
     const [memo, setMemo] = useState("Finalize Q3 budget by Friday. Follow up with vendor about new coffee machine.");
     const [healthDeptTasks, setHealthDeptTasks] = useState<HealthTask[]>(initialHealthDeptTasks);
+    const [crucialAlerts, setCrucialAlerts] = useState<any[]>([]);
     
+    // AI State
     const [isAssigning, setIsAssigning] = useState(false);
     const [assignmentResult, setAssignmentResult] = useState<SuggestTaskAssignmentOutput | null>(null);
     const [selectedAlert, setSelectedAlert] = useState<string | null>(null);
 
+    // Dialog State
     const [isDelegateDialogOpen, setDelegateDialogOpen] = useState(false);
     const [isReviewDialogOpen, setReviewDialogOpen] = useState(false);
     const [isContactManagerOpen, setContactManagerOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<HealthTask | null>(null);
     const [selectedManager, setSelectedManager] = useState('');
-
     const [isShareCodeDialogOpen, setShareCodeDialogOpen] = useState(false);
-    const [locationToShare, setLocationToShare] = useState<(typeof locations)[0] | null>(null);
+    const [locationToShare, setLocationToShare] = useState<Location | null>(null);
     const [inspectorEmail, setInspectorEmail] = useState('');
+
+    // Onboarding Form State
+    const [newLocationName, setNewLocationName] = useState('');
+    const [newToastKey, setNewToastKey] = useState('');
+    const [newManagerName, setNewManagerName] = useState('');
+    const [newManagerEmail, setNewManagerEmail] = useState('');
     
+    // Data fetching state
+    const [toastData, setToastData] = useState<ToastPOSData | null>(null);
+    const [isFetchingToast, setIsFetchingToast] = useState(false);
+
+    const managers = teamMembers.filter(m => m.role === 'Manager');
+    
+    useEffect(() => {
+        if (locations.length > 0 && locations[0].name) {
+            setIsFetchingToast(true);
+            fetchToastData({ location: locations[0].name })
+                .then(data => setToastData(data))
+                .catch(err => {
+                    console.error("Failed to fetch Toast data", err);
+                    toast({ variant: 'destructive', title: 'Could not load POS data.' });
+                })
+                .finally(() => setIsFetchingToast(false));
+        }
+    }, [locations, toast]);
+
+    const handleSetupLocation = (e: FormEvent) => {
+        e.preventDefault();
+        if (!newLocationName || !newManagerName || !newManagerEmail) {
+            toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out all required fields.' });
+            return;
+        }
+
+        const newLocation: Location = {
+            id: 1,
+            name: newLocationName,
+            manager: newManagerName,
+            inspectionCode: `${newLocationName.substring(0,2).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+            toastApiKey: newToastKey,
+        };
+        const newManager: TeamMember = {
+            name: newManagerName,
+            role: "Manager",
+            location: newLocationName,
+        };
+
+        setLocations([newLocation]);
+        setTeamMembers([newManager]);
+
+        toast({
+            title: 'Location Setup Complete!',
+            description: `${newLocationName} is now configured and the manager has been invited.`,
+        });
+
+        // Simulate new tasks/alerts appearing after setup
+        setHealthDeptTasks(prev => [
+            ...prev,
+            { id: 2, description: `Monthly deep clean and sanitization of all ice machines for ${newLocationName}.`, source: "State Regulation 5.11a", status: "Delegated", delegatedTo: newManagerName },
+            { id: 3, description: `Clear blockage from back storage area hand-washing sink at ${newLocationName}.`, source: "Health Inspector Report (2024-07-01)", status: "PendingOwnerApproval", delegatedTo: newManagerName, attachment: { url: "https://placehold.co/600x400.png", name: "sink-fixed.png"} },
+        ]);
+        setCrucialAlerts([
+            { id: 1, location: newLocationName, description: "Main freezer unit is offline. Temperature rising rapidly." },
+            { id: 2, location: newLocationName, description: "POS system is down. Cannot process credit card payments." },
+        ]);
+    };
+
+    if (locations.length === 0) {
+        return (
+            <div className="flex items-center justify-center p-4 md:p-8">
+                <Card className="w-full max-w-2xl">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-primary flex items-center gap-2"><Sparkles /> Welcome! Let's Set Up Your First Location.</CardTitle>
+                        <CardDescription>
+                            Provide some basic information to get your dashboard up and running. You can add more locations later.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleSetupLocation} className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="location-name">Location Name</Label>
+                                <Input id="location-name" placeholder="e.g., Downtown Cafe" value={newLocationName} onChange={e => setNewLocationName(e.target.value)} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="toast-key">Toast POS API Key (Optional)</Label>
+                                <Input id="toast-key" placeholder="Enter your API key to sync sales data" value={newToastKey} onChange={e => setNewToastKey(e.target.value)} />
+                                <p className="text-xs text-muted-foreground">This is a simulation. You can enter any value.</p>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="manager-name">Manager's Full Name</Label>
+                                    <Input id="manager-name" placeholder="Alex Ray" value={newManagerName} onChange={e => setNewManagerName(e.target.value)} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="manager-email">Manager's Email (for Invite)</Label>
+                                    <Input id="manager-email" type="email" placeholder="alex@example.com" value={newManagerEmail} onChange={e => setNewManagerEmail(e.target.value)} required/>
+                                </div>
+                            </div>
+                            <Button type="submit" className="w-full">Save & Create Dashboard</Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
     const handleRequest = (requestId: number, approved: boolean) => {
         const request = requests.find(r => r.id === requestId);
         if (!request) return;
@@ -117,7 +187,8 @@ export default function OwnerDashboard() {
                 title: 'AI Error',
                 description: 'Could not generate an assignment suggestion.',
             });
-            setIsAssigning(false); 
+        } finally {
+            setIsAssigning(false);
         }
     };
 
@@ -172,26 +243,19 @@ export default function OwnerDashboard() {
         setContactManagerOpen(false);
     };
 
-    const handleOpenShareDialog = (location: (typeof locations)[0]) => {
+    const handleOpenShareDialog = (location: Location) => {
         setLocationToShare(location);
-        setInspectorEmail(''); // Reset email field
+        setInspectorEmail('');
         setShareCodeDialogOpen(true);
     };
 
     const handleSendCode = (e: React.FormEvent) => {
         e.preventDefault();
         if (!inspectorEmail.trim()) {
-            toast({
-                variant: 'destructive',
-                title: 'Email Required',
-                description: "Please enter the inspector's email address.",
-            });
+            toast({ variant: 'destructive', title: 'Email Required', description: "Please enter the inspector's email address." });
             return;
         }
-        toast({
-            title: "Code Sent!",
-            description: `The inspection code for ${locationToShare?.name} has been sent to ${inspectorEmail}.`,
-        });
+        toast({ title: "Code Sent!", description: `The inspection code for ${locationToShare?.name} has been sent to ${inspectorEmail}.` });
         setShareCodeDialogOpen(false);
     };
 
@@ -199,19 +263,24 @@ export default function OwnerDashboard() {
     return (
         <TooltipProvider>
             <div className="space-y-6">
-                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
-                                Company-Wide Revenue
+                                Location Revenue (from Toast)
                             </CardTitle>
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">$125,430.89</div>
-                            <p className="text-xs text-muted-foreground">
-                                +18.3% from last month
-                            </p>
+                             {isFetchingToast ? <Loader2 className="h-6 w-6 animate-spin"/> : toastData ? (
+                                <>
+                                    <div className="text-2xl font-bold">${toastData.totalRevenue.toLocaleString()}</div>
+                                    <p className="text-xs text-muted-foreground">
+                                        +{toastData.changeFromLastMonth}% from last month
+                                    </p>
+                                </>
+                             ) : <p className="text-sm text-muted-foreground">No POS data.</p>
+                            }
                         </CardContent>
                     </Card>
                     <Card>
@@ -241,6 +310,8 @@ export default function OwnerDashboard() {
                         </CardContent>
                     </Card>
                 </div>
+
+                <LiveReviews location={locations[0]?.name} />
                  
                 <Card>
                     <CardHeader>
@@ -310,26 +381,6 @@ export default function OwnerDashboard() {
                     </Card>
                     
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2"><TrendingUp /> Overtime Watchlist</CardTitle>
-                            <CardDescription>
-                                Employees approaching the weekly 40-hour overtime limit.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {overtimeWatchlist.map((employee) => (
-                                <div key={employee.id}>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <p className="font-medium">{employee.name} <span className="text-xs text-muted-foreground">({employee.location})</span></p>
-                                        <span className="text-sm text-muted-foreground">{employee.hours} / {employee.limit} hrs</span>
-                                    </div>
-                                    <Progress value={(employee.hours / employee.limit) * 100} className="h-2" />
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                    
-                    <Card className="lg:col-span-2">
                          <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2"><ClipboardPen /> Owner's Memo Board</CardTitle>
                             <CardDescription>Your private notepad for reminders and high-level strategy.</CardDescription>
@@ -592,3 +643,5 @@ export default function OwnerDashboard() {
         </TooltipProvider>
     );
 }
+
+    
