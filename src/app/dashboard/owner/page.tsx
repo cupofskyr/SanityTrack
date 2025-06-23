@@ -64,8 +64,8 @@ const overtimeWatchlist = [
 ];
 
 const locations = [
-    { id: 1, name: "Downtown Cafe", manager: "Alex Ray" },
-    { id: 2, name: "Uptown Bistro", manager: "Casey Lee" }
+    { id: 1, name: "Downtown Cafe", manager: "Alex Ray", inspectionCode: "DC-1A3B" },
+    { id: 2, name: "Uptown Bistro", manager: "Casey Lee", inspectionCode: "UB-9Z8Y" }
 ];
 // --- END MOCK DATA ---
 
@@ -82,13 +82,9 @@ export default function OwnerDashboard() {
     const [isDelegateDialogOpen, setDelegateDialogOpen] = useState(false);
     const [isReviewDialogOpen, setReviewDialogOpen] = useState(false);
     const [isContactManagerOpen, setContactManagerOpen] = useState(false);
-    const [isInspectionLinkOpen, setInspectionLinkOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<HealthTask | null>(null);
     const [selectedManager, setSelectedManager] = useState('');
-    const [selectedLocationForLink, setSelectedLocationForLink] = useState<string | null>(null);
     
-    const inspectionLink = selectedLocationForLink ? `${window.location.origin}/dashboard/health-department/claim?location=${encodeURIComponent(selectedLocationForLink)}` : '';
-
     const handleRequest = (requestId: number, approved: boolean) => {
         const request = requests.find(r => r.id === requestId);
         if (!request) return;
@@ -170,20 +166,6 @@ export default function OwnerDashboard() {
         setContactManagerOpen(false);
     };
 
-    const handleOpenInspectionLinkDialog = (locationName: string) => {
-        setSelectedLocationForLink(locationName);
-        setInspectionLinkOpen(true);
-    };
-    
-    const copyLinkToClipboard = () => {
-        navigator.clipboard.writeText(inspectionLink);
-        toast({
-            title: "Link Copied!",
-            description: "The inspection link has been copied to your clipboard.",
-        });
-    };
-
-
     return (
         <TooltipProvider>
             <div className="space-y-6">
@@ -233,7 +215,7 @@ export default function OwnerDashboard() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline flex items-center gap-2"><MapPin/> My Locations</CardTitle>
-                        <CardDescription>Manage your locations and provide access to health inspectors.</CardDescription>
+                        <CardDescription>Provide the inspection code to a Health Dept. agent to grant them access.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2">
                         {locations.map(loc => (
@@ -242,10 +224,10 @@ export default function OwnerDashboard() {
                                     <p className="font-semibold">{loc.name}</p>
                                     <p className="text-sm text-muted-foreground">Manager: {loc.manager}</p>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => handleOpenInspectionLinkDialog(loc.name)}>
-                                    <Share2 className="mr-2 h-4 w-4" />
-                                    Inspection Link
-                                </Button>
+                                <div className="text-right">
+                                    <p className="text-xs text-muted-foreground">Inspection Code</p>
+                                    <p className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded-md">{loc.inspectionCode}</p>
+                                </div>
                             </div>
                         ))}
                     </CardContent>
@@ -534,29 +516,6 @@ export default function OwnerDashboard() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-                
-                {/* Inspection Link Dialog */}
-                <Dialog open={isInspectionLinkOpen} onOpenChange={setInspectionLinkOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle className="font-headline">Health Dept. Inspection Link</DialogTitle>
-                            <DialogDescription>
-                                Share this link with an on-site inspector to grant them temporary access to this location's compliance data.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4 space-y-2">
-                            <Label htmlFor="inspection-link-input">Shareable Link</Label>
-                            <div className="flex gap-2">
-                                <Input id="inspection-link-input" value={inspectionLink} readOnly />
-                                <Button onClick={copyToClipboard} size="sm">Copy</Button>
-                            </div>
-                        </div>
-                         <DialogFooter>
-                            <Button variant="secondary" onClick={() => setInspectionLinkOpen(false)}>Close</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
             </div>
         </TooltipProvider>
     );

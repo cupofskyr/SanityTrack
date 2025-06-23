@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Toolti
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map } from "lucide-react";
+import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon } from "lucide-react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,8 +37,6 @@ const recentReports = [
   { id: 4, issue: "Strange smell from vent", location: "Uptown Bistro", date: "2024-05-18", status: "Under Investigation", jurisdiction: "Uptown" },
 ];
 
-const jurisdictions = ["Downtown", "Uptown"];
-
 
 export default function HealthDeptDashboard() {
   const { toast } = useToast();
@@ -49,7 +47,40 @@ export default function HealthDeptDashboard() {
   const [description, setDescription] = useState('');
   const [frequency, setFrequency] = useState('');
   const [type, setType] = useState('mandatory');
+  
+  const [linkedJurisdictions, setLinkedJurisdictions] = useState(["Downtown", "Uptown"]);
   const [selectedJurisdiction, setSelectedJurisdiction] = useState('All');
+  const [newEstablishmentCode, setNewEstablishmentCode] = useState('');
+
+  const handleLinkEstablishment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEstablishmentCode.trim()) {
+        toast({
+            variant: "destructive",
+            title: "Invalid Code",
+            description: "Please enter a valid establishment code.",
+        });
+        return;
+    }
+    // Simulate linking
+    const newJurisdiction = `${newEstablishmentCode.trim()}`;
+    if (!linkedJurisdictions.includes(newJurisdiction)) {
+        setLinkedJurisdictions([...linkedJurisdictions, newJurisdiction]);
+        setSelectedJurisdiction(newJurisdiction); // Switch to the new one
+        toast({
+            title: "Establishment Linked!",
+            description: `You now have access to ${newEstablishmentCode.trim()}.`,
+        });
+        setNewEstablishmentCode('');
+    } else {
+         toast({
+            variant: "secondary",
+            title: "Already Linked",
+            description: `This establishment is already in your file.`,
+        });
+    }
+  };
+
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +145,7 @@ export default function HealthDeptDashboard() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All Jurisdictions</SelectItem>
-                {jurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                {linkedJurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -128,6 +159,24 @@ export default function HealthDeptDashboard() {
             In a real-world application, each Health Department agent would only see the locations and data assigned to their specific jurisdiction. This simulation allows you to switch between different jurisdictional views.
         </CardDescription>
       </Alert>
+
+      <Card>
+        <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><LinkIcon /> Link New Establishment</CardTitle>
+            <CardDescription>Enter the code provided by the business owner to link their location to your jurisdiction file.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <form onSubmit={handleLinkEstablishment} className="flex flex-col sm:flex-row gap-2">
+                <Input 
+                    placeholder="Enter Establishment Code from owner" 
+                    value={newEstablishmentCode} 
+                    onChange={(e) => setNewEstablishmentCode(e.target.value)} 
+                    required
+                />
+                <Button type="submit" className="w-full sm:w-auto">Link Location</Button>
+            </form>
+        </CardContent>
+    </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
