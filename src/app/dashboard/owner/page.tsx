@@ -3,7 +3,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes, CalendarClock, CalendarIcon, ListTodo, LinkIcon } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes, CalendarClock, CalendarIcon, ListTodo, LinkIcon, UserPlus, Clock, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { postJob, type JobPostingInput } from '@/ai/flows/post-job-flow';
 
 
 type TeamMember = { name: string; role: "Manager" | "Employee"; location: string };
@@ -42,11 +43,24 @@ type Meeting = {
     description: string;
     meetLink?: string;
 };
+type HiringRequest = {
+    id: number;
+    manager: string;
+    location: string;
+    role: string;
+    urgency: string;
+    shiftType: 'Full-time' | 'Part-time' | 'Contract';
+};
 
 
 const initialHealthDeptTasks: HealthTask[] = [
     { id: 1, description: "Verify all employee food handler certifications are up to date.", source: "City Health Inspector", status: "Pending" },
     { id: 4, description: "Quarterly pest control inspection report.", source: "City Ordinance 23B", status: "Submitted" },
+];
+
+const initialHiringRequests: HiringRequest[] = [
+    { id: 1, manager: 'Alex Ray', location: 'Downtown Cafe', role: 'Line Cook', urgency: 'Immediate', shiftType: 'Full-time' },
+    { id: 2, manager: 'Casey Lee', location: 'Uptown Smoothies', role: 'Barista', urgency: 'Within 2 Weeks', shiftType: 'Part-time' },
 ];
 
 export default function OwnerDashboard() {
@@ -55,7 +69,7 @@ export default function OwnerDashboard() {
     // --- STATE MANAGEMENT ---
     const [locations, setLocations] = useState<Location[]>([]);
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-    const [requests, setRequests] = useState<any[]>([]);
+    const [hiringRequests, setHiringRequests] = useState<HiringRequest[]>(initialHiringRequests);
     const [memo, setMemo] = useState("Finalize Q3 budget by Friday. Follow up with vendor about new coffee machine.");
     const [healthDeptTasks, setHealthDeptTasks] = useState<HealthTask[]>(initialHealthDeptTasks);
     const [crucialAlerts, setCrucialAlerts] = useState<any[]>([]);
@@ -283,15 +297,42 @@ export default function OwnerDashboard() {
             </div>
         );
     }
+    
+    const handleApproveRequest = async (request: HiringRequest) => {
+        setHiringRequests(prev => prev.filter(r => r.id !== request.id));
+        toast({
+            title: "Posting Job...",
+            description: `AI is now posting the ${request.role} position.`
+        });
 
-    const handleRequest = (requestId: number, approved: boolean) => {
-        const request = requests.find(r => r.id === requestId);
+        try {
+            const jobInput: JobPostingInput = {
+                role: request.role,
+                location: request.location,
+                shiftType: request.shiftType,
+            };
+            const result = await postJob(jobInput);
+            toast({
+                title: "Job Posted Successfully!",
+                description: `Confirmation ID: ${result.confirmationId}`,
+            });
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'AI Posting Failed', description: 'Could not post the job listing.' });
+            // Re-add the request to the list if posting fails
+            setHiringRequests(prev => [...prev, request].sort((a,b) => a.id - b.id));
+        }
+    };
+
+    const handleRejectRequest = (requestId: number) => {
+        const request = hiringRequests.find(r => r.id === requestId);
         if (!request) return;
 
-        setRequests(requests.filter(r => r.id !== requestId));
+        setHiringRequests(hiringRequests.filter(r => r.id !== requestId));
         toast({
-            title: `Request ${approved ? 'Approved' : 'Rejected'}`,
-            description: `The "${request.description}" request has been ${approved ? 'approved' : 'rejected'}.`,
+            title: `Request Rejected`,
+            description: `The hiring request for a ${request.role} has been rejected.`,
+            variant: 'secondary'
         });
     };
 
@@ -476,6 +517,38 @@ export default function OwnerDashboard() {
                 </div>
 
                 <LiveReviews location={locations[0]?.name} />
+
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><UserPlus /> Hiring Requests</CardTitle>
+                        <CardDescription>Review and approve hiring requests from your managers. Approved requests will be posted to the job board via AI.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {hiringRequests.length > 0 ? (
+                            <div className="space-y-4">
+                                {hiringRequests.map(req => (
+                                    <div key={req.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 gap-4">
+                                        <div className="space-y-1">
+                                            <p className="font-semibold">{req.role} <span className="font-normal text-muted-foreground">at {req.location}</span></p>
+                                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                                <span><Badge variant="outline">{req.shiftType}</Badge></span>
+                                                <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Urgency: {req.urgency}</span>
+                                                <span className="flex items-center gap-1"><UserCog className="h-3 w-3" /> From: {req.manager}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 self-end sm:self-center">
+                                            <Button size="sm" onClick={() => handleApproveRequest(req)}><CheckCircle className="mr-2 h-4 w-4" /> Approve & Post</Button>
+                                            <Button size="sm" variant="destructive" onClick={() => handleRejectRequest(req.id)}><XCircle className="mr-2 h-4 w-4" /> Reject</Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                             <div className="text-center text-sm text-muted-foreground p-8">No pending hiring requests.</div>
+                        )}
+                    </CardContent>
+                </Card>
+
 
                 <Card>
                     <CardHeader>

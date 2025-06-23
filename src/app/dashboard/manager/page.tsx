@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -120,6 +120,8 @@ export default function ManagerDashboard() {
     
     const [isMealInsightDialogOpen, setIsMealInsightDialogOpen] = useState(false);
     const [aiMealInsight, setAiMealInsight] = useState<{title: string, description: string, employeeName: string} | null>(null);
+
+    const [newHireRequest, setNewHireRequest] = useState({ role: '', shiftType: '', urgency: '' });
 
     useEffect(() => {
         const getBriefing = async () => {
@@ -335,6 +337,20 @@ export default function ManagerDashboard() {
         setAiMealInsight(null);
     };
 
+    const handleRequestNewHire = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newHireRequest.role || !newHireRequest.shiftType || !newHireRequest.urgency) {
+            toast({ variant: "destructive", title: "Missing Information", description: "Please fill out all fields for the hiring request." });
+            return;
+        }
+        // In a real app, this would send the data to a backend. Here, we just show a confirmation.
+        toast({
+            title: "Request Sent to Owner",
+            description: `Your request to hire a ${newHireRequest.role} has been sent for approval.`
+        });
+        setNewHireRequest({ role: '', shiftType: '', urgency: '' });
+    };
+
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card className="lg:col-span-3">
@@ -352,6 +368,49 @@ export default function ManagerDashboard() {
                             <Progress value={member.progress} className="h-2" />
                         </div>
                     ))}
+                </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><UserPlus /> Request New Hire</CardTitle>
+                    <CardDescription>Submit a request to the owner to post a job application for a new team member.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleRequestNewHire} className="grid gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="grid gap-2 md:col-span-2">
+                                <Label htmlFor="hire-role">Role</Label>
+                                <Input id="hire-role" placeholder="e.g., Line Cook, Barista" value={newHireRequest.role} onChange={(e) => setNewHireRequest({...newHireRequest, role: e.target.value})} required />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="hire-shift">Shift Type</Label>
+                                <Select value={newHireRequest.shiftType} onValueChange={(val) => setNewHireRequest({...newHireRequest, shiftType: val})} required>
+                                    <SelectTrigger id="hire-shift"><SelectValue placeholder="Select type" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Full-time">Full-time</SelectItem>
+                                        <SelectItem value="Part-time">Part-time</SelectItem>
+                                        <SelectItem value="Contract">Contract</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="hire-urgency">Urgency</Label>
+                                <Select value={newHireRequest.urgency} onValueChange={(val) => setNewHireRequest({...newHireRequest, urgency: val})} required>
+                                    <SelectTrigger id="hire-urgency"><SelectValue placeholder="Select urgency" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Immediate">Immediate</SelectItem>
+                                        <SelectItem value="Within 2 Weeks">Within 2 Weeks</SelectItem>
+                                        <SelectItem value="Within 1 Month">Within 1 Month</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <Button type="submit" className="w-full md:w-auto">
+                            <Send className="mr-2 h-4 w-4" />
+                            Send Request to Owner
+                        </Button>
+                    </form>
                 </CardContent>
             </Card>
 

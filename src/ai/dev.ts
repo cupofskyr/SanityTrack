@@ -12,3 +12,4 @@ import '@/ai/flows/suggest-task-assignment-flow.ts';
 import '@/ai/flows/process-inspection-report-flow.ts';
 import '@/ai/flows/generate-inquiry-flow.ts';
 import '@/ai/flows/analyze-photo-issue-flow.ts';
+import '@/ai/flows/post-job-flow.ts';
