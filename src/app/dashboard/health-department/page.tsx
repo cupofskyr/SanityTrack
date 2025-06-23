@@ -90,6 +90,11 @@ export default function HealthDeptDashboard() {
   const [selectedReportForContact, setSelectedReportForContact] = useState<Report | null>(null);
   const [aiMessage, setAiMessage] = useState<GenerateInquiryOutput | null>(null);
   const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
+  
+  // State for Investigation Dialog
+  const [isInvestigateDialogOpen, setIsInvestigateDialogOpen] = useState(false);
+  const [selectedReportForInvestigation, setSelectedReportForInvestigation] = useState<Report | null>(null);
+
 
   const handleLinkEstablishment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,11 +233,13 @@ export default function HealthDeptDashboard() {
     return complianceData.filter(data => data.jurisdiction === selectedJurisdiction);
   }, [selectedJurisdiction]);
   
-  const handleInvestigateReport = (reportId: number) => {
-    setRecentReports(reports => reports.map(r => r.id === reportId ? { ...r, status: 'Under Investigation' } : r));
+  const handleOpenInvestigateDialog = (report: Report) => {
+    setSelectedReportForInvestigation(report);
+    setIsInvestigateDialogOpen(true);
+    setRecentReports(reports => reports.map(r => r.id === report.id ? { ...r, status: 'Under Investigation' } : r));
     toast({
-        title: 'Report Flagged',
-        description: 'The report status has been updated to "Under Investigation".',
+        title: 'Report Flagged for Investigation',
+        description: 'The report status has been updated and details are open for review.',
     });
   };
 
@@ -449,7 +456,7 @@ export default function HealthDeptDashboard() {
                     <Badge variant={report.status === 'Under Investigation' ? 'destructive' : 'outline'}>{report.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right space-x-1">
-                     <Button size="sm" variant="outline" onClick={() => handleInvestigateReport(report.id)} disabled={report.status === 'Under Investigation'}>
+                     <Button size="sm" variant="outline" onClick={() => handleOpenInvestigateDialog(report)} disabled={report.status === 'Under Investigation'}>
                         <AlertCircle className="mr-2 h-4 w-4" />
                         Investigate
                      </Button>
@@ -645,9 +652,52 @@ export default function HealthDeptDashboard() {
               </DialogFooter>
           </DialogContent>
       </Dialog>
+      
+      {/* Investigate Report Dialog */}
+      <Dialog open={isInvestigateDialogOpen} onOpenChange={setIsInvestigateDialogOpen}>
+        <DialogContent className="max-w-lg">
+            <DialogHeader>
+                <DialogTitle className="font-headline">Investigate Guest Report</DialogTitle>
+                <DialogDescription>
+                    Review the details of the report from {selectedReportForInvestigation?.location}.
+                </DialogDescription>
+            </DialogHeader>
+            {selectedReportForInvestigation && (
+                <div className="py-4 space-y-4">
+                    <div className="grid grid-cols-3 items-center gap-4">
+                        <Label className="text-right text-muted-foreground">Location</Label>
+                        <p className="col-span-2 font-semibold">{selectedReportForInvestigation.location}</p>
+                    </div>
+                    <div className="grid grid-cols-3 items-center gap-4">
+                        <Label className="text-right text-muted-foreground">Owner</Label>
+                        <p className="col-span-2">{selectedReportForInvestigation.owner}</p>
+                    </div>
+                    <div className="grid grid-cols-3 items-center gap-4">
+                        <Label className="text-right text-muted-foreground">Reported Date</Label>
+                        <p className="col-span-2">{selectedReportForInvestigation.date}</p>
+                    </div>
+                    <div className="grid grid-cols-3 items-center gap-4">
+                        <Label className="text-right text-muted-foreground">Status</Label>
+                        <div className="col-span-2">
+                            <Badge variant={selectedReportForInvestigation.status === 'Under Investigation' ? 'destructive' : 'outline'}>
+                                {selectedReportForInvestigation.status}
+                            </Badge>
+                        </div>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Reported Issue</Label>
+                        <div className="border rounded-md p-3 bg-muted/50">
+                            <p className="text-sm font-semibold">{selectedReportForInvestigation.issue}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsInvestigateDialogOpen(false)}>Close</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
 }
-
-    
