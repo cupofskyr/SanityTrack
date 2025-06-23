@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -29,6 +29,7 @@ import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/fl
 import StaffMealManager from '@/components/staff-meal-manager';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { translateText } from '@/ai/flows/translate-text-flow';
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },
@@ -122,6 +123,9 @@ export default function ManagerDashboard() {
     const [aiMealInsight, setAiMealInsight] = useState<{title: string, description: string, employeeName: string} | null>(null);
 
     const [newHireRequest, setNewHireRequest] = useState({ role: '', shiftType: '', urgency: '', justification: '' });
+
+    const [translations, setTranslations] = useState<Record<number, string>>({});
+    const [translatingId, setTranslatingId] = useState<number | null>(null);
 
     useEffect(() => {
         const getBriefing = async () => {
@@ -351,6 +355,25 @@ export default function ManagerDashboard() {
         setNewHireRequest({ role: '', shiftType: '', urgency: '', justification: '' });
     };
 
+    const handleTranslate = async (taskId: number, text: string) => {
+        if (translations[taskId]) {
+            const newTranslations = { ...translations };
+            delete newTranslations[taskId];
+            setTranslations(newTranslations);
+            return;
+        }
+        setTranslatingId(taskId);
+        try {
+            const { translatedText } = await translateText({ text, targetLanguage: 'Spanish' });
+            setTranslations(prev => ({ ...prev, [taskId]: translatedText }));
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Translation Failed', description: 'Could not translate the task.' });
+        } finally {
+            setTranslatingId(null);
+        }
+    };
+
     return (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card className="lg:col-span-3">
@@ -438,7 +461,7 @@ export default function ManagerDashboard() {
                                     <AccordionTrigger className="hover:no-underline text-left">
                                         <div className="flex w-full items-center justify-between pr-4">
                                             <div className='text-left'>
-                                                <p className="font-semibold">{task.description}</p>
+                                                <p className="font-semibold">{translations[task.id] || task.description}</p>
                                                 <p className="text-xs text-muted-foreground">Source: {task.source}</p>
                                             </div>
                                             <Badge variant={task.status === 'Pending' ? 'destructive' : 'default'} className='whitespace-nowrap'>
@@ -448,23 +471,33 @@ export default function ManagerDashboard() {
                                     </AccordionTrigger>
                                     <AccordionContent>
                                         <div className='p-4 bg-muted/50 rounded-md m-1 space-y-4'>
-                                            {task.status === 'Pending' ? (
-                                                <>
-                                                    <div>
-                                                        <Label className='text-xs text-muted-foreground'>Attach Proof of Completion</Label>
-                                                        <div className='mt-2'>
-                                                            {/* In a real app, the onUploadSuccess prop would be used to handle the uploaded file */}
-                                                            <PhotoUploader />
+                                            <div className="flex items-center gap-4">
+                                                {task.status === 'Pending' ? (
+                                                    <>
+                                                        <div>
+                                                            <Label className='text-xs text-muted-foreground'>Attach Proof of Completion</Label>
+                                                            <div className='mt-2'>
+                                                                <PhotoUploader />
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <Button onClick={() => handleManagerSubmitForApproval(task.id)}>
-                                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                                        Submit for Owner Approval
-                                                    </Button>
-                                                </>
-                                            ) : (
-                                                <p className='text-sm text-muted-foreground italic'>This task is awaiting final approval from the owner. No further action is needed.</p>
-                                            )}
+                                                        <Button onClick={() => handleManagerSubmitForApproval(task.id)}>
+                                                            <CheckCircle className="mr-2 h-4 w-4" />
+                                                            Submit for Owner Approval
+                                                        </Button>
+                                                    </>
+                                                ) : (
+                                                    <p className='text-sm text-muted-foreground italic'>This task is awaiting final approval from the owner. No further action is needed.</p>
+                                                )}
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleTranslate(task.id, task.description)}
+                                                    disabled={translatingId === task.id}
+                                                >
+                                                    {translatingId === task.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}
+                                                    {translatingId === task.id ? 'Translating...' : translations[task.id] ? 'Show Original' : 'Translate'}
+                                                </Button>
+                                            </div>
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>

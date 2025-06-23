@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone, Sparkles, Loader2, User, Phone, Mail, UtensilsCrossed } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone, Sparkles, Loader2, User, Phone, Mail, UtensilsCrossed, Languages } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { analyzePhotoIssue } from '@/ai/flows/analyze-photo-issue-flow';
+import { translateText } from "@/ai/flows/translate-text-flow";
 
 
 const initialTasks = [
@@ -42,6 +43,15 @@ const initialReviews = [
 ];
 
 const mealLimit = 2;
+
+const initialBriefing = {
+    title: "Let's Make it a Great Tuesday!",
+    message: "Great work yesterday everyone! Let's keep the energy high today. Our focus is on guest experience, so let's make sure every customer leaves with a smile.",
+    tasks: [
+        "Double-check all tables for cleanliness before seating new guests.",
+        "Give a friendly greeting to everyone who walks in."
+    ]
+};
 
 export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState(initialTasks);
@@ -70,6 +80,11 @@ export default function EmployeeDashboard() {
   const [newMealPhoto, setNewMealPhoto] = useState<string | null>(null);
 
   const [directMessage, setDirectMessage] = useState<{title: string, description: string} | null>(null);
+
+  const [briefing, setBriefing] = useState(initialBriefing);
+  const [translatedBriefing, setTranslatedBriefing] = useState<{title: string, message: string} | null>(null);
+  const [isTranslatingBriefing, setIsTranslatingBriefing] = useState(false);
+
 
   useEffect(() => {
     const pendingIssue = localStorage.getItem('ai-issue-suggestion');
@@ -208,6 +223,34 @@ export default function EmployeeDashboard() {
     });
   };
 
+  const handleTranslateBriefing = async () => {
+    if (translatedBriefing) {
+        setTranslatedBriefing(null);
+        return;
+    }
+    setIsTranslatingBriefing(true);
+    try {
+        const [titleRes, messageRes] = await Promise.all([
+            translateText({ text: briefing.title, targetLanguage: 'Spanish' }),
+            translateText({ text: briefing.message, targetLanguage: 'Spanish' })
+        ]);
+        setTranslatedBriefing({
+            title: titleRes.translatedText,
+            message: messageRes.translatedText
+        });
+        toast({
+            title: "Briefing Translated",
+            description: "The manager's message has been translated to Spanish."
+        });
+    } catch (error) {
+        console.error(error);
+        toast({ variant: 'destructive', title: 'Translation Failed', description: 'Could not translate the message.' });
+    } finally {
+        setIsTranslatingBriefing(false);
+    }
+  };
+
+
   return (
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
        {directMessage && (
@@ -224,19 +267,24 @@ export default function EmployeeDashboard() {
             </Alert>
         )}
        <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Message from the Manager</CardTitle>
-                <CardDescription>Your manager's daily briefing and focus for the team.</CardDescription>
+            <CardHeader className="flex-row items-start justify-between">
+                <div>
+                    <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Message from the Manager</CardTitle>
+                    <CardDescription>Your manager's daily briefing and focus for the team.</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleTranslateBriefing} disabled={isTranslatingBriefing}>
+                    {isTranslatingBriefing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}
+                    {translatedBriefing ? 'Show Original' : 'Translate'}
+                </Button>
             </CardHeader>
             <CardContent>
                 <Alert>
-                    <AlertTitle className="font-semibold">Let's Make it a Great Tuesday!</AlertTitle>
+                    <AlertTitle className="font-semibold">{translatedBriefing ? translatedBriefing.title : briefing.title}</AlertTitle>
                     <AlertDescription>
-                        <p className="mb-2">Great work yesterday everyone! Let's keep the energy high today. Our focus is on guest experience, so let's make sure every customer leaves with a smile.</p>
+                        <p className="mb-2">{translatedBriefing ? translatedBriefing.message : briefing.message}</p>
                         <p className="font-semibold text-xs mb-1">Today's Focus:</p>
                         <ul className="list-disc list-inside text-xs">
-                            <li>Double-check all tables for cleanliness before seating new guests.</li>
-                            <li>Give a friendly greeting to everyone who walks in.</li>
+                            {briefing.tasks.map((task, i) => <li key={i}>{task}</li>)}
                         </ul>
                     </AlertDescription>
                 </Alert>

@@ -27,7 +27,8 @@ import {
   Wrench,
   ShieldCheck,
   BookOpen,
-  GraduationCap
+  GraduationCap,
+  Languages
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -149,6 +150,11 @@ export default function DashboardLayout({
               <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Languages className="mr-2 h-4 w-4" />
+                <span>Language</span>
+                <span className="ml-auto text-xs text-muted-foreground">English</span>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <ShieldCheck className="mr-2 h-4 w-4" />
