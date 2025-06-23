@@ -83,6 +83,15 @@ export default function InventoryManager() {
         );
     };
 
+    const handleParChange = (id: number, value: string) => {
+        const par = parseInt(value, 10);
+        setInventoryItems(
+            inventoryItems.map(item =>
+                item.id === id ? { ...item, par: isNaN(par) ? 0 : par } : item
+            )
+        );
+    };
+
     const itemsBelowPar = useMemo(() => {
         return inventoryItems.filter(item => item.currentCount < item.par);
     }, [inventoryItems]);
@@ -230,7 +239,14 @@ export default function InventoryManager() {
                                         return (
                                         <TableRow key={item.id} className={cn(isLow && "bg-destructive/10 hover:bg-destructive/20")}>
                                             <TableCell className="font-medium">{item.name}</TableCell>
-                                            <TableCell>{item.par}</TableCell>
+                                            <TableCell>
+                                                <Input 
+                                                    type="number"
+                                                    value={item.par}
+                                                    onChange={(e) => handleParChange(item.id, e.target.value)}
+                                                    className="w-24 h-8"
+                                                />
+                                            </TableCell>
                                             <TableCell>
                                                 <Input 
                                                     type="number"

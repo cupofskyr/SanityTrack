@@ -3,7 +3,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-f
 import LiveReviews from '@/components/live-reviews';
 import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
 import { format } from 'date-fns';
+import InventoryManager from '@/components/inventory-manager';
 
 
 type TeamMember = { name: string; role: "Manager" | "Employee"; location: string };
@@ -655,6 +656,20 @@ export default function OwnerDashboard() {
                                 </AccordionItem>
                             ))}
                         </Accordion>
+                    </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-3">
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2">
+                            <Boxes /> Inventory Management
+                        </CardTitle>
+                        <CardDescription>
+                            Oversee and adjust inventory par levels for all locations. The AI will use these levels to generate reorder lists for managers.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <InventoryManager />
                     </CardContent>
                 </Card>
 
