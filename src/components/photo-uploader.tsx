@@ -146,19 +146,15 @@ export default function PhotoUploader({ readOnly = false, initialPreview, onPhot
       {!preview ? (
         <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg bg-muted p-4 space-y-3">
             <div className="flex flex-col items-center text-center">
-                <UploadCloud className="w-10 h-10 text-muted-foreground" />
+                <Camera className="w-10 h-10 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground mt-2">
-                    Upload an existing photo or take a new one.
+                    Take a photo of the issue or upload an existing file.
                 </p>
             </div>
             <div className='flex gap-2 w-full max-w-sm'>
-                <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-                    <UploadCloud className="mr-2 h-4 w-4"/>
-                    Upload File
-                </Button>
                  <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full">
+                        <Button className="w-full">
                             <Camera className="mr-2 h-4 w-4"/>
                             Take Photo
                         </Button>
@@ -184,11 +180,15 @@ export default function PhotoUploader({ readOnly = false, initialPreview, onPhot
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
+                    <UploadCloud className="mr-2 h-4 w-4"/>
+                    Upload File
+                </Button>
             </div>
         </div>
       ) : (
         <div className="relative w-full h-48 rounded-lg overflow-hidden border">
-          <Image src={preview} alt="Image preview" layout="fill" objectFit="cover" />
+          <Image src={preview} alt="Image preview" layout="fill" objectFit="cover" data-ai-hint="issue photo"/>
           <div className="absolute top-2 right-2 flex items-center bg-black/50 p-1 rounded-md text-white text-xs">
             <span className="truncate max-w-[200px]">{fileName}</span>
             <Button
