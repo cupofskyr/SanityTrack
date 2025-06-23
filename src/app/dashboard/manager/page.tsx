@@ -173,9 +173,9 @@ export default function ManagerDashboard() {
 
             <Card className="lg:col-span-3">
                 <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><PlusCircle /> Create & Assign Task</CardTitle>
+                    <CardTitle className="font-headline flex items-center gap-2"><PlusCircle /> Create & Assign Manual Task</CardTitle>
                     <CardDescription>
-                        Define new one-time, weekly, or monthly tasks and assign them to your team members.
+                        Define new one-time or recurring tasks and assign them to a specific team member. For shift-based tasks, use the Equipment page.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -222,9 +222,9 @@ export default function ManagerDashboard() {
 
             <Card className="lg:col-span-3">
                 <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> Assigned Tasks</CardTitle>
+                    <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> Manually Assigned Tasks</CardTitle>
                     <CardDescription>
-                        A list of all recurring and one-time tasks you've created. AI-generated tasks appear on the Equipment page.
+                       A list of all one-time or manually-assigned recurring tasks. The AI-generated Master Task List for shifts is on the Equipment page.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

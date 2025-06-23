@@ -16,12 +16,12 @@ import { GenerateTasksFromInventoryInputSchema, type GenerateTasksFromInventoryO
 
 
 type AISetupAssistantProps = {
-    onTasksGenerated: (tasks: GenerateTasksFromInventoryOutput['tasks']) => void;
+    onTasksSuggested: (tasks: GenerateTasksFromInventoryOutput['tasks']) => void;
 };
 
-export default function AISetupAssistant({ onTasksGenerated }: AISetupAssistantProps) {
+export default function AISetupAssistant({ onTasksSuggested }: AISetupAssistantProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<GenerateTasksFromInventoryOutput | null>(null);
+  const [setupInstructions, setSetupInstructions] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<GenerateTasksFromInventoryInput>({
@@ -38,13 +38,13 @@ export default function AISetupAssistant({ onTasksGenerated }: AISetupAssistantP
 
   async function onSubmit(values: GenerateTasksFromInventoryInput) {
     setIsLoading(true);
-    setResult(null);
+    setSetupInstructions(null);
     setError(null);
 
     try {
       const response = await generateTasksFromInventory(values);
-      setResult(response);
-      onTasksGenerated(response.tasks);
+      setSetupInstructions(response.setupInstructions);
+      onTasksSuggested(response.tasks);
     } catch (e) {
       setError("Failed to generate tasks. Please try again.");
       console.error(e);
@@ -145,18 +145,18 @@ export default function AISetupAssistant({ onTasksGenerated }: AISetupAssistantP
                 
                 <Button type="submit" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Generate Task Checklist
+                    Generate Task Suggestions
                 </Button>
                 </form>
             </Form>
 
             {error && <p className="mt-4 text-destructive">{error}</p>}
 
-            {result && (
+            {setupInstructions && (
                  <Alert className="mt-6">
                     <Info className="h-4 w-4" />
                     <AlertTitle>Setup Recommendation</AlertTitle>
-                    <AlertDescription>{result.setupInstructions}</AlertDescription>
+                    <AlertDescription>{setupInstructions}</AlertDescription>
                 </Alert>
             )}
         </CardContent>
