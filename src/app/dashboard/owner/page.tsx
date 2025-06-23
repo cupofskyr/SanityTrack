@@ -15,7 +15,6 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import PhotoUploader from '@/components/photo-uploader';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
@@ -822,7 +821,7 @@ export default function OwnerDashboard() {
                 </Card>
 
                 {/* AI Assignment Dialog */}
-                <Dialog open={isAssigning} onOpenChange={(open) => !open && closeAssignmentDialog()}>
+                <Dialog open={!!selectedAlert} onOpenChange={(open) => !open && closeAssignmentDialog()}>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle className="font-headline flex items-center gap-2"><Sparkles className="text-primary"/> AI Assignment Suggestion</DialogTitle>
@@ -830,12 +829,12 @@ export default function OwnerDashboard() {
                                 For the issue: "{selectedAlert}"
                             </DialogDescription>
                         </DialogHeader>
-                            {!assignmentResult ? (
+                            {!assignmentResult && isAssigning ? (
                                 <div className="flex items-center justify-center p-8 space-x-2">
                                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
                                     <p className="text-muted-foreground">AI is thinking...</p>
                                 </div>
-                            ) : (
+                            ) : assignmentResult ? (
                                 <div className="py-4 space-y-4">
                                      <Alert>
                                         <UserCog className="h-4 w-4"/>
@@ -849,7 +848,7 @@ export default function OwnerDashboard() {
                                         </AlertDescription>
                                     </Alert>
                                 </div>
-                            )}
+                            ) : null}
                         <DialogFooter>
                             <Button variant="secondary" onClick={closeAssignmentDialog}>Close</Button>
                             <Button disabled={!assignmentResult}>Assign & Notify (Simulated)</Button>
