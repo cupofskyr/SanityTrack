@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, List, UserCheck, Trash2, CalendarIcon } from "lucide-react";
+import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generateSchedule, type GenerateScheduleInput, type GenerateScheduleOutput } from "@/ai/flows/ai-shift-planner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -58,6 +59,9 @@ export default function AIShiftScheduler() {
     const [result, setResult] = useState<GenerateScheduleOutput | null>(null);
     const { toast } = useToast();
 
+    // In a real app, this would be controlled by the owner's approval action.
+    const isScheduleApproved = false;
+
     const handleCreateShifts = (e: React.FormEvent) => {
         e.preventDefault();
         if (!dateRange?.from || !dateRange?.to) {
@@ -90,8 +94,8 @@ export default function AIShiftScheduler() {
         setShifts(Array.from(shiftMap.values()));
 
         toast({
-            title: "Shifts Created",
-            description: `Added ${newShifts.length} new shifts to the roster.`,
+            title: "Shift Proposal Created",
+            description: `Submitted ${newShifts.length} new shifts for owner approval.`,
         });
     };
 
@@ -108,6 +112,10 @@ export default function AIShiftScheduler() {
     const handleGenerateSchedule = async () => {
         if (shifts.length === 0) {
              toast({ variant: "destructive", title: "No Shifts", description: "Please create shifts before generating a schedule." });
+            return;
+        }
+        if (!isScheduleApproved) {
+            toast({ variant: "destructive", title: "Approval Required", description: "The owner must approve the proposed shifts before the AI can generate a schedule." });
             return;
         }
         setIsLoading(true);
@@ -147,8 +155,8 @@ export default function AIShiftScheduler() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">1. Create Shifts in Bulk</CardTitle>
-                    <CardDescription>Select a date range, shift times, and days of the week to quickly populate the shift roster.</CardDescription>
+                    <CardTitle className="text-lg">1. Propose Shifts</CardTitle>
+                    <CardDescription>Select a date range, shift times, and days of the week to propose shifts for the owner to approve.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleCreateShifts} className="space-y-6">
@@ -222,7 +230,7 @@ export default function AIShiftScheduler() {
                                 <Input id="end-time" type="time" value={shiftTime.endTime} onChange={e => setShiftTime({...shiftTime, endTime: e.target.value})} required/>
                             </div>
                              <div className="flex items-end">
-                                <Button type="submit" className="w-full">Create Shifts</Button>
+                                <Button type="submit" className="w-full">Propose Shifts</Button>
                             </div>
                         </div>
                     </form>
@@ -232,10 +240,10 @@ export default function AIShiftScheduler() {
             <Card>
                 <CardHeader>
                     <CardTitle className="text-lg">2. Generate Schedule</CardTitle>
-                    <CardDescription>Click the button to let AI automatically assign the created shifts based on employee availability.</CardDescription>
+                    <CardDescription>Once the owner approves the proposed shifts, this button will be enabled to automatically generate the schedule.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button onClick={handleGenerateSchedule} disabled={isLoading || shifts.filter(s => !s.assignedTo).length === 0}>
+                    <Button onClick={handleGenerateSchedule} disabled={isLoading || shifts.length === 0 || !isScheduleApproved}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Generate AI Schedule
                     </Button>
@@ -253,15 +261,24 @@ export default function AIShiftScheduler() {
                 <CardHeader>
                      <CardTitle className="font-headline flex items-center justify-between text-lg">
                         <div className="flex items-center gap-2">
-                            <List /> Shift Roster
+                            <List /> Proposed Shift Roster & Status
                         </div>
                         <Button variant="outline" size="sm" onClick={() => setShifts([])} disabled={shifts.length === 0}>
-                            Clear All
+                            Clear Proposal
                         </Button>
                      </CardTitle>
-                    <CardDescription>Overview of all created shifts and their assignments. You can manually delete shifts.</CardDescription>
+                    <CardDescription>Overview of all proposed shifts. These must be approved by the owner before assignments can be made.</CardDescription>
                 </CardHeader>
                 <CardContent>
+                    {shifts.length > 0 && (
+                        <Alert variant="default" className="mb-4 bg-accent/10 border-accent text-accent [&>svg]:text-accent">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Pending Approval</AlertTitle>
+                            <AlertDescription>
+                                This shift schedule is pending approval from the owner. The AI scheduler will be enabled once the proposal is approved.
+                            </AlertDescription>
+                        </Alert>
+                    )}
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -276,13 +293,9 @@ export default function AIShiftScheduler() {
                                 <TableRow key={shift.id}>
                                     <TableCell>{format(parseDate(shift.date), 'PPP')}</TableCell>
                                     <TableCell>{shift.startTime} - {shift.endTime}</TableCell>
-                                    <TableCell>{shift.assignedTo ? (
-                                        <span className="font-medium">{shift.assignedTo}</span>
-                                    ) : result?.unassignedShifts.includes(shift.id) ? (
-                                        <span className="font-bold text-destructive">COULD NOT ASSIGN</span>
-                                    ) : (
-                                        <span className="text-muted-foreground">Unassigned</span>
-                                    )}</TableCell>
+                                    <TableCell>
+                                        <span className="text-muted-foreground">Pending Approval</span>
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="ghost" size="icon" onClick={() => handleDeleteShift(shift.id)}>
                                             <Trash2 className="h-4 w-4" />
@@ -292,7 +305,7 @@ export default function AIShiftScheduler() {
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24">No shifts created yet.</TableCell>
+                                    <TableCell colSpan={4} className="text-center h-24">No shifts proposed yet.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>

@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
@@ -52,6 +53,10 @@ export default function EmployeeDashboard() {
   const [isClockedIn, setIsClockedIn] = useState(false);
   const [lastClockIn, setLastClockIn] = useState<Date | null>(null);
 
+  const [isOvertimeDialogOpen, setIsOvertimeDialogOpen] = useState(false);
+  const [overtimeReason, setOvertimeReason] = useState("");
+  const [overtimeHours, setOvertimeHours] = useState("");
+
   const handleClockIn = () => {
     setIsClockedIn(true);
     setLastClockIn(new Date());
@@ -93,11 +98,71 @@ export default function EmployeeDashboard() {
     });
   };
 
+  const handleRequestOvertime = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!overtimeReason || !overtimeHours) {
+        toast({
+            variant: "destructive",
+            title: "Missing Information",
+            description: "Please provide a reason and the number of hours.",
+        });
+        return;
+    }
+    setIsOvertimeDialogOpen(false);
+    setOvertimeReason("");
+    setOvertimeHours("");
+    toast({
+        title: "Overtime Request Submitted",
+        description: `Your request for ${overtimeHours} hour(s) has been sent to the owner for approval.`,
+    });
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
       <Card className="lg:col-span-2">
-        <CardHeader>
+        <CardHeader className="flex-row justify-between items-start">
           <CardTitle className="font-headline flex items-center gap-2"><Clock /> Time Clock</CardTitle>
+          <Dialog open={isOvertimeDialogOpen} onOpenChange={setIsOvertimeDialogOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="sm"><Timer className="mr-2 h-4 w-4"/> Request Overtime</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="font-headline">Request Overtime</DialogTitle>
+                    <DialogDescription>
+                        All overtime must be approved by the owner. Please provide a reason and duration.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleRequestOvertime}>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="overtime-hours">Overtime Hours Requested</Label>
+                            <Input
+                            id="overtime-hours"
+                            type="number"
+                            placeholder="e.g., 2"
+                            value={overtimeHours}
+                            onChange={(e) => setOvertimeHours(e.target.value)}
+                            required
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="overtime-reason">Reason for Overtime</Label>
+                            <Textarea
+                            id="overtime-reason"
+                            placeholder="e.g., Needed to finish deep cleaning the kitchen after a busy night."
+                            value={overtimeReason}
+                            onChange={(e) => setOvertimeReason(e.target.value)}
+                            required
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit">Submit for Approval</Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
