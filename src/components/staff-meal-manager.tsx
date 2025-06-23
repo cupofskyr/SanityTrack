@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -70,7 +69,7 @@ export default function StaffMealManager() {
         <Card className="lg:col-span-3">
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2"><Utensils /> Manage Approved Staff Meals</CardTitle>
-                <CardDescription>Define the list of items employees are permitted to log as their staff meal. This list is for policy and does not affect inventory counts.</CardDescription>
+                <CardDescription>Define the list of items employees are permitted to log as their staff meal. The policy allows for 2 items per shift. This list is for policy and does not affect inventory counts.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-6">
