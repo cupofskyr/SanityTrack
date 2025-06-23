@@ -68,6 +68,8 @@ export default function EmployeeDashboard() {
   const [isMealLogDialogOpen, setIsMealLogDialogOpen] = useState(false);
   const [newMealDescription, setNewMealDescription] = useState("");
 
+  const [directMessage, setDirectMessage] = useState<{title: string, description: string} | null>(null);
+
   useEffect(() => {
     const pendingIssue = localStorage.getItem('ai-issue-suggestion');
     if (pendingIssue) {
@@ -78,6 +80,12 @@ export default function EmployeeDashboard() {
             title: "AI Suggestion Loaded",
             description: "The issue description from the AI Camera has been pre-filled for you."
         });
+    }
+
+    const message = localStorage.getItem('employee-direct-message');
+    if (message) {
+        const parsedMessage = JSON.parse(message);
+        setDirectMessage(parsedMessage);
     }
   }, [toast]);
 
@@ -191,6 +199,19 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+       {directMessage && (
+            <Alert variant="destructive" className="lg:col-span-2 bg-accent/10 border-accent/50 text-accent [&>svg]:text-accent">
+                <Megaphone className="h-4 w-4" />
+                <AlertTitle>{directMessage.title}</AlertTitle>
+                <AlertDescription className="flex justify-between items-center">
+                    {directMessage.description}
+                    <Button variant="ghost" size="sm" onClick={() => {
+                        setDirectMessage(null);
+                        localStorage.removeItem('employee-direct-message');
+                    }}>Dismiss</Button>
+                </AlertDescription>
+            </Alert>
+        )}
        <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Message from the Manager</CardTitle>

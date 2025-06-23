@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, Send } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -116,6 +116,9 @@ export default function ManagerDashboard() {
 
     const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [meetingDetails, setMeetingDetails] = useState({ title: '', date: new Date(), time: '', attendee: '', description: '' });
+    
+    const [isMealInsightDialogOpen, setIsMealInsightDialogOpen] = useState(false);
+    const [aiMealInsight, setAiMealInsight] = useState<{title: string, description: string, employeeName: string} | null>(null);
 
     useEffect(() => {
         const getBriefing = async () => {
@@ -307,10 +310,28 @@ export default function ManagerDashboard() {
     };
 
     const handleAiMealAnalysis = () => {
-        toast({
-            title: "AI Analysis (Simulated)",
-            description: "John Doe has consistently taken the maximum number of items (2) this week. Consider a friendly reminder about the policy if this trend continues."
+        // Simulate getting an insight for a specific employee
+        setAiMealInsight({
+            title: "AI Insight on John Doe's Meal Log",
+            description: "John Doe has consistently taken the maximum number of items (2) this week. Consider a friendly reminder about the policy if this trend continues.",
+            employeeName: "John Doe"
         });
+        setIsMealInsightDialogOpen(true);
+    };
+
+    const handleSendMealInsight = () => {
+        if (!aiMealInsight) return;
+        // Use localStorage to simulate sending the message
+        localStorage.setItem('employee-direct-message', JSON.stringify({
+            title: "A note on your meal log",
+            description: aiMealInsight.description
+        }));
+        toast({
+            title: "Message Sent",
+            description: `A message has been sent to ${aiMealInsight.employeeName}'s dashboard.`
+        });
+        setIsMealInsightDialogOpen(false);
+        setAiMealInsight(null);
     };
 
     return (
@@ -826,6 +847,25 @@ export default function ManagerDashboard() {
                         <Button variant="outline" onClick={() => setIsBriefingDialogOpen(false)}>Dismiss</Button>
                         <Button onClick={handlePostBriefing} disabled={isGeneratingBriefing || !dailyBriefing}>
                             Post to Employee Dashboard
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={isMealInsightDialogOpen} onOpenChange={setIsMealInsightDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="font-headline">{aiMealInsight?.title}</DialogTitle>
+                        <DialogDescription>
+                            This is a private, AI-generated insight. You can send this as a message to the employee's dashboard.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-sm">{aiMealInsight?.description}</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={() => setIsMealInsightDialogOpen(false)}>Close</Button>
+                        <Button onClick={handleSendMealInsight}>
+                            <Send className="mr-2 h-4 w-4" /> Send to Employee
                         </Button>
                     </DialogFooter>
                 </DialogContent>
