@@ -63,6 +63,11 @@ type Shift = {
     assignedTo?: string;
 };
 
+// Simulation data for this employee
+const employeeName = "John Doe";
+const employeeLocation = "Downtown Cafe";
+const employeeShift = { start: "09:00", end: "17:00" };
+
 
 export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState(initialTasks);
@@ -97,7 +102,6 @@ export default function EmployeeDashboard() {
   const [isTranslatingBriefing, setIsTranslatingBriefing] = useState(false);
   
   const [mySchedule, setMySchedule] = useState<Shift[]>([]);
-  const employeeName = "John Doe"; // In a real app, this would come from user context
 
   useEffect(() => {
     // This effect simulates fetching the schedule from a shared source (localStorage)
@@ -133,6 +137,19 @@ export default function EmployeeDashboard() {
   const handleClockIn = () => {
     setIsClockedIn(true);
     setLastClockIn(new Date());
+
+    const newLog = {
+      id: Date.now(),
+      employeeName,
+      location: employeeLocation,
+      type: 'in',
+      timestamp: new Date().toISOString(),
+      shiftStart: employeeShift.start,
+    };
+    const logs = JSON.parse(localStorage.getItem('timeClockLogs') || '[]');
+    logs.push(newLog);
+    localStorage.setItem('timeClockLogs', JSON.stringify(logs));
+
     toast({
       title: "Clocked In",
       description: `You clocked in at ${new Date().toLocaleTimeString()}. Welcome!`,
@@ -141,6 +158,19 @@ export default function EmployeeDashboard() {
 
   const handleClockOut = () => {
     setIsClockedIn(false);
+
+     const newLog = {
+      id: Date.now(),
+      employeeName,
+      location: employeeLocation,
+      type: 'out',
+      timestamp: new Date().toISOString(),
+      shiftEnd: employeeShift.end,
+    };
+    const logs = JSON.parse(localStorage.getItem('timeClockLogs') || '[]');
+    logs.push(newLog);
+    localStorage.setItem('timeClockLogs', JSON.stringify(logs));
+
     toast({
       title: "Clocked Out",
       description: `You clocked out at ${new Date().toLocaleTimeString()}. Have a great day!`,

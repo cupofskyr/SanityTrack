@@ -27,7 +27,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import PhotoUploader from '@/components/photo-uploader';
 import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
 import StaffMealManager from '@/components/staff-meal-manager';
-import { format } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { translateText } from '@/ai/flows/translate-text-flow';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -72,6 +72,15 @@ type HiringRequest = {
     justification: string;
 };
 type RejectedRequest = HiringRequest & { ownerComment: string; };
+type TimeClockLog = {
+    id: number;
+    employeeName: string;
+    location: string;
+    type: 'in' | 'out';
+    timestamp: string;
+    shiftStart?: string;
+    shiftEnd?: string;
+};
 
 
 const issueAnalyzerSchema = z.object({
@@ -141,6 +150,8 @@ export default function ManagerDashboard() {
     const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
     
     const [rejectedRequests, setRejectedRequests] = useState<RejectedRequest[]>([]);
+    
+    const [timeClockLogs, setTimeClockLogs] = useState<TimeClockLog[]>([]);
 
     useEffect(() => {
         const storedRejected = localStorage.getItem('rejectedHiringRequests');
@@ -148,6 +159,10 @@ export default function ManagerDashboard() {
             // A real app would filter these for the current manager
             setRejectedRequests(JSON.parse(storedRejected));
         }
+        
+        const logs = JSON.parse(localStorage.getItem('timeClockLogs') || '[]');
+        setTimeClockLogs(logs.sort((a:TimeClockLog, b:TimeClockLog) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+
     }, []);
 
 
@@ -412,6 +427,28 @@ export default function ManagerDashboard() {
         window.print();
     };
 
+    const calculateDeviation = (log: TimeClockLog) => {
+        const gracePeriodMinutes = 5;
+        const clockTime = new Date(log.timestamp);
+        const scheduleTime = log.type === 'in' ? log.shiftStart : log.shiftEnd;
+
+        if (!scheduleTime) return { text: 'N/A', isLate: false };
+
+        const [hours, minutes] = scheduleTime.split(':').map(Number);
+        const shiftTime = new Date(clockTime);
+        shiftTime.setHours(hours, minutes, 0, 0);
+
+        const diffMins = differenceInMinutes(clockTime, shiftTime);
+
+        if (log.type === 'in' && diffMins > gracePeriodMinutes) {
+            return { text: `Late by ${diffMins} min`, isLate: true };
+        }
+        if (log.type === 'out' && diffMins < -gracePeriodMinutes) {
+            return { text: `Early by ${Math.abs(diffMins)} min`, isLate: true };
+        }
+        return { text: 'On Time', isLate: false };
+    };
+
     return (
         <TooltipProvider>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -534,6 +571,59 @@ export default function ManagerDashboard() {
                     </Card>
                 </TooltipTrigger>
                 <TooltipContent><p>Track task completion and performance for each team member.</p></TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                             <CardTitle className="font-headline flex items-center gap-2"><Clock /> Live Time Clock Feed</CardTitle>
+                            <CardDescription>Recent clock-in and clock-out events from your team. Deviations are highlighted.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Employee</TableHead>
+                                        <TableHead>Event</TableHead>
+                                        <TableHead>Time</TableHead>
+                                        <TableHead>Deviation</TableHead>
+                                        <TableHead className="text-right">Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {timeClockLogs.length > 0 ? timeClockLogs.map(log => {
+                                        const deviation = calculateDeviation(log);
+                                        return (
+                                            <TableRow key={log.id} className={cn(deviation.isLate && "bg-destructive/10")}>
+                                                <TableCell className="font-medium">{log.employeeName}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant={log.type === 'in' ? 'default' : 'secondary'}>
+                                                        Clocked {log.type === 'in' ? 'In' : 'Out'}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>{format(new Date(log.timestamp), 'p')}</TableCell>
+                                                <TableCell className={cn(deviation.isLate && "font-semibold text-destructive")}>
+                                                    {deviation.text}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button size="sm" variant="outline"><Phone className="mr-2 h-4 w-4" /> Call</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    }) : (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-24 text-center">No clock events recorded yet.</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>See real-time clock-in/out events and identify tardiness.</p>
+                </TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -1170,5 +1260,3 @@ export default function ManagerDashboard() {
         </TooltipProvider>
     );
 }
-
-    
