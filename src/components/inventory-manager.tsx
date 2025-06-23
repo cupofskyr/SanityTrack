@@ -7,12 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, PlusCircle, AlertCircle } from 'lucide-react';
+import { Trash2, PlusCircle, Sparkles, Loader2, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Separator } from './ui/separator';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
+import { generateShoppingList, type GenerateShoppingListOutput } from '@/ai/flows/generate-shopping-list-flow';
+import { Textarea } from './ui/textarea';
 
 type InventoryItem = {
     id: number;
@@ -32,6 +33,9 @@ export default function InventoryManager() {
     ]);
     const [newItem, setNewItem] = useState({ name: '', par: '' });
     const [countingFrequency, setCountingFrequency] = useState('1');
+
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [shoppingListResult, setShoppingListResult] = useState<GenerateShoppingListOutput | null>(null);
 
     const handleAddItem = (e: React.FormEvent) => {
         e.preventDefault();
@@ -80,8 +84,38 @@ export default function InventoryManager() {
     };
 
     const itemsBelowPar = useMemo(() => {
-        return inventoryItems.filter(item => item.currentCount < item.par).length;
+        return inventoryItems.filter(item => item.currentCount < item.par);
     }, [inventoryItems]);
+
+    const handleGenerateList = async () => {
+        setIsGenerating(true);
+        setShoppingListResult(null);
+        try {
+            const itemsToOrder = itemsBelowPar.map(({name, par, currentCount}) => ({name, par, currentCount}));
+            const result = await generateShoppingList({ items: itemsToOrder });
+            setShoppingListResult(result);
+            toast({
+                title: 'Shopping List Ready!',
+                description: 'The AI has generated your reorder list.',
+            });
+        } catch (error) {
+            console.error("Failed to generate shopping list", error);
+            toast({
+                variant: 'destructive',
+                title: 'AI Error',
+                description: 'There was a problem generating the shopping list.',
+            });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+    
+    const handleSendEmail = () => {
+        toast({
+            title: 'Order Email Sent (Simulation)',
+            description: 'In a real application, this would send an email to your supplier.',
+        });
+    };
 
     return (
         <div className="space-y-6">
@@ -131,17 +165,46 @@ export default function InventoryManager() {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Inventory Status</CardTitle>
-                    <AlertCircle className={cn("h-4 w-4", itemsBelowPar > 0 ? "text-destructive" : "text-muted-foreground")} />
+            <Card className="lg:col-span-3 border-primary bg-primary/5">
+                <CardHeader>
+                    <CardTitle className="font-headline text-primary flex items-center gap-2"><Sparkles /> AI Reorder Assistant</CardTitle>
+                    <CardDescription>When items are below par, the AI can generate a shopping list for you. Automated emails and alarms will notify the manager.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className={cn("text-2xl font-bold", itemsBelowPar > 0 && "text-destructive")}>{itemsBelowPar}</div>
-                    <p className="text-xs text-muted-foreground">
-                        item(s) are below par level and require reordering.
-                    </p>
+                    <div className="flex flex-row items-center justify-between rounded-lg border bg-card text-card-foreground p-4">
+                        <div className='space-y-0.5'>
+                            <p className="text-sm font-medium">Inventory Status</p>
+                            <p className={cn("text-xs", itemsBelowPar.length > 0 ? "text-destructive font-semibold" : "text-muted-foreground")}>
+                                {itemsBelowPar.length} item(s) are below par and require reordering.
+                            </p>
+                        </div>
+                        <Button onClick={handleGenerateList} disabled={isGenerating || itemsBelowPar.length === 0}>
+                            {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Generate Shopping List
+                        </Button>
+                    </div>
+
+                    {shoppingListResult && (
+                        <div className="mt-4 space-y-4">
+                             <div className="grid gap-2">
+                                <Label htmlFor="email-subject">Generated Email Subject</Label>
+                                <Input id="email-subject" readOnly value={shoppingListResult.subject} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="shopping-list">Generated Shopping List</Label>
+                                <Textarea id="shopping-list" readOnly value={shoppingListResult.shoppingList} rows={8} />
+                            </div>
+                           
+                        </div>
+                    )}
                 </CardContent>
+                 {shoppingListResult && (
+                    <CardFooter>
+                         <Button onClick={handleSendEmail} className='bg-accent hover:bg-accent/90 text-accent-foreground'>
+                            <Send className="mr-2 h-4 w-4" /> Send Order Email (Simulated)
+                        </Button>
+                    </CardFooter>
+                 )}
             </Card>
             
             <Card>
