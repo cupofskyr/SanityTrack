@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
-import { ListTodo, PlusCircle, X, Sparkles } from 'lucide-react';
+import { ListTodo, PlusCircle, X, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type Task = {
@@ -55,6 +55,18 @@ export default function EquipmentPage() {
             title: "Task Added!",
             description: `"${taskToAdd.description}" has been added to the master list.`,
         });
+    };
+
+    const handleRemoveTask = (taskId: number) => {
+        const taskToRemove = managedTasks.find(t => t.id === taskId);
+        setManagedTasks(prev => prev.filter(t => t.id !== taskId));
+        if (taskToRemove) {
+            toast({
+                variant: 'secondary',
+                title: "Task Removed",
+                description: `"${taskToRemove.description}" has been removed from the master list.`,
+            });
+        }
     };
 
     const handleClearSuggestions = () => {
@@ -125,8 +137,9 @@ export default function EquipmentPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[80%]">Task Description</TableHead>
+                                <TableHead className="w-[75%]">Task Description</TableHead>
                                 <TableHead>Frequency</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -137,11 +150,17 @@ export default function EquipmentPage() {
                                     <TableCell>
                                         <Badge variant="secondary">{task.frequency}</Badge>
                                     </TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveTask(task.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                            <span className="sr-only">Remove Task</span>
+                                        </Button>
+                                    </TableCell>
                                 </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                <TableCell colSpan={2} className="text-center h-24">
+                                <TableCell colSpan={3} className="text-center h-24">
                                     No tasks in the master list yet. Use the AI Setup Assistant above to generate tasks.
                                 </TableCell>
                                 </TableRow>
