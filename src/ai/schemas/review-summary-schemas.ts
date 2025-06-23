@@ -1,4 +1,11 @@
+
 import { z } from 'zod';
+
+export const SummarizeReviewsInputSchema = z.object({
+  source: z.enum(['Google', 'Yelp']),
+  location: z.string().describe('The name of the location to fetch reviews for.'),
+});
+export type SummarizeReviewsInput = z.infer<typeof SummarizeReviewsInputSchema>;
 
 export const ReviewSchema = z.object({
   source: z.enum(['Google', 'Yelp']),

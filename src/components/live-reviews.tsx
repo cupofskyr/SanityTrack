@@ -1,14 +1,19 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
-import { summarizeReviews, type SummarizeReviewsOutput } from '@/ai/flows/fetch-reviews-flow';
+import { summarizeReviews, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/ai/flows/fetch-reviews-flow';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Star, Rss } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
-export default function LiveReviews() {
+type LiveReviewsProps = {
+    location: string;
+};
+
+export default function LiveReviews({ location }: LiveReviewsProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState<string | null>(null); // 'google' | 'yelp' | null
     const [result, setResult] = useState<SummarizeReviewsOutput | null>(null);
@@ -17,11 +22,15 @@ export default function LiveReviews() {
         setIsLoading(source.toLowerCase());
         setResult(null);
         try {
-            const response = await summarizeReviews(`Fetch recent reviews from ${source}`);
+            const input: SummarizeReviewsInput = {
+                source,
+                location,
+            }
+            const response = await summarizeReviews(input);
             setResult(response);
             toast({
                 title: `${source} Reviews Loaded`,
-                description: "The AI has fetched and summarized the latest reviews.",
+                description: `The AI has fetched and summarized the latest reviews for ${location}.`,
             })
         } catch (error) {
             console.error(error);
@@ -34,12 +43,17 @@ export default function LiveReviews() {
             setIsLoading(null);
         }
     };
+    
+    // Effect to clear results when location changes
+    useEffect(() => {
+        setResult(null);
+    }, [location]);
 
     return (
         <Card className="lg:col-span-3">
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2"><Rss /> Live Customer Feedback (Simulated)</CardTitle>
-                <CardDescription>Use AI to fetch and summarize recent reviews from external sources like Google and Yelp.</CardDescription>
+                <CardDescription>Use AI to fetch and summarize recent reviews for this location from external sources.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex gap-4 mb-6">
@@ -52,10 +66,16 @@ export default function LiveReviews() {
                         Fetch Yelp Reviews
                     </Button>
                 </div>
+                {isLoading && (
+                    <div className="text-center p-4">
+                        <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary"/>
+                        <p className="text-sm text-muted-foreground mt-2">Fetching reviews for {location}...</p>
+                    </div>
+                )}
                 {result && (
                      <div>
                         <Alert className="mb-4">
-                            <AlertTitle className="font-semibold">AI Summary</AlertTitle>
+                            <AlertTitle className="font-semibold">AI Summary for {location}</AlertTitle>
                             <AlertDescription>{result.summary}</AlertDescription>
                         </Alert>
                         <div className="space-y-4">
