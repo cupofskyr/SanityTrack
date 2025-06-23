@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -51,6 +50,11 @@ export default function TrainingManager() {
   const [challengeDescription, setChallengeDescription] = useState("Think you're the fastest? Upload a video of you making a menu item and compete for the top spot on the leaderboard! Each month the #1 ranking gets a 500$ bonus");
   const [videoSubmissions, setVideoSubmissions] = useState<VideoSubmission[]>(initialVideoSubmissions);
 
+  // Add state for video edit dialog
+  const [isEditVideoDialogOpen, setIsEditVideoDialogOpen] = useState(false);
+  const [currentVideoSubmission, setCurrentVideoSubmission] = useState<VideoSubmission | null>(null);
+  const [editedTime, setEditedTime] = useState('');
+
 
   const openMenuDialog = (item: MenuItem | null) => {
     setCurrentItem(item ? { ...item } : { id: 0, name: '', description: '', ingredients: '', allergens: '', imageUrl: 'https://placehold.co/600x400.png' });
@@ -91,6 +95,34 @@ export default function TrainingManager() {
           toast({ variant: 'secondary', title: 'Submission Deleted', description: 'The video submission has been removed from the leaderboard.' });
       }
   };
+
+  // Add handlers for editing video submission time
+  const openEditVideoDialog = (submission: VideoSubmission) => {
+    setCurrentVideoSubmission(submission);
+    setEditedTime(String(submission.time));
+    setIsEditVideoDialogOpen(true);
+  };
+
+  const handleSaveEditedTime = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentVideoSubmission || editedTime === '') {
+        toast({ variant: 'destructive', title: 'Invalid Time', description: 'Please enter a valid time.' });
+        return;
+    }
+    const newTime = parseInt(editedTime, 10);
+    if (isNaN(newTime) || newTime < 0) {
+        toast({ variant: 'destructive', title: 'Invalid Time', description: 'Please enter a valid positive number for the time.' });
+        return;
+    }
+
+    setVideoSubmissions(videoSubmissions.map(s => 
+        s.id === currentVideoSubmission.id ? { ...s, time: newTime } : s
+    ));
+    toast({ title: 'Time Updated', description: `The time for ${currentVideoSubmission.user}'s submission has been updated.` });
+    setIsEditVideoDialogOpen(false);
+    setCurrentVideoSubmission(null);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -186,6 +218,10 @@ export default function TrainingManager() {
                                         <TableCell>{submission.item}</TableCell>
                                         <TableCell>{submission.time}</TableCell>
                                         <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" onClick={() => openEditVideoDialog(submission)}>
+                                                <Pencil className="h-4 w-4" />
+                                                <span className="sr-only">Edit Submission</span>
+                                            </Button>
                                             <Button variant="ghost" size="icon" onClick={() => handleDeleteSubmission(submission.id)}>
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                                 <span className="sr-only">Delete Submission</span>
@@ -242,6 +278,38 @@ export default function TrainingManager() {
                         <DialogFooter>
                             <Button type="button" variant="secondary" onClick={() => setIsMenuDialogOpen(false)}>Cancel</Button>
                             <Button type="submit">Save Item</Button>
+                        </DialogFooter>
+                    </form>
+                )}
+            </DialogContent>
+        </Dialog>
+
+        {/* Add the new dialog for editing video time */}
+        <Dialog open={isEditVideoDialogOpen} onOpenChange={setIsEditVideoDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="font-headline">Edit Submission Time</DialogTitle>
+                    <DialogDescription>
+                        Correct the time for the submission by {currentVideoSubmission?.user} for the item "{currentVideoSubmission?.item}".
+                    </DialogDescription>
+                </DialogHeader>
+                {currentVideoSubmission && (
+                    <form onSubmit={handleSaveEditedTime}>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="submission-time">Time (in seconds)</Label>
+                                <Input
+                                    id="submission-time"
+                                    type="number"
+                                    value={editedTime}
+                                    onChange={(e) => setEditedTime(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="secondary" onClick={() => setIsEditVideoDialogOpen(false)}>Cancel</Button>
+                            <Button type="submit">Save Time</Button>
                         </DialogFooter>
                     </form>
                 )}
