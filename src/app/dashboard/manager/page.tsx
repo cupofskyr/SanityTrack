@@ -85,10 +85,10 @@ export default function ManagerDashboard() {
 
     const [delegatedTasks, setDelegatedTasks] = useState<DelegatedTask[]>(initialDelegatedTasks);
 
-    const handleManagerSubmitForApproval = (taskId: number, attachment: {url: string, name: string}) => {
+    const handleManagerSubmitForApproval = (taskId: number) => {
         setDelegatedTasks(tasks => tasks.map(task => 
             task.id === taskId 
-            ? { ...task, status: 'PendingOwnerApproval', attachmentUrl: attachment.url } 
+            ? { ...task, status: 'PendingOwnerApproval', attachmentUrl: 'https://placehold.co/600x400.png' } 
             : task
         ));
         toast({
@@ -232,7 +232,7 @@ export default function ManagerDashboard() {
                                                             <PhotoUploader />
                                                         </div>
                                                     </div>
-                                                    <Button onClick={() => handleManagerSubmitForApproval(task.id, {url: 'https://placehold.co/600x400.png', name: 'proof.png'})}>
+                                                    <Button onClick={() => handleManagerSubmitForApproval(task.id)}>
                                                         <CheckCircle className="mr-2 h-4 w-4" />
                                                         Submit for Owner Approval
                                                     </Button>
@@ -493,5 +493,3 @@ export default function ManagerDashboard() {
         </div>
     );
 }
-
-    

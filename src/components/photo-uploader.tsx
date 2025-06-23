@@ -34,6 +34,7 @@ export default function PhotoUploader({ readOnly = false, initialPreview }: Phot
   }, [initialPreview]);
 
   useEffect(() => {
+    let stream: MediaStream | null = null;
     if (isCameraOpen) {
       const getCameraPermission = async () => {
         try {
@@ -48,7 +49,7 @@ export default function PhotoUploader({ readOnly = false, initialPreview }: Phot
              return;
           }
 
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
           setHasCameraPermission(true);
   
           if (videoRef.current) {
@@ -68,8 +69,7 @@ export default function PhotoUploader({ readOnly = false, initialPreview }: Phot
       getCameraPermission();
 
       return () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
+        if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }
       }
@@ -197,5 +197,3 @@ export default function PhotoUploader({ readOnly = false, initialPreview }: Phot
     </div>
   );
 }
-
-    
