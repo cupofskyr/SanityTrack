@@ -3,19 +3,25 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2 } from "lucide-react";
 import AIRecommendationForm from "@/components/ai-recommendation-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { analyzeIssue } from '@/ai/flows/analyze-issue-flow';
 
 
 const teamMembers = [
@@ -24,30 +30,18 @@ const teamMembers = [
     { name: "Sam Wilson", tasksCompleted: 10, tasksPending: 0, progress: 100 },
 ];
 
-const highPriorityIssues = [
-    { id: 1, description: "Major leak in the kitchen storage area.", reportedBy: "Jane Smith", category: "Plumbing", contactType: "Plumber" },
-    { id: 2, description: "Freezer unit temperature is above safety limits.", reportedBy: "System Alert", category: "Electrical", contactType: "Electrician" },
-    { id: 3, description: "Reports of rodent activity in the dry stock room.", reportedBy: "John Doe", category: "Pest Control", contactType: "Pest Control" },
-];
-
 const initialContacts = [
     { id: 1, name: "Joe's Plumbing", type: "Plumber", phone: "555-123-4567" },
     { id: 2, name: "Sparky Electric", type: "Electrician", phone: "555-987-6543" },
 ];
 
-type Contact = {
-    id: number;
-    name: string;
-    type: string;
-    phone: string;
-};
+type Contact = { id: number; name: string; type: string; phone: string; };
+type ManagedTask = { id: number; description: string; frequency: string; assignee: string; };
+type HighPriorityIssue = { id: number; description: string; reportedBy: string; category: string; contactType: string; };
 
-type ManagedTask = {
-    id: number;
-    description: string;
-    frequency: string;
-    assignee: string;
-};
+const issueAnalyzerSchema = z.object({
+  description: z.string().min(10, "Please provide a detailed description."),
+});
 
 export default function ManagerDashboard() {
     const { toast } = useToast();
@@ -62,6 +56,49 @@ export default function ManagerDashboard() {
     const [taskDescription, setTaskDescription] = useState('');
     const [taskFrequency, setTaskFrequency] = useState('');
     const [taskAssignee, setTaskAssignee] = useState('');
+
+    const [highPriorityIssues, setHighPriorityIssues] = useState<HighPriorityIssue[]>([
+        { id: 1, description: "Major leak in the kitchen storage area.", reportedBy: "Jane Smith", category: "Plumbing", contactType: "Plumber" },
+        { id: 2, description: "Freezer unit temperature is above safety limits.", reportedBy: "System Alert", category: "Electrical", contactType: "Electrician" },
+    ]);
+    
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const issueForm = useForm<z.infer<typeof issueAnalyzerSchema>>({
+        resolver: zodResolver(issueAnalyzerSchema),
+        defaultValues: { description: "" },
+    });
+
+    async function handleAnalyzeIssue(values: z.infer<typeof issueAnalyzerSchema>) {
+        setIsAnalyzing(true);
+        try {
+            const result = await analyzeIssue({ description: values.description });
+            toast({
+                title: "AI Analysis Complete",
+                description: `Category: ${result.category}, Emergency: ${result.isEmergency ? 'Yes' : 'No'}`
+            });
+            if (result.isEmergency) {
+                const newIssue: HighPriorityIssue = {
+                    id: Date.now(),
+                    description: values.description,
+                    reportedBy: 'AI Analyzer',
+                    category: result.category,
+                    contactType: result.suggestedContact
+                };
+                setHighPriorityIssues(prev => [newIssue, ...prev]);
+                 toast({
+                    variant: "destructive",
+                    title: "🚨 Emergency Detected!",
+                    description: "A new high-priority issue has been added to your list.",
+                })
+            }
+            issueForm.reset();
+        } catch (error) {
+            toast({ variant: "destructive", title: "AI Error", description: "Failed to analyze issue."});
+            console.error(error);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    }
 
 
     const findContact = (type: string) => contacts.find(c => c.type === type);
@@ -222,42 +259,77 @@ export default function ManagerDashboard() {
                 </CardContent>
             </Card>
 
+            <Card className="lg:col-span-3">
+                 <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Zap className="text-primary"/> AI Issue Analyzer</CardTitle>
+                    <CardDescription>Enter a reported issue to have the AI categorize it. Emergencies will be added to the High-Priority list below.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Form {...issueForm}>
+                        <form onSubmit={issueForm.handleSubmit(handleAnalyzeIssue)} className="space-y-4">
+                            <FormField
+                                control={issueForm.control}
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>New Issue Description</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="e.g., There's a large pool of water forming under the main sink..." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button type="submit" disabled={isAnalyzing}>
+                                {isAnalyzing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Analyze with AI
+                            </Button>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
+
+
             <Card className="lg:col-span-2">
                  <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-accent"/> High-Priority Issues</CardTitle>
-                    <CardDescription>Critical issues that require immediate attention and AI-powered suggestions.</CardDescription>
+                    <CardDescription>Critical issues identified by the AI that require immediate attention.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    {highPriorityIssues.map(issue => {
-                        const contact = findContact(issue.contactType);
-                        return (
-                            <Alert key={issue.id} variant="destructive" className="bg-accent/10 border-accent text-accent [&>svg]:text-accent">
-                                <Flag className="h-4 w-4" />
-                                <AlertTitle className="font-bold">{issue.description}</AlertTitle>
-                                <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                                   <div>
-                                        <p>Reported by: {issue.reportedBy}</p>
-                                        <div className="font-semibold">AI Category: <Badge variant="outline" className="text-accent border-accent">{issue.category}</Badge></div>
-                                   </div>
-                                   <div className="mt-2 sm:mt-0">
-                                        {contact ? (
-                                             <Button size="sm" asChild>
-                                                <a href={`tel:${contact.phone}`}>
-                                                    <Phone className="mr-2 h-4 w-4" /> Call {contact.name}
-                                                </a>
-                                             </Button>
-                                        ) : (
-                                            <Button size="sm" asChild>
-                                                <Link href={`https://www.thumbtack.com/s/${issue.contactType.toLowerCase().replace(' ', '-')}/near-me/`} target="_blank">
-                                                    <ExternalLink className="mr-2 h-4 w-4" /> Find on Thumbtack
-                                                </Link>
-                                            </Button>
-                                        )}
-                                   </div>
-                                </AlertDescription>
-                            </Alert>
-                        )
-                    })}
+                    {highPriorityIssues.length > 0 ? (
+                        highPriorityIssues.map(issue => {
+                            const contact = findContact(issue.contactType);
+                            return (
+                                <Alert key={issue.id} variant="destructive" className="bg-accent/10 border-accent text-accent [&>svg]:text-accent">
+                                    <Flag className="h-4 w-4" />
+                                    <AlertTitle className="font-bold">{issue.description}</AlertTitle>
+                                    <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                       <div>
+                                            <p>Reported by: {issue.reportedBy}</p>
+                                            <div className="font-semibold">AI Category: <Badge variant="outline" className="text-accent border-accent">{issue.category}</Badge></div>
+                                       </div>
+                                       <div className="mt-2 sm:mt-0">
+                                            {contact ? (
+                                                 <Button size="sm" asChild>
+                                                    <a href={`tel:${contact.phone}`}>
+                                                        <Phone className="mr-2 h-4 w-4" /> Call {contact.name}
+                                                    </a>
+                                                 </Button>
+                                            ) : (
+                                                <Button size="sm" asChild>
+                                                    <Link href={`https://www.thumbtack.com/s/${issue.contactType.toLowerCase().replace(' ', '-')}/near-me/`} target="_blank">
+                                                        <ExternalLink className="mr-2 h-4 w-4" /> Find on Thumbtack
+                                                    </Link>
+                                                </Button>
+                                            )}
+                                       </div>
+                                    </AlertDescription>
+                                </Alert>
+                            )
+                        })
+                    ) : (
+                        <div className="text-center text-sm text-muted-foreground p-4">No high-priority issues detected. Use the analyzer above.</div>
+                    )}
                 </CardContent>
             </Card>
             
@@ -341,3 +413,5 @@ export default function ManagerDashboard() {
         </div>
     );
 }
+
+    
