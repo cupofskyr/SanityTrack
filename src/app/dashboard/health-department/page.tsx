@@ -14,7 +14,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
-import { processInspectionReport, type ProcessInspectionReportOutput } from '@/ai/flows/process-inspection-report-flow';
+import { processInspectionReport } from '@/ai/flows/process-inspection-report-flow';
+import { type ProcessInspectionReportOutput } from '@/ai/schemas/inspection-report-schemas';
 import { format } from 'date-fns';
 
 const complianceData = [
