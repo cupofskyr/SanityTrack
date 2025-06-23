@@ -702,6 +702,41 @@ export default function ManagerDashboard() {
                         </TableBody>
                     </Table>
                 </CardContent>
+                <CardFooter>
+                    <Dialog open={isMealInsightDialogOpen} onOpenChange={setIsMealInsightDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" onClick={handleAiMealAnalysis}>
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                Get AI Insight on Meal Logs
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle className="font-headline flex items-center gap-2">
+                                    <Sparkles className="text-primary h-5 w-5" />
+                                    AI Meal Log Insight
+                                </DialogTitle>
+                            </DialogHeader>
+                            {aiMealInsight ? (
+                                <div className="py-4 space-y-4">
+                                    <Alert>
+                                        <AlertTitle>{aiMealInsight.title}</AlertTitle>
+                                        <AlertDescription>{aiMealInsight.description}</AlertDescription>
+                                    </Alert>
+                                </div>
+                            ) : (
+                                <div className="py-4 text-center text-muted-foreground">Click the button to get an AI insight.</div>
+                            )}
+                            <DialogFooter>
+                                <Button type="button" variant="secondary" onClick={() => setIsMealInsightDialogOpen(false)}>Close</Button>
+                                <Button onClick={handleSendMealInsight} disabled={!aiMealInsight}>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    Send Reminder to Employee
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </CardFooter>
             </Card>
 
             <StaffMealManager />
