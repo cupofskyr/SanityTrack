@@ -92,7 +92,7 @@ export default function TrainingPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><Video/> Speed Run Challenge</CardTitle>
-                    <CardDescription>Think you're the fastest? Upload a video of you making a menu item and compete for the top spot on the leaderboard!</CardDescription>
+                    <CardDescription>Think you're the fastest? Upload a video of you making a menu item and compete for the top spot on the leaderboard! Each month the #1 ranking gets a 500$ bonus</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
