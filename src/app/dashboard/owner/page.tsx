@@ -50,6 +50,7 @@ type HiringRequest = {
     role: string;
     urgency: string;
     shiftType: 'Full-time' | 'Part-time' | 'Contract';
+    justification: string;
 };
 
 
@@ -59,8 +60,8 @@ const initialHealthDeptTasks: HealthTask[] = [
 ];
 
 const initialHiringRequests: HiringRequest[] = [
-    { id: 1, manager: 'Alex Ray', location: 'Downtown Cafe', role: 'Line Cook', urgency: 'Immediate', shiftType: 'Full-time' },
-    { id: 2, manager: 'Casey Lee', location: 'Uptown Smoothies', role: 'Barista', urgency: 'Within 2 Weeks', shiftType: 'Part-time' },
+    { id: 1, manager: 'Alex Ray', location: 'Downtown Cafe', role: 'Line Cook', urgency: 'Immediate', shiftType: 'Full-time', justification: 'Our current cook is going on extended leave, and we need coverage to maintain service quality.' },
+    { id: 2, manager: 'Casey Lee', location: 'Uptown Smoothies', role: 'Barista', urgency: 'Within 2 Weeks', shiftType: 'Part-time', justification: 'Increased foot traffic in the mornings is causing long wait times. A part-time barista will improve customer satisfaction.' },
 ];
 
 export default function OwnerDashboard() {
@@ -545,16 +546,21 @@ export default function OwnerDashboard() {
                         {hiringRequests.length > 0 ? (
                             <div className="space-y-4">
                                 {hiringRequests.map(req => (
-                                    <div key={req.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 gap-4">
-                                        <div className="space-y-1">
-                                            <p className="font-semibold">{req.role} <span className="font-normal text-muted-foreground">at {req.location}</span></p>
-                                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                                <span><Badge variant="outline">{req.shiftType}</Badge></span>
-                                                <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Urgency: {req.urgency}</span>
-                                                <span className="flex items-center gap-1"><UserCog className="h-3 w-3" /> From: {req.manager}</span>
+                                    <div key={req.id} className="flex flex-col sm:flex-row items-start justify-between rounded-lg border p-4 gap-4">
+                                        <div className="space-y-2 flex-grow">
+                                            <div>
+                                                <p className="font-semibold">{req.role} <span className="font-normal text-muted-foreground">at {req.location}</span></p>
+                                                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-1">
+                                                    <span><Badge variant="outline">{req.shiftType}</Badge></span>
+                                                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Urgency: {req.urgency}</span>
+                                                    <span className="flex items-center gap-1"><UserCog className="h-3 w-3" /> From: {req.manager}</span>
+                                                </div>
                                             </div>
+                                            <blockquote className="text-sm text-muted-foreground italic border-l-2 pl-3 mt-2">
+                                                "{req.justification}"
+                                            </blockquote>
                                         </div>
-                                        <div className="flex gap-2 self-end sm:self-center">
+                                        <div className="flex gap-2 self-end sm:self-center shrink-0">
                                             <Button size="sm" onClick={() => handleApproveRequest(req)}><CheckCircle className="mr-2 h-4 w-4" /> Approve & Post via AI</Button>
                                             <Button size="sm" variant="outline" onClick={() => handleManualPost(req.id)}><ThumbsUp className="mr-2 h-4 w-4" /> Manually Posted</Button>
                                             <Button size="sm" variant="destructive" onClick={() => handleRejectRequest(req.id)}><XCircle className="mr-2 h-4 w-4" /> Reject</Button>

@@ -121,7 +121,7 @@ export default function ManagerDashboard() {
     const [isMealInsightDialogOpen, setIsMealInsightDialogOpen] = useState(false);
     const [aiMealInsight, setAiMealInsight] = useState<{title: string, description: string, employeeName: string} | null>(null);
 
-    const [newHireRequest, setNewHireRequest] = useState({ role: '', shiftType: '', urgency: '' });
+    const [newHireRequest, setNewHireRequest] = useState({ role: '', shiftType: '', urgency: '', justification: '' });
 
     useEffect(() => {
         const getBriefing = async () => {
@@ -339,8 +339,8 @@ export default function ManagerDashboard() {
 
     const handleRequestNewHire = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newHireRequest.role || !newHireRequest.shiftType || !newHireRequest.urgency) {
-            toast({ variant: "destructive", title: "Missing Information", description: "Please fill out all fields for the hiring request." });
+        if (!newHireRequest.role || !newHireRequest.shiftType || !newHireRequest.urgency || !newHireRequest.justification) {
+            toast({ variant: "destructive", title: "Missing Information", description: "Please fill out all fields for the hiring request, including the justification." });
             return;
         }
         // In a real app, this would send the data to a backend. Here, we just show a confirmation.
@@ -348,7 +348,7 @@ export default function ManagerDashboard() {
             title: "Request Sent to Owner",
             description: `Your request to hire a ${newHireRequest.role} has been sent for approval.`
         });
-        setNewHireRequest({ role: '', shiftType: '', urgency: '' });
+        setNewHireRequest({ role: '', shiftType: '', urgency: '', justification: '' });
     };
 
     return (
@@ -405,6 +405,17 @@ export default function ManagerDashboard() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="hire-justification">Justification</Label>
+                            <Textarea
+                                id="hire-justification"
+                                placeholder="e.g., We are entering our busy season and need another person on the line to keep up with demand during peak hours."
+                                value={newHireRequest.justification}
+                                onChange={(e) => setNewHireRequest({ ...newHireRequest, justification: e.target.value })}
+                                required
+                                rows={3}
+                            />
                         </div>
                         <Button type="submit" className="w-full md:w-auto">
                             <Send className="mr-2 h-4 w-4" />
