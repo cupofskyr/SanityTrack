@@ -24,6 +24,7 @@ import { analyzeIssue } from '@/ai/flows/analyze-issue-flow';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import PhotoUploader from '@/components/photo-uploader';
 import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
+import { format } from 'date-fns';
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },
@@ -94,13 +95,21 @@ export default function ManagerDashboard() {
     const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(true);
 
     useEffect(() => {
-        // Simulate a "daily" fetch when the manager logs in/visits the page
         const getBriefing = async () => {
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const lastBriefingDate = localStorage.getItem('lastManagerBriefingShown');
+
+            if (lastBriefingDate === today) {
+                setIsGeneratingBriefing(false); // Ensure loading state is correct
+                return; // Already shown today
+            }
+
             setIsGeneratingBriefing(true);
             try {
                 const briefing = await generateDailyBriefing();
                 setDailyBriefing(briefing);
                 setIsBriefingDialogOpen(true);
+                localStorage.setItem('lastManagerBriefingShown', today); // Set that it was shown
             } catch (error) {
                 console.error("Failed to generate daily briefing:", error);
                 toast({

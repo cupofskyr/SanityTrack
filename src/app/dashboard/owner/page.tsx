@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
 import LiveReviews from '@/components/live-reviews';
 import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
+import { format } from 'date-fns';
 
 
 type TeamMember = { name: string; role: "Manager" | "Employee"; location: string };
@@ -98,12 +99,22 @@ export default function OwnerDashboard() {
 
     useEffect(() => {
         const getBriefing = async () => {
-            if (locations.length === 0) return; // Don't run if no locations are set up
+            if (locations.length === 0) return;
+
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const lastBriefingDate = localStorage.getItem('lastOwnerBriefingShown');
+
+            if (lastBriefingDate === today) {
+                setIsGeneratingBriefing(false);
+                return; // Already shown today
+            }
+
             setIsGeneratingBriefing(true);
             try {
                 const briefing = await generateDailyBriefing();
                 setDailyBriefing(briefing);
                 setIsBriefingDialogOpen(true);
+                localStorage.setItem('lastOwnerBriefingShown', today);
             } catch (error) {
                 console.error("Failed to generate daily briefing:", error);
                 toast({
