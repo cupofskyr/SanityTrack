@@ -3,7 +3,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes, CalendarClock, CalendarIcon, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -23,12 +23,25 @@ import LiveReviews from '@/components/live-reviews';
 import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
 import { format } from 'date-fns';
 import InventoryManager from '@/components/inventory-manager';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 
 
 type TeamMember = { name: string; role: "Manager" | "Employee"; location: string };
 type Location = { id: number; name: string; manager: string; inspectionCode: string; toastApiKey?: string; };
 type HealthTaskStatus = 'Pending' | 'Delegated' | 'PendingOwnerApproval' | 'Submitted';
 type HealthTask = { id: number; description: string; source: string; status: HealthTaskStatus; delegatedTo?: string; attachment?: { url: string; name: string; }; };
+type Meeting = {
+    id: number;
+    title: string;
+    date: Date;
+    time: string;
+    attendee: string;
+    description: string;
+};
+
 
 const initialHealthDeptTasks: HealthTask[] = [
     { id: 1, description: "Verify all employee food handler certifications are up to date.", source: "City Health Inspector", status: "Pending" },
@@ -82,6 +95,10 @@ export default function OwnerDashboard() {
     const [isBriefingDialogOpen, setIsBriefingDialogOpen] = useState(false);
     const [dailyBriefing, setDailyBriefing] = useState<GenerateDailyBriefingOutput | null>(null);
     const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(true);
+
+    // Meeting state
+    const [meetings, setMeetings] = useState<Meeting[]>([]);
+    const [meetingDetails, setMeetingDetails] = useState({ title: '', date: new Date(), time: '', attendee: '', description: '' });
 
     const managers = teamMembers.filter(m => m.role === 'Manager');
     
@@ -378,6 +395,25 @@ export default function OwnerDashboard() {
         setShareCodeDialogOpen(false);
     };
 
+    const handleScheduleMeeting = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!meetingDetails.title || !meetingDetails.date || !meetingDetails.time || !meetingDetails.attendee) {
+            toast({ variant: "destructive", title: "Missing Information", description: "Please fill out all meeting details." });
+            return;
+        }
+        const newMeeting: Meeting = {
+            id: Date.now(),
+            ...meetingDetails,
+        };
+        setMeetings(prev => [newMeeting, ...prev]);
+        toast({
+            title: "Meeting Scheduled (Simulated)",
+            description: `A Google Calendar invite for "${meetingDetails.title}" has been sent to ${meetingDetails.attendee}.`,
+        });
+        // Reset form
+        setMeetingDetails({ title: '', date: new Date(), time: '', attendee: '', description: '' });
+    };
+
 
     return (
         <TooltipProvider>
@@ -431,6 +467,101 @@ export default function OwnerDashboard() {
                 </div>
 
                 <LiveReviews location={locations[0]?.name} />
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><CalendarClock /> Schedule Internal Meeting</CardTitle>
+                        <CardDescription>Prototype for Google Calendar integration. Schedule a meeting and a simulated invite will be sent.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <form onSubmit={handleScheduleMeeting} className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="meeting-title">Meeting Title</Label>
+                                <Input id="meeting-title" placeholder="Q3 Planning Session" value={meetingDetails.title} onChange={(e) => setMeetingDetails({...meetingDetails, title: e.target.value})} required/>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid gap-2">
+                                    <Label>Date</Label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant={"outline"}
+                                                className={cn("justify-start text-left font-normal", !meetingDetails.date && "text-muted-foreground")}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {meetingDetails.date ? format(meetingDetails.date, "PPP") : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0">
+                                            <Calendar
+                                                mode="single"
+                                                selected={meetingDetails.date}
+                                                onSelect={(date) => setMeetingDetails({...meetingDetails, date: date || new Date()})}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="meeting-time">Time</Label>
+                                    <Input id="meeting-time" type="time" value={meetingDetails.time} onChange={(e) => setMeetingDetails({...meetingDetails, time: e.target.value})} required/>
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="meeting-attendee">Attendee</Label>
+                                    <Select value={meetingDetails.attendee} onValueChange={(val) => setMeetingDetails({...meetingDetails, attendee: val})} required>
+                                        <SelectTrigger id="meeting-attendee">
+                                            <SelectValue placeholder="Select team member" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {teamMembers.map(member => (
+                                                <SelectItem key={member.name} value={member.name}>{member.name} ({member.role})</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="meeting-description">Description / Agenda (Optional)</Label>
+                                <Textarea id="meeting-description" placeholder="Discuss Q3 goals, review new health protocols..." value={meetingDetails.description} onChange={(e) => setMeetingDetails({...meetingDetails, description: e.target.value})} />
+                            </div>
+                            <Button type="submit">Schedule Meeting</Button>
+                         </form>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><ListTodo/> Upcoming Meetings</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                         <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead>Date & Time</TableHead>
+                                    <TableHead>Attendee</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {meetings.length > 0 ? (
+                                    meetings.sort((a,b) => a.date.getTime() - b.date.getTime()).map((meeting) => (
+                                    <TableRow key={meeting.id}>
+                                        <TableCell className="font-medium">{meeting.title}</TableCell>
+                                        <TableCell>{format(meeting.date, 'PPP')} at {meeting.time}</TableCell>
+                                        <TableCell>{meeting.attendee}</TableCell>
+                                    </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                    <TableCell colSpan={3} className="text-center h-24">
+                                        No meetings scheduled yet.
+                                    </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
                  
                 <Card>
                     <CardHeader className="flex flex-row items-start justify-between">
