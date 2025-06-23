@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle, AlertCircle } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle, AlertCircle, MailWarning } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -31,6 +31,7 @@ import { format, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { translateText } from '@/ai/flows/translate-text-flow';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { generateWarningLetter, type GenerateWarningLetterOutput } from '@/ai/flows/generate-warning-letter-flow';
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },
@@ -152,6 +153,11 @@ export default function ManagerDashboard() {
     const [rejectedRequests, setRejectedRequests] = useState<RejectedRequest[]>([]);
     
     const [timeClockLogs, setTimeClockLogs] = useState<TimeClockLog[]>([]);
+
+    const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
+    const [warningContent, setWarningContent] = useState<GenerateWarningLetterOutput | null>(null);
+    const [isGeneratingWarning, setIsGeneratingWarning] = useState(false);
+    const [selectedLogForWarning, setSelectedLogForWarning] = useState<TimeClockLog | null>(null);
 
     useEffect(() => {
         const storedRejected = localStorage.getItem('rejectedHiringRequests');
@@ -432,7 +438,7 @@ export default function ManagerDashboard() {
         const clockTime = new Date(log.timestamp);
         const scheduleTime = log.type === 'in' ? log.shiftStart : log.shiftEnd;
 
-        if (!scheduleTime) return { text: 'N/A', isLate: false };
+        if (!scheduleTime) return { text: 'N/A', isLate: false, details: '' };
 
         const [hours, minutes] = scheduleTime.split(':').map(Number);
         const shiftTime = new Date(clockTime);
@@ -441,12 +447,45 @@ export default function ManagerDashboard() {
         const diffMins = differenceInMinutes(clockTime, shiftTime);
 
         if (log.type === 'in' && diffMins > gracePeriodMinutes) {
-            return { text: `Late by ${diffMins} min`, isLate: true };
+            return { text: `Late by ${diffMins} min`, isLate: true, details: `was ${diffMins} minutes late for their shift on ${format(clockTime, 'PPP')}` };
         }
         if (log.type === 'out' && diffMins < -gracePeriodMinutes) {
-            return { text: `Early by ${Math.abs(diffMins)} min`, isLate: true };
+            return { text: `Early by ${Math.abs(diffMins)} min`, isLate: true, details: `clocked out ${Math.abs(diffMins)} minutes early from their shift on ${format(clockTime, 'PPP')}` };
         }
-        return { text: 'On Time', isLate: false };
+        return { text: 'On Time', isLate: false, details: '' };
+    };
+    
+    const handleGenerateWarning = async (log: TimeClockLog, details: string) => {
+        setSelectedLogForWarning(log);
+        setIsWarningDialogOpen(true);
+        setIsGeneratingWarning(true);
+        setWarningContent(null);
+        try {
+            const result = await generateWarningLetter({
+                employeeName: log.employeeName,
+                latenessDetails: details,
+            });
+            setWarningContent(result);
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                title: 'AI Error',
+                description: 'Could not generate the warning letter.',
+            });
+        } finally {
+            setIsGeneratingWarning(false);
+        }
+    };
+    
+    const handleSendWarning = () => {
+        setIsWarningDialogOpen(false);
+        toast({
+            title: "Warning Sent (Simulated)",
+            description: `A formal warning has been emailed to ${selectedLogForWarning?.employeeName}.`
+        });
+        setSelectedLogForWarning(null);
+        setWarningContent(null);
     };
 
     return (
@@ -606,8 +645,13 @@ export default function ManagerDashboard() {
                                                 <TableCell className={cn(deviation.isLate && "font-semibold text-destructive")}>
                                                     {deviation.text}
                                                 </TableCell>
-                                                <TableCell className="text-right">
+                                                <TableCell className="text-right space-x-1">
                                                     <Button size="sm" variant="outline"><Phone className="mr-2 h-4 w-4" /> Call</Button>
+                                                    {deviation.isLate && (
+                                                        <Button size="sm" variant="destructive" onClick={() => handleGenerateWarning(log, deviation.details)}>
+                                                            <MailWarning className="mr-2 h-4 w-4" /> AI Warning
+                                                        </Button>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         );
@@ -642,7 +686,7 @@ export default function ManagerDashboard() {
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="hire-shift">Shift Type</Label>
-                                        <Select value={newHireRequest.shiftType} onValueChange={(val) => setNewHireRequest({...newHireRequest, shiftType: val})} required>
+                                        <Select value={newHireRequest.shiftType} onValueChange={(val) => setNewHireRequest({...newHireRequest, shiftType: val as any})} required>
                                             <SelectTrigger id="hire-shift"><SelectValue placeholder="Select type" /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="Full-time">Full-time</SelectItem>
@@ -1256,6 +1300,46 @@ export default function ManagerDashboard() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <Dialog open={isWarningDialogOpen} onOpenChange={setIsWarningDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="font-headline flex items-center gap-2">
+                            <MailWarning className="text-primary h-5 w-5" />
+                            AI-Generated Warning
+                        </DialogTitle>
+                        <DialogDescription>
+                            Review the AI-generated email for {selectedLogForWarning?.employeeName} before sending.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {isGeneratingWarning ? (
+                        <div className="flex items-center justify-center p-8 space-x-2">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                            <p className="text-muted-foreground">AI is drafting the warning...</p>
+                        </div>
+                    ) : warningContent ? (
+                        <div className="py-4 space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="warning-subject">Email Subject</Label>
+                                <Input id="warning-subject" value={warningContent.subject} readOnly />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="warning-body">Email Body</Label>
+                                <Textarea id="warning-body" defaultValue={warningContent.body} rows={10} />
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-destructive text-center py-8">Could not generate a warning letter.</p>
+                    )}
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={() => setIsWarningDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSendWarning} disabled={isGeneratingWarning || !warningContent}>
+                            Send Email (Simulated)
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
         </div>
         </TooltipProvider>
     );

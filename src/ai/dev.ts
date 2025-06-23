@@ -14,3 +14,4 @@ import '@/ai/flows/generate-inquiry-flow.ts';
 import '@/ai/flows/analyze-photo-issue-flow.ts';
 import '@/ai/flows/post-job-flow.ts';
 import '@/ai/flows/translate-text-flow.ts';
+import '@/ai/flows/generate-warning-letter-flow.ts';

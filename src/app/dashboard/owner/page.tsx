@@ -3,7 +3,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes, CalendarClock, CalendarIcon, ListTodo, LinkIcon, UserPlus, Clock, Send, ThumbsUp, Phone } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, MapPin, UserCog, Megaphone, ClipboardPen, ShieldAlert, Sparkles, Loader2, Lightbulb, MessageSquare, Briefcase, Share2, Rss, PlusCircle, Boxes, CalendarClock, CalendarIcon, ListTodo, LinkIcon, UserPlus, Clock, Send, ThumbsUp, Phone, MailWarning } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { postJob, type JobPostingInput } from '@/ai/flows/post-job-flow';
+import { generateWarningLetter, type GenerateWarningLetterOutput } from '@/ai/flows/generate-warning-letter-flow';
 
 
 type TeamMember = {
@@ -115,6 +116,10 @@ export default function OwnerDashboard() {
     const [rejectionReason, setRejectionReason] = useState('');
     const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
     const [selectedUserForPermissions, setSelectedUserForPermissions] = useState<TeamMember | null>(null);
+    const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
+    const [warningContent, setWarningContent] = useState<GenerateWarningLetterOutput | null>(null);
+    const [isGeneratingWarning, setIsGeneratingWarning] = useState(false);
+    const [selectedLogForWarning, setSelectedLogForWarning] = useState<TimeClockLog | null>(null);
 
 
     // Onboarding Form State
@@ -545,7 +550,7 @@ export default function OwnerDashboard() {
         const clockTime = new Date(log.timestamp);
         const scheduleTime = log.type === 'in' ? log.shiftStart : log.shiftEnd;
 
-        if (!scheduleTime) return { text: 'N/A', isLate: false };
+        if (!scheduleTime) return { text: 'N/A', isLate: false, details: '' };
 
         const [hours, minutes] = scheduleTime.split(':').map(Number);
         const shiftTime = new Date(clockTime);
@@ -554,12 +559,45 @@ export default function OwnerDashboard() {
         const diffMins = differenceInMinutes(clockTime, shiftTime);
 
         if (log.type === 'in' && diffMins > gracePeriodMinutes) {
-            return { text: `Late by ${diffMins} min`, isLate: true };
+            return { text: `Late by ${diffMins} min`, isLate: true, details: `was ${diffMins} minutes late for their shift on ${format(clockTime, 'PPP')}` };
         }
         if (log.type === 'out' && diffMins < -gracePeriodMinutes) {
-            return { text: `Early by ${Math.abs(diffMins)} min`, isLate: true };
+            return { text: `Early by ${Math.abs(diffMins)} min`, isLate: true, details: `clocked out ${Math.abs(diffMins)} minutes early from their shift on ${format(clockTime, 'PPP')}` };
         }
-        return { text: 'On Time', isLate: false };
+        return { text: 'On Time', isLate: false, details: '' };
+    };
+
+    const handleGenerateWarning = async (log: TimeClockLog, details: string) => {
+        setSelectedLogForWarning(log);
+        setIsWarningDialogOpen(true);
+        setIsGeneratingWarning(true);
+        setWarningContent(null);
+        try {
+            const result = await generateWarningLetter({
+                employeeName: log.employeeName,
+                latenessDetails: details,
+            });
+            setWarningContent(result);
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                title: 'AI Error',
+                description: 'Could not generate the warning letter.',
+            });
+        } finally {
+            setIsGeneratingWarning(false);
+        }
+    };
+    
+    const handleSendWarning = () => {
+        setIsWarningDialogOpen(false);
+        toast({
+            title: "Warning Sent (Simulated)",
+            description: `A formal warning has been emailed to ${selectedLogForWarning?.employeeName}.`
+        });
+        setSelectedLogForWarning(null);
+        setWarningContent(null);
     };
 
 
@@ -730,8 +768,13 @@ export default function OwnerDashboard() {
                                                     <TableCell className={cn(deviation.isLate && "font-semibold text-destructive")}>
                                                         {deviation.text}
                                                     </TableCell>
-                                                    <TableCell className="text-right">
+                                                    <TableCell className="text-right space-x-1">
                                                         <Button size="sm" variant="outline"><Phone className="mr-2 h-4 w-4" /> Call</Button>
+                                                         {deviation.isLate && (
+                                                            <Button size="sm" variant="destructive" onClick={() => handleGenerateWarning(log, deviation.details)}>
+                                                                <MailWarning className="mr-2 h-4 w-4" /> AI Warning
+                                                            </Button>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                             );
@@ -1334,6 +1377,46 @@ export default function OwnerDashboard() {
                         <DialogFooter>
                             <Button variant="secondary" onClick={() => setIsPermissionsDialogOpen(false)}>Cancel</Button>
                             <Button onClick={handleSavePermissions}>Save Changes</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                 {/* AI Warning Dialog */}
+                 <Dialog open={isWarningDialogOpen} onOpenChange={setIsWarningDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className="font-headline flex items-center gap-2">
+                                <MailWarning className="text-primary h-5 w-5" />
+                                AI-Generated Warning
+                            </DialogTitle>
+                            <DialogDescription>
+                                Review the AI-generated email for {selectedLogForWarning?.employeeName} before sending.
+                            </DialogDescription>
+                        </DialogHeader>
+                        {isGeneratingWarning ? (
+                            <div className="flex items-center justify-center p-8 space-x-2">
+                                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                <p className="text-muted-foreground">AI is drafting the warning...</p>
+                            </div>
+                        ) : warningContent ? (
+                            <div className="py-4 space-y-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="warning-subject">Email Subject</Label>
+                                    <Input id="warning-subject" value={warningContent.subject} readOnly />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="warning-body">Email Body</Label>
+                                    <Textarea id="warning-body" defaultValue={warningContent.body} rows={10} />
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-destructive text-center py-8">Could not generate a warning letter.</p>
+                        )}
+                        <DialogFooter>
+                            <Button variant="secondary" onClick={() => setIsWarningDialogOpen(false)}>Cancel</Button>
+                            <Button onClick={handleSendWarning} disabled={isGeneratingWarning || !warningContent}>
+                                Send Email (Simulated)
+                            </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
