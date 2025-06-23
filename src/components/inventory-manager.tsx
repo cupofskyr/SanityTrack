@@ -130,7 +130,7 @@ export default function InventoryManager() {
         <div className="space-y-6">
              <Card>
                 <CardHeader>
-                    <CardTitle>Add & Manage Inventory</CardTitle>
+                    <CardTitle className="font-headline">Add & Manage Inventory</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
@@ -218,7 +218,7 @@ export default function InventoryManager() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Current Inventory List</CardTitle>
+                    <CardTitle className="font-headline">Current Inventory List</CardTitle>
                     <CardDescription>
                         Update the "Current Count" after receiving a delivery. Adjust "Par Level" to change reorder points. The AI uses this data to create shopping lists.
                     </CardDescription>
