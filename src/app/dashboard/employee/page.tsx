@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -32,10 +32,17 @@ const initialIssues = [
   { id: 2, description: "Dining area light flickering", status: "Maintenance Notified" },
 ];
 
+const initialReviews = [
+  { id: 1, rating: 5, comment: "The service was incredibly fast and friendly! The smoothie was delicious.", author: "Happy Customer" },
+  { id: 2, rating: 4, comment: "Great place, very clean. My order took a little long, but it was worth the wait.", author: "Visitor" },
+  { id: 3, rating: 5, comment: "I love coming here. The staff always remembers my order!", author: "A Regular" },
+];
+
 export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState(initialTasks);
   const [completedTasks, setCompletedTasks] = useState(initialCompletedTasks);
   const [issues, setIssues] = useState(initialIssues);
+  const [reviews, setReviews] = useState(initialReviews);
   
   const [newIssueDescription, setNewIssueDescription] = useState("");
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
@@ -282,6 +289,30 @@ export default function EmployeeDashboard() {
           </Table>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><Star /> Recent Customer Feedback</CardTitle>
+            <CardDescription>Approved reviews from recent guests.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            {reviews.map((review) => (
+            <div key={review.id} className="p-3 border rounded-lg bg-muted/50">
+                <div className="flex items-center gap-1 mb-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                    key={i}
+                    className={`h-4 w-4 ${i < review.rating ? 'text-accent' : 'text-muted-foreground/30'}`}
+                    fill="currentColor"
+                    />
+                ))}
+                </div>
+                <blockquote className="text-sm italic border-l-2 pl-3">"{review.comment}"</blockquote>
+                <p className="text-xs text-right text-muted-foreground mt-2">- {review.author}</p>
+            </div>
+            ))}
+        </CardContent>
+        </Card>
     </div>
   );
 }
