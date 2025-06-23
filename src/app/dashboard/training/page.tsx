@@ -27,6 +27,7 @@ type VideoSubmission = {
     item: string;
     time: number;
     videoUrl: string;
+    location: string;
 };
 
 export default function TrainingPage() {
@@ -72,6 +73,7 @@ export default function TrainingPage() {
                 item: newItemName,
                 time: parseInt(newTime, 10),
                 videoUrl: event.target?.result as string,
+                location: 'Downtown', // In a real app, this would be tied to the user's assigned location
             };
             setVideos(prev => [newVideo, ...prev]);
             setIsUploadDialogOpen(false);
@@ -158,6 +160,7 @@ export default function TrainingPage() {
                                         <TableRow>
                                             <TableHead className="w-[50px]">Rank</TableHead>
                                             <TableHead>User</TableHead>
+                                            <TableHead>Location</TableHead>
                                             <TableHead>Menu Item</TableHead>
                                             <TableHead className="text-right">Time (s)</TableHead>
                                         </TableRow>
@@ -170,13 +173,14 @@ export default function TrainingPage() {
                                                     <TableRow key={video.id}>
                                                         <TableCell className="font-bold">{index + 1}</TableCell>
                                                         <TableCell>{video.user}</TableCell>
+                                                        <TableCell>{video.location}</TableCell>
                                                         <TableCell>{video.item}</TableCell>
                                                         <TableCell className="text-right font-mono">{video.time}</TableCell>
                                                     </TableRow>
                                                 ))
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={4} className="h-24 text-center">
+                                                <TableCell colSpan={5} className="h-24 text-center">
                                                     No submissions yet. Be the first!
                                                 </TableCell>
                                             </TableRow>
@@ -198,7 +202,7 @@ export default function TrainingPage() {
                                             <CardContent className="p-4">
                                                 <p className="font-semibold">{video.item}</p>
                                                 <div className="text-sm text-muted-foreground flex justify-between items-center">
-                                                    <span>By: {video.user}</span>
+                                                    <span>By: {video.user} at {video.location}</span>
                                                     <span className="font-bold text-base text-foreground">{video.time}s</span>
                                                 </div>
                                             </CardContent>

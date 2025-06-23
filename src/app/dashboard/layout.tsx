@@ -68,8 +68,11 @@ export default function DashboardLayout({
 
   const baseNavItems = [
     { href: getDashboardLink(), icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/dashboard/training", icon: BookOpen, label: "Training" },
   ];
+
+  if (role !== "Health Department") {
+      baseNavItems.push({ href: "/dashboard/training", icon: BookOpen, label: "Training" });
+  }
 
   if (role !== 'Owner') {
     baseNavItems.push({ href: "/taskboard", icon: ClipboardList, label: "Taskboard" });
@@ -86,7 +89,7 @@ export default function DashboardLayout({
     navItems.push(...managerNavItems);
   }
   
-  if (role === "Manager" || role === "Owner") {
+  if ((role === "Manager" || role === "Owner") && role !== "Health Department") {
     navItems.push({ href: "/dashboard/training/setup", icon: GraduationCap, label: "Training Setup" });
   }
 
