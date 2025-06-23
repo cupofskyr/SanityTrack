@@ -424,20 +424,27 @@ export default function OwnerDashboard() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
-                                Location Revenue (from Toast)
+                                Live Sales for {locations[0]?.name}
                             </CardTitle>
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                              {isFetchingToast ? <Loader2 className="h-6 w-6 animate-spin"/> : toastData ? (
-                                <>
-                                    <div className="text-2xl font-bold">${toastData.totalRevenue.toLocaleString()}</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        +{toastData.changeFromLastMonth}% from last month
-                                    </p>
-                                </>
-                             ) : <p className="text-sm text-muted-foreground">No POS data.</p>
-                            }
+                                <div className="space-y-2">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Today's Sales</p>
+                                        <p className="text-2xl font-bold">${toastData.liveSalesToday.toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">This Month</p>
+                                        <p className="text-lg font-semibold">${toastData.salesThisMonth.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                             ) : (
+                                <div className="text-center pt-4">
+                                    <p className="text-sm text-muted-foreground">Toast POS not connected.</p>
+                                </div>
+                             )}
                         </CardContent>
                     </Card>
                     <Card>

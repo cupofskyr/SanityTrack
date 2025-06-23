@@ -19,8 +19,8 @@ export type FetchToastDataInput = z.infer<typeof FetchToastDataInputSchema>;
 
 
 const ToastPOSDataSchema = z.object({
-  totalRevenue: z.number().describe('The total revenue for the given period.'),
-  changeFromLastMonth: z.number().describe('The percentage change in revenue from the previous month.'),
+  liveSalesToday: z.number().describe("The live, up-to-the-minute sales revenue for today."),
+  salesThisMonth: z.number().describe("The total sales revenue for the current month so far."),
 });
 export type ToastPOSData = z.infer<typeof ToastPOSDataSchema>;
 
@@ -28,12 +28,13 @@ export type ToastPOSData = z.infer<typeof ToastPOSDataSchema>;
 async function getSimulatedToastData(input: FetchToastDataInput): Promise<ToastPOSData> {
     // In a real application, you would make an API call to Toast using the location.
     // This mock data simulates a successful response, with slight variation based on location name length.
-    const baseRevenue = 40000 + (input.location.length * 1000); // Vary base revenue by location
-    const randomRevenue = baseRevenue + Math.random() * 15000; // between 40k+ and 55k+
-    const randomChange = (Math.random() * 10) + 15; // between 15% and 25%
+    const baseSales = 2000 + (input.location.length * 100);
+    const liveSalesToday = baseSales + Math.random() * 500;
+    const salesThisMonth = (baseSales * 20) + Math.random() * 5000;
+    
     return {
-        totalRevenue: parseFloat(randomRevenue.toFixed(2)),
-        changeFromLastMonth: parseFloat(randomChange.toFixed(1)),
+        liveSalesToday: parseFloat(liveSalesToday.toFixed(2)),
+        salesThisMonth: parseFloat(salesThisMonth.toFixed(2)),
     };
 }
 
