@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -9,6 +10,7 @@ import { Trash2, PlusCircle, Pencil, GraduationCap, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from './ui/textarea';
 
 type MenuItem = {
@@ -50,10 +52,14 @@ export default function TrainingManager() {
   const [challengeDescription, setChallengeDescription] = useState("Think you're the fastest? Upload a video of you making a menu item and compete for the top spot on the leaderboard! Each month the #1 ranking gets a 500$ bonus");
   const [videoSubmissions, setVideoSubmissions] = useState<VideoSubmission[]>(initialVideoSubmissions);
 
-  // Add state for video edit dialog
+  // State for video edit dialog
   const [isEditVideoDialogOpen, setIsEditVideoDialogOpen] = useState(false);
   const [currentVideoSubmission, setCurrentVideoSubmission] = useState<VideoSubmission | null>(null);
   const [editedTime, setEditedTime] = useState('');
+
+  // State for delete confirmations
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{type: 'menu' | 'video', id: number, name: string} | null>(null);
 
 
   const openMenuDialog = (item: MenuItem | null) => {
@@ -80,22 +86,26 @@ export default function TrainingManager() {
     setCurrentItem(null);
   };
   
-  const handleDeleteMenuItem = (id: number) => {
-    const itemToDelete = menuItems.find(item => item.id === id);
-    if(itemToDelete && window.confirm(`Are you sure you want to delete "${itemToDelete.name}"?`)) {
-        setMenuItems(menuItems.filter(item => item.id !== id));
-        toast({ variant: 'secondary', title: 'Item Deleted', description: `"${itemToDelete.name}" has been removed.` });
-    }
-  };
-  
-  const handleDeleteSubmission = (id: number) => {
-      const submissionToDelete = videoSubmissions.find(s => s.id === id);
-      if (submissionToDelete && window.confirm(`Are you sure you want to delete the submission from ${submissionToDelete.user}?`)) {
-          setVideoSubmissions(videoSubmissions.filter(s => s.id !== id));
-          toast({ variant: 'secondary', title: 'Submission Deleted', description: 'The video submission has been removed from the leaderboard.' });
-      }
+  const openDeleteDialog = (type: 'menu' | 'video', id: number, name: string) => {
+    setItemToDelete({ type, id, name });
+    setIsDeleteDialogOpen(true);
   };
 
+  const handleConfirmDelete = () => {
+    if (!itemToDelete) return;
+
+    if (itemToDelete.type === 'menu') {
+        setMenuItems(menuItems.filter(item => item.id !== itemToDelete.id));
+        toast({ variant: 'secondary', title: 'Item Deleted', description: `"${itemToDelete.name}" has been removed.` });
+    } else if (itemToDelete.type === 'video') {
+        setVideoSubmissions(videoSubmissions.filter(s => s.id !== itemToDelete.id));
+        toast({ variant: 'secondary', title: 'Submission Deleted', description: `The video submission from ${itemToDelete.name} has been removed.` });
+    }
+    
+    setIsDeleteDialogOpen(false);
+    setItemToDelete(null);
+  };
+  
   // Add handlers for editing video submission time
   const openEditVideoDialog = (submission: VideoSubmission) => {
     setCurrentVideoSubmission(submission);
@@ -157,7 +167,7 @@ export default function TrainingManager() {
                                             <Pencil className="h-4 w-4" />
                                             <span className="sr-only">Edit</span>
                                         </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteMenuItem(item.id)}>
+                                        <Button variant="ghost" size="icon" onClick={() => openDeleteDialog('menu', item.id, item.name)}>
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                             <span className="sr-only">Delete</span>
                                         </Button>
@@ -222,7 +232,7 @@ export default function TrainingManager() {
                                                 <Pencil className="h-4 w-4" />
                                                 <span className="sr-only">Edit Submission</span>
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteSubmission(submission.id)}>
+                                            <Button variant="ghost" size="icon" onClick={() => openDeleteDialog('video', submission.id, submission.user)}>
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                                 <span className="sr-only">Delete Submission</span>
                                             </Button>
@@ -315,6 +325,22 @@ export default function TrainingManager() {
                 )}
             </DialogContent>
         </Dialog>
+        
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the {itemToDelete?.type === 'menu' ? 'menu item' : 'submission from'} <span className="font-semibold">"{itemToDelete?.name}"</span>.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }

@@ -21,8 +21,6 @@ import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-f
 import LiveReviews from '@/components/live-reviews';
 import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
 import { format } from 'date-fns';
-import InventoryManager from '@/components/inventory-manager';
-import StaffMealManager from '@/components/staff-meal-manager';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
@@ -856,23 +854,7 @@ export default function OwnerDashboard() {
                         </Accordion>
                     </CardContent>
                 </Card>
-
-                <StaffMealManager />
-
-                <Card className="lg:col-span-3">
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2">
-                            <Boxes /> Inventory Management
-                        </CardTitle>
-                        <CardDescription>
-                            Oversee and adjust inventory par levels for all locations. The AI will use these levels to generate reorder lists for managers.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <InventoryManager />
-                    </CardContent>
-                </Card>
-
+                
                 {/* AI Assignment Dialog */}
                 <Dialog open={!!selectedAlert} onOpenChange={(open) => !open && closeAssignmentDialog()}>
                     <DialogContent>
