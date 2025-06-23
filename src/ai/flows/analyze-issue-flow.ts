@@ -8,31 +8,12 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-export const IssueCategorySchema = z.enum([
-    "Plumbing", 
-    "Electrical", 
-    "Pest Control", 
-    "HVAC", 
-    "General Maintenance", 
-    "Safety",
-    "Unknown"
-]);
-export type IssueCategory = z.infer<typeof IssueCategorySchema>;
-
-
-const AnalyzeIssueInputSchema = z.object({
-  description: z.string().describe('A description of the maintenance issue reported.'),
-});
-export type AnalyzeIssueInput = z.infer<typeof AnalyzeIssueInputSchema>;
-
-const AnalyzeIssueOutputSchema = z.object({
-  category: IssueCategorySchema.describe("The category of the issue."),
-  isEmergency: z.boolean().describe('Whether the issue is an emergency requiring immediate attention.'),
-  suggestedContact: z.string().describe('The type of professional to contact (e.g., Plumber, Electrician).'),
-});
-export type AnalyzeIssueOutput = z.infer<typeof AnalyzeIssueOutputSchema>;
+import {
+    AnalyzeIssueInputSchema, 
+    type AnalyzeIssueInput,
+    AnalyzeIssueOutputSchema,
+    type AnalyzeIssueOutput
+} from '@/ai/schemas/issue-analysis-schemas';
 
 export async function analyzeIssue(input: AnalyzeIssueInput): Promise<AnalyzeIssueOutput> {
   return analyzeIssueFlow(input);

@@ -1,0 +1,25 @@
+import { z } from 'zod';
+
+export const IssueCategorySchema = z.enum([
+    "Plumbing", 
+    "Electrical", 
+    "Pest Control", 
+    "HVAC", 
+    "General Maintenance", 
+    "Safety",
+    "Unknown"
+]);
+export type IssueCategory = z.infer<typeof IssueCategorySchema>;
+
+
+export const AnalyzeIssueInputSchema = z.object({
+  description: z.string().describe('A description of the maintenance issue reported.'),
+});
+export type AnalyzeIssueInput = z.infer<typeof AnalyzeIssueInputSchema>;
+
+export const AnalyzeIssueOutputSchema = z.object({
+  category: IssueCategorySchema.describe("The category of the issue."),
+  isEmergency: z.boolean().describe('Whether the issue is an emergency requiring immediate attention.'),
+  suggestedContact: z.string().describe('The type of professional to contact (e.g., Plumber, Electrician).'),
+});
+export type AnalyzeIssueOutput = z.infer<typeof AnalyzeIssueOutputSchema>;
