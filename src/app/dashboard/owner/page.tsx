@@ -4,17 +4,18 @@
 import { useState, useEffect } from 'react';
 import LiveReviews from '@/components/live-reviews';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { DollarSign, ShieldCheck, TrendingUp, AlertTriangle, CheckCircle, XCircle, RefreshCw, Loader2, MapPin, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const initialRequests = [
-  { id: 1, type: "Shift Change", description: "Manager proposed 45 shifts for the upcoming week.", details: "Mon-Fri, 9am-5pm" },
-  { id: 2, type: "Overtime", description: "John Doe requested 2 hours of overtime.", details: "Reason: Deep clean kitchen after busy weekend." },
+  { id: 1, type: "Shift Change", description: "Manager proposed 45 shifts for the upcoming week.", details: "Mon-Fri, 9am-5pm", manager: "Alex Ray", location: "Downtown Cafe" },
+  { id: 2, type: "Overtime", description: "John Doe requested 2 hours of overtime.", details: "Reason: Deep clean kitchen after busy weekend.", manager: "Alex Ray", location: "Downtown Cafe" },
 ];
 
 
@@ -122,29 +123,47 @@ export default function OwnerDashboard() {
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-accent"/> Pending Approvals</CardTitle>
                     <CardDescription>
-                        Review and approve or reject requests from your team.
+                        Review and approve or reject requests from your team. Hover over an item for more details.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {requests.length > 0 ? (
                         requests.map((request) => (
-                             <div key={request.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4">
-                                <div className="mb-4 sm:mb-0">
-                                    <div className="flex items-center gap-3">
-                                        <Badge variant={request.type === 'Overtime' ? 'secondary' : 'default'}>{request.type}</Badge>
-                                        <p className="font-semibold">{request.description}</p>
+                             <Tooltip key={request.id}>
+                                <TooltipTrigger asChild>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-default">
+                                        <div className="mb-4 sm:mb-0">
+                                            <div className="flex items-center gap-3">
+                                                <Badge variant={request.type === 'Overtime' ? 'secondary' : 'default'}>{request.type}</Badge>
+                                                <p className="font-semibold">{request.description}</p>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground mt-1 pl-1">{request.details}</p>
+                                        </div>
+                                        <div className="flex gap-2 self-end sm:self-center">
+                                            <Button size="sm" onClick={() => handleRequest(request.id, true)}>
+                                                <CheckCircle className="mr-2 h-4 w-4"/> Approve
+                                            </Button>
+                                            <Button size="sm" variant="destructive" onClick={() => handleRequest(request.id, false)}>
+                                                <XCircle className="mr-2 h-4 w-4"/> Reject
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <p className="text-sm text-muted-foreground mt-1 pl-1">{request.details}</p>
-                                </div>
-                                <div className="flex gap-2 self-end sm:self-center">
-                                    <Button size="sm" onClick={() => handleRequest(request.id, true)}>
-                                        <CheckCircle className="mr-2 h-4 w-4"/> Approve
-                                    </Button>
-                                    <Button size="sm" variant="destructive" onClick={() => handleRequest(request.id, false)}>
-                                        <XCircle className="mr-2 h-4 w-4"/> Reject
-                                    </Button>
-                                </div>
-                            </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <div className="grid gap-2 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                                            <span className="font-semibold">Location:</span>
+                                            <span>{request.location}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <UserCog className="h-4 w-4 text-muted-foreground" />
+                                            <span className="font-semibold">Manager:</span>
+                                            <span>{request.manager}</span>
+                                        </div>
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
                         ))
                     ) : (
                         <p className="text-sm text-muted-foreground text-center py-4">No pending approvals.</p>
