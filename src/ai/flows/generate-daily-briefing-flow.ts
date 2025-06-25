@@ -5,31 +5,23 @@
  * - generateDailyBriefing - A function that generates a daily message for staff.
  * - GenerateDailyBriefingOutput - The return type for the function.
  */
-import { defineFlow } from 'genkit/flow';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import { GenerateDailyBriefingOutputSchema, type GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
-import { z } from 'zod';
 import { format } from 'date-fns';
 
-// No specific input needed, but we can pass the date to the prompt.
-const DailyBriefingInputSchema = z.object({
-  currentDate: z.string(),
-});
-
 export async function generateDailyBriefing(): Promise<GenerateDailyBriefingOutput> {
-  return generateDailyBriefingFlow.run();
+  return generateDailyBriefingFlow();
 }
 
-export const generateDailyBriefingFlow = defineFlow(
+export const generateDailyBriefingFlow = ai.defineFlow(
   {
     name: 'generateDailyBriefingFlow',
     outputSchema: GenerateDailyBriefingOutputSchema,
   },
   async () => {
     const currentDate = format(new Date(), 'EEEE, MMMM do, yyyy');
-    const llmResponse = await generate({
-      model: googleAI.model('gemini-2.0-flash'),
+    const llmResponse = await ai.generate({
+      model: 'googleai/gemini-1.5-flash-latest',
       prompt: `You are a positive and effective restaurant manager starting the day. 
   Today's date is {{currentDate}}.
 
@@ -41,11 +33,11 @@ export const generateDailyBriefingFlow = defineFlow(
 
   This message will be posted on the employee dashboard to align the team for the day.
   `,
-      templateContext: { currentDate },
+      input: { currentDate },
       output: {
         schema: GenerateDailyBriefingOutputSchema,
       },
     });
-    return llmResponse.output();
+    return llmResponse.output!;
   }
 );

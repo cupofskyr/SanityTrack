@@ -7,9 +7,7 @@
  * - GenerateShoppingListInput - The input type for the function.
  * - GenerateShoppingListOutput - The return type for the function.
  */
-import { defineFlow } from 'genkit/flow';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import { 
     GenerateShoppingListInputSchema,
     type GenerateShoppingListInput,
@@ -18,16 +16,16 @@ import {
 } from '@/ai/schemas/shopping-list-schemas';
 
 export async function generateShoppingList(input: GenerateShoppingListInput): Promise<GenerateShoppingListOutput> {
-  return generateShoppingListFlow.run(input);
+  return generateShoppingListFlow(input);
 }
 
-export const generateShoppingListFlow = defineFlow(
+export const generateShoppingListFlow = ai.defineFlow(
   {
     name: 'generateShoppingListFlow',
     inputSchema: GenerateShoppingListInputSchema,
     outputSchema: GenerateShoppingListOutputSchema,
   },
-  async input => {
+  async (input) => {
     const currentDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -36,8 +34,8 @@ export const generateShoppingListFlow = defineFlow(
 
     const augmentedInput = { ...input, currentDate };
 
-    const llmResponse = await generate({
-      model: googleAI.model('gemini-2.0-flash'),
+    const llmResponse = await ai.generate({
+      model: 'googleai/gemini-1.5-flash-latest',
       prompt: `You are an efficient restaurant supply chain assistant. Your task is to generate a shopping list and an email subject line based on a list of inventory items that are below their par (ideal) stock level.
 
 Today's date is {{currentDate}}.
@@ -57,11 +55,11 @@ Example format for the shopping list:
 
 Do not add any conversational text or introductions to the shopping list itself.
 `,
-      templateContext: augmentedInput,
+      input: augmentedInput,
       output: {
         schema: GenerateShoppingListOutputSchema,
       },
     });
-    return llmResponse.output();
+    return llmResponse.output!;
   }
 );

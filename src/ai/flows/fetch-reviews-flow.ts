@@ -2,10 +2,7 @@
 /**
  * @fileOverview An AI flow for fetching and summarizing customer reviews for a specific location.
  */
-import { defineFlow } from 'genkit/flow';
-import { generate } from 'genkit/ai';
-import { defineTool } from 'genkit/tool';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import {
     ReviewSchema,
@@ -16,7 +13,7 @@ import {
 } from '@/ai/schemas/review-summary-schemas';
 
 // This is our mock tool. In a real app, this would call the Yelp/Google APIs.
-const fetchReviewsTool = defineTool(
+const fetchReviewsTool = ai.defineTool(
   {
     name: 'fetchReviews',
     description: 'Fetches recent customer reviews from a specified source (Google or Yelp) for a specific location.',
@@ -56,24 +53,25 @@ const fetchReviewsTool = defineTool(
 
 export type { SummarizeReviewsOutput, SummarizeReviewsInput };
 
-export const summarizeReviewsFlow = defineFlow(
+export const summarizeReviewsFlow = ai.defineFlow(
     {
         name: 'summarizeReviewsFlow',
         inputSchema: SummarizeReviewsInputSchema,
         outputSchema: SummarizeReviewsOutputSchema,
     },
     async (input) => {
-        const llmResponse = await generate({
-            prompt: `The user wants to see customer reviews for the "${input.location}" location from ${input.source}. Use the available tools to fetch them. After fetching, provide a very brief summary of the overall sentiment and include the raw review data.`,
-            model: googleAI.model('gemini-2.0-flash'),
+        const llmResponse = await ai.generate({
+            prompt: `The user wants to see customer reviews for the "{{location}}" location from {{source}}. Use the available tools to fetch them. After fetching, provide a very brief summary of the overall sentiment and include the raw review data.`,
+            model: 'googleai/gemini-1.5-flash-latest',
             tools: [fetchReviewsTool],
-            output: { schema: SummarizeReviewsOutputSchema }
+            output: { schema: SummarizeReviewsOutputSchema },
+            input,
         });
         
-        return llmResponse.output();
+        return llmResponse.output!;
     }
 );
 
 export async function summarizeReviews(input: SummarizeReviewsInput): Promise<SummarizeReviewsOutput> {
-    return summarizeReviewsFlow.run(input);
+    return summarizeReviewsFlow(input);
 }

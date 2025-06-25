@@ -8,7 +8,7 @@
  * - ToastPOSData - The return type for the function.
  */
 
-import { defineFlow } from 'genkit/flow';
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
 const FetchToastDataInputSchema = z.object({
@@ -38,7 +38,7 @@ async function getSimulatedToastData(input: FetchToastDataInput): Promise<ToastP
 }
 
 
-export const fetchToastDataFlow = defineFlow(
+export const fetchToastDataFlow = ai.defineFlow(
   {
     name: 'fetchToastDataFlow',
     inputSchema: FetchToastDataInputSchema,
@@ -53,5 +53,5 @@ export const fetchToastDataFlow = defineFlow(
 
 
 export async function fetchToastData(input: FetchToastDataInput): Promise<ToastPOSData> {
-  return fetchToastDataFlow.run(input);
+  return fetchToastDataFlow(input);
 }

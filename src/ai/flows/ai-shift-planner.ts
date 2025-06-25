@@ -7,9 +7,7 @@
  * - GenerateScheduleInput - The input type for the generateSchedule function.
  * - GenerateScheduleOutput - The return type for the generateSchedule function.
  */
-import { defineFlow } from 'genkit/flow';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
 const EmployeeSchema = z.object({
@@ -43,18 +41,18 @@ const GenerateScheduleOutputSchema = z.object({
 export type GenerateScheduleOutput = z.infer<typeof GenerateScheduleOutputSchema>;
 
 export async function generateSchedule(input: GenerateScheduleInput): Promise<GenerateScheduleOutput> {
-  return generateScheduleFlow.run(input);
+  return generateScheduleFlow(input);
 }
 
-export const generateScheduleFlow = defineFlow(
+export const generateScheduleFlow = ai.defineFlow(
   {
     name: 'generateScheduleFlow',
     inputSchema: GenerateScheduleInputSchema,
     outputSchema: GenerateScheduleOutputSchema,
   },
-  async input => {
-    const llmResponse = await generate({
-      model: googleAI.model('gemini-2.0-flash'),
+  async (input) => {
+    const llmResponse = await ai.generate({
+      model: 'googleai/gemini-1.5-flash-latest',
       prompt: `You are an intelligent shift scheduling assistant for a restaurant manager.
 Your task is to create a fair and balanced shift schedule.
 
@@ -74,11 +72,11 @@ Your goal is to assign each shift to an employee. Follow these rules:
 3.  If a shift cannot be assigned because no one is available, list it in the 'unassignedShifts' field.
 4.  Provide a brief reasoning for your assignment decisions.
 `,
-      templateContext: input,
+      input,
       output: {
         schema: GenerateScheduleOutputSchema,
       },
     });
-    return llmResponse.output();
+    return llmResponse.output!;
   }
 );

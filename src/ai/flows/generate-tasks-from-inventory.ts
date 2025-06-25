@@ -7,9 +7,7 @@
  * - GenerateTasksFromInventoryInput - The input type for the function.
  * - GenerateTasksFromInventoryOutput - The return type for the function.
  */
-import { defineFlow } from 'genkit/flow';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import {
     GenerateTasksFromInventoryInputSchema, 
     type GenerateTasksFromInventoryInput,
@@ -19,18 +17,18 @@ import {
 
 
 export async function generateTasksFromInventory(input: GenerateTasksFromInventoryInput): Promise<GenerateTasksFromInventoryOutput> {
-  return generateTasksFromInventoryFlow.run(input);
+  return generateTasksFromInventoryFlow(input);
 }
 
-export const generateTasksFromInventoryFlow = defineFlow(
+export const generateTasksFromInventoryFlow = ai.defineFlow(
   {
     name: 'generateTasksFromInventoryFlow',
     inputSchema: GenerateTasksFromInventoryInputSchema,
     outputSchema: GenerateTasksFromInventoryOutputSchema,
   },
-  async input => {
-    const llmResponse = await generate({
-      model: googleAI.model('gemini-2.0-flash'),
+  async (input) => {
+    const llmResponse = await ai.generate({
+      model: 'googleai/gemini-1.5-flash-latest',
       prompt: `You are an expert restaurant operations consultant. A new manager is setting up their cleaning and maintenance schedule.
 Your task is to generate a comprehensive list of recurring tasks based on the inventory of their restaurant.
 
@@ -53,11 +51,11 @@ Focus on standard, essential sanitation and maintenance tasks for a restaurant.
 Example Task:
 { description: "Deep clean Fryer 1 and change oil", frequency: "Weekly" }
 `,
-      templateContext: input,
+      input,
       output: {
         schema: GenerateTasksFromInventoryOutputSchema,
       },
     });
-    return llmResponse.output();
+    return llmResponse.output!;
   }
 );
