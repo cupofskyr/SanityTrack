@@ -1,12 +1,11 @@
 
 "use client"
 import { useState, useMemo, useEffect } from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, FileText, TrendingUp, ShieldCheck, PlusCircle, FileCheck, Map, Link as LinkIcon, Sparkles, Wand2, Loader2, Trash2, Pencil, Mail, BrainCircuit, MessageSquare, Check, X, ThumbsUp, Send, Camera, Clipboard, Printer } from "lucide-react";
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,7 +24,12 @@ import { Separator } from '@/components/ui/separator';
 import { analyzeIssue, type AnalyzeIssueOutput } from '@/ai/flows/analyze-issue-flow';
 import PhotoUploader from '@/components/photo-uploader';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
 
+const ComplianceChart = dynamic(() => import('@/components/compliance-chart'), { 
+    ssr: false,
+    loading: () => <Skeleton className="h-[250px] w-full" />
+});
 
 const complianceData = [
   { month: "Jan", score: 82, jurisdiction: "Downtown" },
@@ -35,13 +39,6 @@ const complianceData = [
   { month: "May", score: 94, jurisdiction: "Uptown" },
   { month: "Jun", score: 92, jurisdiction: "Uptown" },
 ];
-
-const chartConfig = {
-  score: {
-    label: "Compliance Score",
-    color: "hsl(var(--primary))",
-  },
-}
 
 const initialReports = [
   { id: 1, issue: "Water puddle near entrance (Unresolved)", location: "Downtown", date: "2024-05-21", status: "Action Taken", jurisdiction: "Downtown", owner: "Alex Ray", source: 'Guest Report', resolutionNotes: "Manager Alex Ray has mopped the area and placed a 'Wet Floor' sign. Maintenance has been called to check for a roof leak." },
@@ -571,15 +568,7 @@ export default function HealthDeptDashboard() {
           <CardDescription>Monthly compliance scores based on completed tasks and resolved issues.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="h-[250px] w-full">
-            <BarChart accessibilityLayer data={filteredComplianceData}>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
-              <YAxis domain={[70, 100]}/>
-              <RechartsTooltip cursor={false} content={<ChartTooltipContent />} />
-              <Bar dataKey="score" fill="var(--color-score)" radius={4} />
-            </BarChart>
-          </ChartContainer>
+          <ComplianceChart data={filteredComplianceData} />
         </CardContent>
       </Card>
       
