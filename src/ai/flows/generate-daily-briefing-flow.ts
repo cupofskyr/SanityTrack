@@ -5,8 +5,9 @@
  * - generateDailyBriefing - A function that generates a daily message for staff.
  * - GenerateDailyBriefingOutput - The return type for the function.
  */
-
-import { ai } from '@/ai/genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import { GenerateDailyBriefingOutputSchema, type GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -17,14 +18,19 @@ const DailyBriefingInputSchema = z.object({
 });
 
 export async function generateDailyBriefing(): Promise<GenerateDailyBriefingOutput> {
-  return generateDailyBriefingFlow();
+  return generateDailyBriefingFlow.run();
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateDailyBriefingPrompt',
-  input: { schema: DailyBriefingInputSchema },
-  output: { schema: GenerateDailyBriefingOutputSchema },
-  prompt: `You are a positive and effective restaurant manager starting the day. 
+export const generateDailyBriefingFlow = defineFlow(
+  {
+    name: 'generateDailyBriefingFlow',
+    outputSchema: GenerateDailyBriefingOutputSchema,
+  },
+  async () => {
+    const currentDate = format(new Date(), 'EEEE, MMMM do, yyyy');
+    const llmResponse = await generate({
+      model: googleAI.model('gemini-2.0-flash'),
+      prompt: `You are a positive and effective restaurant manager starting the day. 
   Today's date is {{currentDate}}.
 
   Your task is to generate a short, motivational "Daily Briefing" for your staff.
@@ -35,16 +41,11 @@ const prompt = ai.definePrompt({
 
   This message will be posted on the employee dashboard to align the team for the day.
   `,
-});
-
-const generateDailyBriefingFlow = ai.defineFlow(
-  {
-    name: 'generateDailyBriefingFlow',
-    outputSchema: GenerateDailyBriefingOutputSchema,
-  },
-  async () => {
-    const currentDate = format(new Date(), 'EEEE, MMMM do, yyyy');
-    const { output } = await prompt({ currentDate });
-    return output!;
+      templateContext: { currentDate },
+      output: {
+        schema: GenerateDailyBriefingOutputSchema,
+      },
+    });
+    return llmResponse.output();
   }
 );

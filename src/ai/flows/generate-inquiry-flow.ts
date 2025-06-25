@@ -6,8 +6,9 @@
  * - GenerateInquiryInput - The input type for the function.
  * - GenerateInquiryOutput - The return type for the function.
  */
-
-import { ai } from '@/ai/genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
   GenerateInquiryInputSchema,
   type GenerateInquiryInput,
@@ -16,14 +17,19 @@ import {
 } from '@/ai/schemas/inquiry-generation-schemas';
 
 export async function generateInquiry(input: GenerateInquiryInput): Promise<GenerateInquiryOutput> {
-  return generateInquiryFlow(input);
+  return generateInquiryFlow.run(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateInquiryPrompt',
-  input: { schema: GenerateInquiryInputSchema },
-  output: { schema: GenerateInquiryOutputSchema },
-  prompt: `You are a Health Department Agent. Your task is to draft a professional email to a business owner, {{ownerName}}, regarding a guest complaint about their location, {{locationName}}.
+export const generateInquiryFlow = defineFlow(
+  {
+    name: 'generateInquiryFlow',
+    inputSchema: GenerateInquiryInputSchema,
+    outputSchema: GenerateInquiryOutputSchema,
+  },
+  async (input) => {
+    const llmResponse = await generate({
+      model: googleAI.model('gemini-2.0-flash'),
+      prompt: `You are a Health Department Agent. Your task is to draft a professional email to a business owner, {{ownerName}}, regarding a guest complaint about their location, {{locationName}}.
 
 The guest reported the following issue:
 "{{{guestReport}}}"
@@ -36,16 +42,11 @@ Your goals are:
 5. Request confirmation of resolution (e.g., a photo or a description of the action taken).
 6. Inform the owner that this has been logged as a mandatory task that requires a formal response.
 `,
-});
-
-const generateInquiryFlow = ai.defineFlow(
-  {
-    name: 'generateInquiryFlow',
-    inputSchema: GenerateInquiryInputSchema,
-    outputSchema: GenerateInquiryOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+      templateContext: input,
+      output: {
+        schema: GenerateInquiryOutputSchema,
+      },
+    });
+    return llmResponse.output();
   }
 );

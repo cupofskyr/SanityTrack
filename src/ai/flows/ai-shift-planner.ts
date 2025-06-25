@@ -7,9 +7,10 @@
  * - GenerateScheduleInput - The input type for the generateSchedule function.
  * - GenerateScheduleOutput - The return type for the generateSchedule function.
  */
-
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
+import { z } from 'zod';
 
 const EmployeeSchema = z.object({
   name: z.string().describe('The name of the employee.'),
@@ -42,14 +43,19 @@ const GenerateScheduleOutputSchema = z.object({
 export type GenerateScheduleOutput = z.infer<typeof GenerateScheduleOutputSchema>;
 
 export async function generateSchedule(input: GenerateScheduleInput): Promise<GenerateScheduleOutput> {
-  return generateScheduleFlow(input);
+  return generateScheduleFlow.run(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateSchedulePrompt',
-  input: {schema: GenerateScheduleInputSchema},
-  output: {schema: GenerateScheduleOutputSchema},
-  prompt: `You are an intelligent shift scheduling assistant for a restaurant manager.
+export const generateScheduleFlow = defineFlow(
+  {
+    name: 'generateScheduleFlow',
+    inputSchema: GenerateScheduleInputSchema,
+    outputSchema: GenerateScheduleOutputSchema,
+  },
+  async input => {
+    const llmResponse = await generate({
+      model: googleAI.model('gemini-2.0-flash'),
+      prompt: `You are an intelligent shift scheduling assistant for a restaurant manager.
 Your task is to create a fair and balanced shift schedule.
 
 Here are the employees and the dates they are NOT available:
@@ -68,16 +74,11 @@ Your goal is to assign each shift to an employee. Follow these rules:
 3.  If a shift cannot be assigned because no one is available, list it in the 'unassignedShifts' field.
 4.  Provide a brief reasoning for your assignment decisions.
 `,
-});
-
-const generateScheduleFlow = ai.defineFlow(
-  {
-    name: 'generateScheduleFlow',
-    inputSchema: GenerateScheduleInputSchema,
-    outputSchema: GenerateScheduleOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+      templateContext: input,
+      output: {
+        schema: GenerateScheduleOutputSchema,
+      },
+    });
+    return llmResponse.output();
   }
 );

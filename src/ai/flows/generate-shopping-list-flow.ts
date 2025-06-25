@@ -7,8 +7,9 @@
  * - GenerateShoppingListInput - The input type for the function.
  * - GenerateShoppingListOutput - The return type for the function.
  */
-
-import {ai} from '@/ai/genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import { 
     GenerateShoppingListInputSchema,
     type GenerateShoppingListInput,
@@ -17,14 +18,27 @@ import {
 } from '@/ai/schemas/shopping-list-schemas';
 
 export async function generateShoppingList(input: GenerateShoppingListInput): Promise<GenerateShoppingListOutput> {
-  return generateShoppingListFlow(input);
+  return generateShoppingListFlow.run(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateShoppingListPrompt',
-  input: {schema: GenerateShoppingListInputSchema},
-  output: {schema: GenerateShoppingListOutputSchema},
-  prompt: `You are an efficient restaurant supply chain assistant. Your task is to generate a shopping list and an email subject line based on a list of inventory items that are below their par (ideal) stock level.
+export const generateShoppingListFlow = defineFlow(
+  {
+    name: 'generateShoppingListFlow',
+    inputSchema: GenerateShoppingListInputSchema,
+    outputSchema: GenerateShoppingListOutputSchema,
+  },
+  async input => {
+    const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+
+    const augmentedInput = { ...input, currentDate };
+
+    const llmResponse = await generate({
+      model: googleAI.model('gemini-2.0-flash'),
+      prompt: `You are an efficient restaurant supply chain assistant. Your task is to generate a shopping list and an email subject line based on a list of inventory items that are below their par (ideal) stock level.
 
 Today's date is {{currentDate}}.
 
@@ -43,23 +57,11 @@ Example format for the shopping list:
 
 Do not add any conversational text or introductions to the shopping list itself.
 `,
-});
-
-const generateShoppingListFlow = ai.defineFlow(
-  {
-    name: 'generateShoppingListFlow',
-    inputSchema: GenerateShoppingListInputSchema,
-    outputSchema: GenerateShoppingListOutputSchema,
-  },
-  async input => {
-    const currentDate = new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+      templateContext: augmentedInput,
+      output: {
+        schema: GenerateShoppingListOutputSchema,
+      },
     });
-
-    // We augment the input with the current date to be used in the prompt
-    const {output} = await prompt({...input, currentDate} as any);
-    return output!;
+    return llmResponse.output();
   }
 );

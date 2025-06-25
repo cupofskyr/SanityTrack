@@ -2,8 +2,9 @@
 /**
  * @fileOverview An AI flow for translating text into different languages.
  */
-
-import { ai } from '@/ai/genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
   TranslateTextInputSchema,
   type TranslateTextInput,
@@ -12,28 +13,28 @@ import {
 } from '@/ai/schemas/translation-schemas';
 
 export async function translateText(input: TranslateTextInput): Promise<TranslateTextOutput> {
-  return translateTextFlow(input);
+  return translateTextFlow.run(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'translateTextPrompt',
-  input: { schema: TranslateTextInputSchema },
-  output: { schema: TranslateTextOutputSchema },
-  prompt: `Translate the following text to {{targetLanguage}}.
-Do not add any preamble, conversational text, or additional formatting. Return only the translated text itself.
-
-Text to translate:
-"{{{text}}}"`,
-});
-
-const translateTextFlow = ai.defineFlow(
+export const translateTextFlow = defineFlow(
   {
     name: 'translateTextFlow',
     inputSchema: TranslateTextInputSchema,
     outputSchema: TranslateTextOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+    const llmResponse = await generate({
+      model: googleAI.model('gemini-2.0-flash'),
+      prompt: `Translate the following text to {{targetLanguage}}.
+Do not add any preamble, conversational text, or additional formatting. Return only the translated text itself.
+
+Text to translate:
+"{{{text}}}"`,
+      templateContext: input,
+      output: {
+        schema: TranslateTextOutputSchema,
+      },
+    });
+    return llmResponse.output();
   }
 );

@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -8,8 +7,9 @@
  * - GenerateTasksFromInventoryInput - The input type for the function.
  * - GenerateTasksFromInventoryOutput - The return type for the function.
  */
-
-import {ai} from '@/ai/genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
     GenerateTasksFromInventoryInputSchema, 
     type GenerateTasksFromInventoryInput,
@@ -19,14 +19,19 @@ import {
 
 
 export async function generateTasksFromInventory(input: GenerateTasksFromInventoryInput): Promise<GenerateTasksFromInventoryOutput> {
-  return generateTasksFromInventoryFlow(input);
+  return generateTasksFromInventoryFlow.run(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateTasksFromInventoryPrompt',
-  input: {schema: GenerateTasksFromInventoryInputSchema},
-  output: {schema: GenerateTasksFromInventoryOutputSchema},
-  prompt: `You are an expert restaurant operations consultant. A new manager is setting up their cleaning and maintenance schedule.
+export const generateTasksFromInventoryFlow = defineFlow(
+  {
+    name: 'generateTasksFromInventoryFlow',
+    inputSchema: GenerateTasksFromInventoryInputSchema,
+    outputSchema: GenerateTasksFromInventoryOutputSchema,
+  },
+  async input => {
+    const llmResponse = await generate({
+      model: googleAI.model('gemini-2.0-flash'),
+      prompt: `You are an expert restaurant operations consultant. A new manager is setting up their cleaning and maintenance schedule.
 Your task is to generate a comprehensive list of recurring tasks based on the inventory of their restaurant.
 
 First, create a friendly message for the manager explaining that they should label their equipment with numbers to make tracking easier. For example: "Cooler 1", "Cooler 2", "Fryer 1".
@@ -48,16 +53,11 @@ Focus on standard, essential sanitation and maintenance tasks for a restaurant.
 Example Task:
 { description: "Deep clean Fryer 1 and change oil", frequency: "Weekly" }
 `,
-});
-
-const generateTasksFromInventoryFlow = ai.defineFlow(
-  {
-    name: 'generateTasksFromInventoryFlow',
-    inputSchema: GenerateTasksFromInventoryInputSchema,
-    outputSchema: GenerateTasksFromInventoryOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+      templateContext: input,
+      output: {
+        schema: GenerateTasksFromInventoryOutputSchema,
+      },
+    });
+    return llmResponse.output();
   }
 );

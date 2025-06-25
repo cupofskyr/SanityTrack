@@ -7,8 +7,9 @@
  * - ProcessInspectionReportInput - The input type for the function.
  * - ProcessInspectionReportOutput - The return type for the function.
  */
-
-import { ai } from '@/ai/genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
   ProcessInspectionReportInputSchema,
   type ProcessInspectionReportInput,
@@ -19,14 +20,19 @@ import {
 export async function processInspectionReport(
   input: ProcessInspectionReportInput
 ): Promise<ProcessInspectionReportOutput> {
-  return processInspectionReportFlow(input);
+  return processInspectionReportFlow.run(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'processInspectionReportPrompt',
-  input: { schema: ProcessInspectionReportInputSchema },
-  output: { schema: ProcessInspectionReportOutputSchema },
-  prompt: `You are an expert health inspector supervisor reviewing a report for {{locationName}} from an inspection on {{inspectionDate}}.
+export const processInspectionReportFlow = defineFlow(
+  {
+    name: 'processInspectionReportFlow',
+    inputSchema: ProcessInspectionReportInputSchema,
+    outputSchema: ProcessInspectionReportOutputSchema,
+  },
+  async (input) => {
+    const llmResponse = await generate({
+      model: googleAI.model('gemini-2.0-flash'),
+      prompt: `You are an expert health inspector supervisor reviewing a report for {{locationName}} from an inspection on {{inspectionDate}}.
 Your job is to analyze the inspector's notes and extract two types of information:
 
 1.  **Immediate Tasks**: Identify all specific, non-compliant items that need to be fixed immediately. Phrase these as clear, actionable commands. These will be sent to the restaurant owner.
@@ -39,16 +45,11 @@ INSPECTION NOTES:
 
 Analyze the notes and provide the structured output. If there are no issues for a category, return an empty array.
 `,
-});
-
-const processInspectionReportFlow = ai.defineFlow(
-  {
-    name: 'processInspectionReportFlow',
-    inputSchema: ProcessInspectionReportInputSchema,
-    outputSchema: ProcessInspectionReportOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+      templateContext: input,
+      output: {
+        schema: ProcessInspectionReportOutputSchema,
+      },
+    });
+    return llmResponse.output();
   }
 );

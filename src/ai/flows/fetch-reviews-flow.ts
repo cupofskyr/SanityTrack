@@ -1,11 +1,12 @@
-
 'use server';
 /**
  * @fileOverview An AI flow for fetching and summarizing customer reviews for a specific location.
  */
-
-import {ai} from '@/ai/genkit';
-import {z} from 'zod';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { defineTool } from 'genkit/tool';
+import { googleAI } from '@genkit-ai/googleai';
+import { z } from 'zod';
 import {
     ReviewSchema,
     SummarizeReviewsInputSchema,
@@ -15,7 +16,7 @@ import {
 } from '@/ai/schemas/review-summary-schemas';
 
 // This is our mock tool. In a real app, this would call the Yelp/Google APIs.
-const fetchReviewsTool = ai.defineTool(
+const fetchReviewsTool = defineTool(
   {
     name: 'fetchReviews',
     description: 'Fetches recent customer reviews from a specified source (Google or Yelp) for a specific location.',
@@ -55,24 +56,24 @@ const fetchReviewsTool = ai.defineTool(
 
 export type { SummarizeReviewsOutput, SummarizeReviewsInput };
 
-const summarizeReviewsFlow = ai.defineFlow(
+export const summarizeReviewsFlow = defineFlow(
     {
         name: 'summarizeReviewsFlow',
         inputSchema: SummarizeReviewsInputSchema,
         outputSchema: SummarizeReviewsOutputSchema,
     },
     async (input) => {
-        const llmResponse = await ai.generate({
+        const llmResponse = await generate({
             prompt: `The user wants to see customer reviews for the "${input.location}" location from ${input.source}. Use the available tools to fetch them. After fetching, provide a very brief summary of the overall sentiment and include the raw review data.`,
-            model: 'googleai/gemini-2.0-flash',
+            model: googleAI.model('gemini-2.0-flash'),
             tools: [fetchReviewsTool],
             output: { schema: SummarizeReviewsOutputSchema }
         });
         
-        return llmResponse.output()!;
+        return llmResponse.output();
     }
 );
 
 export async function summarizeReviews(input: SummarizeReviewsInput): Promise<SummarizeReviewsOutput> {
-    return summarizeReviewsFlow(input);
+    return summarizeReviewsFlow.run(input);
 }

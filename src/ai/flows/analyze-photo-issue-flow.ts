@@ -7,8 +7,9 @@
  * - AnalyzePhotoInput - The input type for the function.
  * - AnalyzePhotoOutput - The return type for the function.
  */
-
-import { ai } from '@/ai/genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
     AnalyzePhotoInputSchema,
     type AnalyzePhotoInput,
@@ -18,15 +19,20 @@ import {
 
 
 export async function analyzePhotoIssue(input: AnalyzePhotoInput): Promise<AnalyzePhotoOutput> {
-    return analyzePhotoIssueFlow(input);
+    return analyzePhotoIssueFlow.run(input);
 }
 
 
-const prompt = ai.definePrompt({
-    name: 'analyzePhotoIssuePrompt',
-    input: { schema: AnalyzePhotoInputSchema },
-    output: { schema: AnalyzePhotoOutputSchema },
-    prompt: `You are an AI assistant for a facility management application. Your task is to analyze the provided photo and generate a short, clear, and actionable description of the maintenance or sanitation issue it depicts.
+export const analyzePhotoIssueFlow = defineFlow(
+  {
+    name: 'analyzePhotoIssueFlow',
+    inputSchema: AnalyzePhotoInputSchema,
+    outputSchema: AnalyzePhotoOutputSchema,
+  },
+  async (input) => {
+    const llmResponse = await generate({
+      model: googleAI.model('gemini-2.0-flash'),
+      prompt: `You are an AI assistant for a facility management application. Your task is to analyze the provided photo and generate a short, clear, and actionable description of the maintenance or sanitation issue it depicts.
 
 Focus on what needs to be done. Be direct.
 
@@ -40,17 +46,11 @@ Good examples:
 Analyze this image:
 {{media url=photoDataUri}}
 `,
-});
-
-
-const analyzePhotoIssueFlow = ai.defineFlow(
-  {
-    name: 'analyzePhotoIssueFlow',
-    inputSchema: AnalyzePhotoInputSchema,
-    outputSchema: AnalyzePhotoOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+      templateContext: input,
+      output: {
+        schema: AnalyzePhotoOutputSchema,
+      },
+    });
+    return llmResponse.output();
   }
 );

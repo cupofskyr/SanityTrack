@@ -6,8 +6,9 @@
  * - SuggestTaskAssignmentInput - The input type for the function.
  * - SuggestTaskAssignmentOutput - The return type for the function.
  */
-
-import {ai} from '@/ai/genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
     SuggestTaskAssignmentInputSchema,
     type SuggestTaskAssignmentInput,
@@ -16,14 +17,19 @@ import {
 } from '@/ai/schemas/task-assignment-schemas';
 
 export async function suggestTaskAssignment(input: SuggestTaskAssignmentInput): Promise<SuggestTaskAssignmentOutput> {
-  return suggestTaskAssignmentFlow(input);
+  return suggestTaskAssignmentFlow.run(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'suggestTaskAssignmentPrompt',
-  input: {schema: SuggestTaskAssignmentInputSchema},
-  output: {schema: SuggestTaskAssignmentOutputSchema},
-  prompt: `You are an expert operations director for a multi-location business.
+export const suggestTaskAssignmentFlow = defineFlow(
+  {
+    name: 'suggestTaskAssignmentFlow',
+    inputSchema: SuggestTaskAssignmentInputSchema,
+    outputSchema: SuggestTaskAssignmentOutputSchema,
+  },
+  async input => {
+    const llmResponse = await generate({
+      model: googleAI.model('gemini-2.0-flash'),
+      prompt: `You are an expert operations director for a multi-location business.
 Your goal is to delegate tasks efficiently.
 
 An urgent issue has come up:
@@ -36,16 +42,11 @@ Here is the available team:
 
 Based on the issue and the team members' roles, suggest the most appropriate person to handle this task. Provide a brief, one-sentence reasoning for your choice. For example, if it's a plumbing issue, assign it to a manager who can call a plumber. If it's a simple cleaning task, a regular employee is fine.
 `,
-});
-
-const suggestTaskAssignmentFlow = ai.defineFlow(
-  {
-    name: 'suggestTaskAssignmentFlow',
-    inputSchema: SuggestTaskAssignmentInputSchema,
-    outputSchema: SuggestTaskAssignmentOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+      templateContext: input,
+      output: {
+        schema: SuggestTaskAssignmentOutputSchema,
+      },
+    });
+    return llmResponse.output();
   }
 );

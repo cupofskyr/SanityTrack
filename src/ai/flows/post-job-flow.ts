@@ -2,13 +2,14 @@
 /**
  * @fileOverview An AI flow for simulating posting a job to a job board.
  */
-
-import { ai } from '@/ai/genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { defineTool } from 'genkit/tool';
+import { googleAI } from '@genkit-ai/googleai';
 import { JobPostingInputSchema, JobPostingOutputSchema, type JobPostingInput, type JobPostingOutput } from '@/ai/schemas/job-posting-schemas';
-import { z } from 'zod';
 
 // This is our mock tool. In a real app, this would call the Indeed/Workable API.
-const postToJobBoardTool = ai.defineTool(
+const postToJobBoardTool = defineTool(
   {
     name: 'postToJobBoard',
     description: 'Posts a job listing to an external job board like Indeed.',
@@ -32,11 +33,11 @@ const postToJobBoardTool = ai.defineTool(
 
 
 export async function postJob(input: JobPostingInput): Promise<JobPostingOutput> {
-  return postJobFlow(input);
+  return postJobFlow.run(input);
 }
 
 
-const postJobFlow = ai.defineFlow(
+export const postJobFlow = defineFlow(
     {
         name: 'postJobFlow',
         inputSchema: JobPostingInputSchema,
@@ -44,9 +45,9 @@ const postJobFlow = ai.defineFlow(
     },
     async (input) => {
         console.log('Initiating job posting flow for:', input);
-        const llmResponse = await ai.generate({
+        const llmResponse = await generate({
             prompt: `The user wants to post a job for a ${input.role} at ${input.location}. Use the available tools to post this job.`,
-            model: 'googleai/gemini-2.0-flash',
+            model: googleAI.model('gemini-2.0-flash'),
             tools: [postToJobBoardTool],
             output: { schema: JobPostingOutputSchema }
         });

@@ -2,8 +2,9 @@
 /**
  * @fileOverview An AI flow for generating a warning letter about punctuality.
  */
-
-import { ai } from '@/ai/genkit';
+import { defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
   GenerateWarningLetterInputSchema,
   type GenerateWarningLetterInput,
@@ -12,14 +13,19 @@ import {
 } from '@/ai/schemas/warning-letter-schemas';
 
 export async function generateWarningLetter(input: GenerateWarningLetterInput): Promise<GenerateWarningLetterOutput> {
-  return generateWarningLetterFlow(input);
+  return generateWarningLetterFlow.run(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateWarningLetterPrompt',
-  input: { schema: GenerateWarningLetterInputSchema },
-  output: { schema: GenerateWarningLetterOutputSchema },
-  prompt: `You are a professional and fair HR manager. Your task is to draft a formal warning email to an employee regarding their punctuality. The tone should be firm and clear, but not overly aggressive. It should serve as a formal record.
+export const generateWarningLetterFlow = defineFlow(
+  {
+    name: 'generateWarningLetterFlow',
+    inputSchema: GenerateWarningLetterInputSchema,
+    outputSchema: GenerateWarningLetterOutputSchema,
+  },
+  async (input) => {
+    const llmResponse = await generate({
+      model: googleAI.model('gemini-2.0-flash'),
+      prompt: `You are a professional and fair HR manager. Your task is to draft a formal warning email to an employee regarding their punctuality. The tone should be firm and clear, but not overly aggressive. It should serve as a formal record.
 
 Employee Name: {{employeeName}}
 Incident: {{latenessDetails}}
@@ -31,16 +37,11 @@ The email should:
 4.  Politely ask the employee to ensure they adhere to their schedule going forward.
 5.  End on a professional note, suggesting they speak to their manager if they have any issues preventing them from being on time.
 `,
-});
-
-const generateWarningLetterFlow = ai.defineFlow(
-  {
-    name: 'generateWarningLetterFlow',
-    inputSchema: GenerateWarningLetterInputSchema,
-    outputSchema: GenerateWarningLetterOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+      templateContext: input,
+      output: {
+        schema: GenerateWarningLetterOutputSchema,
+      },
+    });
+    return llmResponse.output();
   }
 );
