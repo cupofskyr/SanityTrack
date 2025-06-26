@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { generateSchedule } from "@/app/actions";
+import { generateScheduleAction } from "@/app/actions";
 import type { GenerateScheduleInput, GenerateScheduleOutput } from "@/ai/flows/ai-shift-planner";
 
 type Shift = {
@@ -143,7 +143,7 @@ export default function AIShiftScheduler() {
         };
 
         try {
-            const response = await generateSchedule(input);
+            const response = await generateScheduleAction(input);
             
             if (response.error || !response.data) {
                 toast({ variant: "destructive", title: "AI Error", description: response.error || "Failed to generate schedule." });

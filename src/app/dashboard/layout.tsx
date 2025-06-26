@@ -27,7 +27,8 @@ import {
   Languages,
   UserCog,
   Loader2,
-  ChefHat
+  ChefHat,
+  CalendarClock
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,7 @@ export default function DashboardLayout({
   const dashboardLink = getDashboardLink();
   const navItems = [
     { href: dashboardLink, icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/dashboard/manager/shifts", icon: CalendarClock, label: "Shifts", roles: ["Manager", "Owner"]},
     { href: "/dashboard/taskboard", icon: ClipboardList, label: "Taskboard", roles: ["Employee", "Manager"] },
     { href: "/dashboard/manager/quality-control", icon: ChefHat, label: "Quality Control", roles: ["Manager", "Owner"] },
     { href: "/dashboard/training", icon: BookOpen, label: "Training", roles: ["Employee", "Manager", "Owner", "Health Department"] },

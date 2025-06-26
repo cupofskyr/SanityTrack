@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { analyzePhotoIssue, translateText } from '@/app/actions';
+import { analyzePhotoIssueAction, translateTextAction } from '@/app/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 
@@ -205,7 +205,7 @@ export default function EmployeeDashboard() {
       if (!photoForAnalysis) return;
       setIsAnalyzingPhoto(true);
       try {
-        const { data, error } = await analyzePhotoIssue({ photoDataUri: photoForAnalysis });
+        const { data, error } = await analyzePhotoIssueAction({ photoDataUri: photoForAnalysis });
         if (error || !data) {
             throw new Error(error || 'Failed to analyze photo.');
         }
@@ -287,8 +287,8 @@ export default function EmployeeDashboard() {
     setIsTranslatingBriefing(true);
     try {
         const [titleRes, messageRes] = await Promise.all([
-            translateText({ text: briefing.title, targetLanguage: 'Spanish' }),
-            translateText({ text: briefing.message, targetLanguage: 'Spanish' })
+            translateTextAction({ text: briefing.title, targetLanguage: 'Spanish' }),
+            translateTextAction({ text: briefing.message, targetLanguage: 'Spanish' })
         ]);
         if (titleRes.error || !titleRes.data || messageRes.error || !messageRes.data) {
              throw new Error(titleRes.error || messageRes.error || 'Failed to translate');
