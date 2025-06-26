@@ -21,7 +21,7 @@ export default function ComplianceChart({ data }: ComplianceChartProps) {
             <BarChart accessibilityLayer data={data}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
-                <YAxis domain={[70, 100]}/>
+                <YAxis domain={[0, 100]}/>
                 <RechartsTooltip cursor={false} content={<ChartTooltipContent />} />
                 <Bar dataKey="score" fill="var(--color-score)" radius={4} />
             </BarChart>

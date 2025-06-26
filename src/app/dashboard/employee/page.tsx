@@ -205,8 +205,11 @@ export default function EmployeeDashboard() {
       if (!photoForAnalysis) return;
       setIsAnalyzingPhoto(true);
       try {
-        const { suggestion } = await analyzePhotoIssue({ photoDataUri: photoForAnalysis });
-        setNewIssueDescription(suggestion);
+        const { data, error } = await analyzePhotoIssue({ photoDataUri: photoForAnalysis });
+        if (error || !data) {
+            throw new Error(error || 'Failed to analyze photo.');
+        }
+        setNewIssueDescription(data.suggestion);
         toast({ title: "AI Analysis Complete", description: "The issue description has been pre-filled." });
       } catch (error) {
         console.error(error);
@@ -287,9 +290,12 @@ export default function EmployeeDashboard() {
             translateText({ text: briefing.title, targetLanguage: 'Spanish' }),
             translateText({ text: briefing.message, targetLanguage: 'Spanish' })
         ]);
+        if (titleRes.error || !titleRes.data || messageRes.error || !messageRes.data) {
+             throw new Error(titleRes.error || messageRes.error || 'Failed to translate');
+        }
         setTranslatedBriefing({
-            title: titleRes.translatedText,
-            message: messageRes.translatedText
+            title: titleRes.data.translatedText,
+            message: messageRes.data.translatedText
         });
         toast({
             title: "Briefing Translated",
@@ -477,7 +483,13 @@ export default function EmployeeDashboard() {
                             </DialogHeader>
                             <PhotoUploader />
                             <DialogFooter>
-                              <Button type="submit" className="bg-primary hover:bg-primary/90">Submit Completion</Button>
+                              <Button type="submit" className="bg-primary hover:bg-primary/90" onClick={() => {
+                                toast({
+                                    title: "Task Submitted for Review",
+                                    description: `Your completion for "${task.name}" has been sent to the manager.`,
+                                });
+                                // Note: In a real app, this would close the dialog and update the task state.
+                            }}>Submit Completion</Button>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
@@ -507,7 +519,6 @@ export default function EmployeeDashboard() {
                     <div className="rounded-md border">
                         <Calendar
                             mode="multiple"
-                            min={0}
                             selected={unavailableDays}
                             onSelect={setUnavailableDays}
                             className="p-0"

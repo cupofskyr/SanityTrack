@@ -142,7 +142,7 @@ export default function ManagerDashboard() {
     const [isMealInsightDialogOpen, setIsMealInsightDialogOpen] = useState(false);
     const [aiMealInsight, setAiMealInsight] = useState<{title: string, description: string, employeeName: string} | null>(null);
 
-    const [newHireRequest, setNewHireRequest] = useState({ role: '', shiftType: '', urgency: '', justification: '' });
+    const [newHireRequest, setNewHireRequest] = useState<{role: string; shiftType: 'Full-time' | 'Part-time' | 'Contract' | ''; urgency: string; justification: string;}>({ role: '', shiftType: '', urgency: '', justification: '' });
 
     const [translations, setTranslations] = useState<Record<number, string>>({});
     const [translatingId, setTranslatingId] = useState<number | null>(null);
@@ -183,8 +183,11 @@ export default function ManagerDashboard() {
 
             setIsGeneratingBriefing(true);
             try {
-                const briefing = await generateDailyBriefing();
-                setDailyBriefing(briefing);
+                const {data, error} = await generateDailyBriefing();
+                if (error || !data) {
+                    throw new Error(error || 'Failed to generate briefing');
+                }
+                setDailyBriefing(data);
                 setIsBriefingDialogOpen(true);
                 localStorage.setItem('lastManagerBriefingShown', today); // Set that it was shown
             } catch (error) {
@@ -239,18 +242,22 @@ export default function ManagerDashboard() {
     async function handleAnalyzeIssue(values: z.infer<typeof issueAnalyzerSchema>) {
         setIsAnalyzing(true);
         try {
-            const result = await analyzeIssue({ description: values.description });
+            const {data, error} = await analyzeIssue({ description: values.description });
+            if (error || !data) {
+                 throw new Error(error || "Failed to analyze issue.");
+            }
+
             toast({
                 title: "AI Analysis Complete",
-                description: `Category: ${result.category}, Emergency: ${result.isEmergency ? 'Yes' : 'No'}`
+                description: `Category: ${data.category}, Emergency: ${data.isEmergency ? 'Yes' : 'No'}`
             });
-            if (result.isEmergency) {
+            if (data.isEmergency) {
                 const newIssue: HighPriorityIssue = {
                     id: Date.now(),
                     description: values.description,
                     reportedBy: 'AI Analyzer',
-                    category: result.category,
-                    contactType: result.suggestedContact
+                    category: data.category,
+                    contactType: data.suggestedContact
                 };
                 setHighPriorityIssues(prev => [newIssue, ...prev]);
                  toast({
@@ -391,7 +398,13 @@ export default function ManagerDashboard() {
             toast({ variant: "destructive", title: "Missing Information", description: "Please fill out all fields for the hiring request, including the justification." });
             return;
         }
-        // In a real app, this would send the data to a backend. Here, we just show a confirmation.
+        
+        // In a real app, this would send to a backend. Here, we use localStorage.
+        const currentRequests = JSON.parse(localStorage.getItem('hiringRequests') || '[]');
+        const newRequestWithId = { ...newHireRequest, id: Date.now(), manager: 'Demo Manager', location: 'Downtown' }; // Add some mock context
+        currentRequests.push(newRequestWithId);
+        localStorage.setItem('hiringRequests', JSON.stringify(currentRequests));
+
         toast({
             title: "Request Sent to Owner",
             description: `Your request to hire a ${newHireRequest.role} has been sent for approval.`
@@ -408,8 +421,11 @@ export default function ManagerDashboard() {
         }
         setTranslatingId(taskId);
         try {
-            const { translatedText } = await translateText({ text, targetLanguage: 'Spanish' });
-            setTranslations(prev => ({ ...prev, [taskId]: translatedText }));
+            const {data, error} = await translateText({ text, targetLanguage: 'Spanish' });
+            if (error || !data) {
+                throw new Error(error || 'Failed to translate');
+            }
+            setTranslations(prev => ({ ...prev, [taskId]: data.translatedText }));
         } catch (error) {
             console.error(error);
             toast({ variant: 'destructive', title: 'Translation Failed', description: 'Could not translate the task.' });
@@ -460,11 +476,14 @@ export default function ManagerDashboard() {
         setIsGeneratingWarning(true);
         setWarningContent(null);
         try {
-            const result = await generateWarningLetter({
+            const {data, error} = await generateWarningLetter({
                 employeeName: log.employeeName,
                 latenessDetails: details,
             });
-            setWarningContent(result);
+            if (error || !data) {
+                throw new Error(error || "Failed to generate warning.");
+            }
+            setWarningContent(data);
         } catch (error) {
             console.error(error);
             toast({
@@ -1000,119 +1019,6 @@ export default function ManagerDashboard() {
                 <TooltipTrigger asChild>
                     <Card className="lg:col-span-3">
                         <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2"><CalendarClock /> Schedule Internal Meeting</CardTitle>
-                            <CardDescription>Prototype for Google Calendar integration. Schedule a meeting and a simulated invite will be sent.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <form onSubmit={handleScheduleMeeting} className="space-y-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="meeting-title">Meeting Title</Label>
-                                    <Input id="meeting-title" placeholder="Q3 Planning Session" value={meetingDetails.title} onChange={(e) => setMeetingDetails({...meetingDetails, title: e.target.value})} required/>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="grid gap-2">
-                                        <Label>Date</Label>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn("justify-start text-left font-normal", !meetingDetails.date && "text-muted-foreground")}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {meetingDetails.date ? format(meetingDetails.date, "PPP") : <span>Pick a date</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={meetingDetails.date}
-                                                    onSelect={(date) => setMeetingDetails({...meetingDetails, date: date || new Date()})}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="meeting-time">Time</Label>
-                                        <Input id="meeting-time" type="time" value={meetingDetails.time} onChange={(e) => setMeetingDetails({...meetingDetails, time: e.target.value})} required/>
-                                    </div>
-                                     <div className="grid gap-2">
-                                        <Label htmlFor="meeting-attendee">Attendee</Label>
-                                        <Select value={meetingDetails.attendee} onValueChange={(val) => setMeetingDetails({...meetingDetails, attendee: val})} required>
-                                            <SelectTrigger id="meeting-attendee">
-                                                <SelectValue placeholder="Select team member" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {/* In a real app, you might want to select multiple attendees */}
-                                                <SelectItem value="Owner">Owner</SelectItem>
-                                                {teamMembers.map(member => (
-                                                    <SelectItem key={member.name} value={member.name}>{member.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="meeting-description">Description / Agenda (Optional)</Label>
-                                    <Textarea id="meeting-description" placeholder="Discuss Q3 goals, review new health protocols..." value={meetingDetails.description} onChange={(e) => setMeetingDetails({...meetingDetails, description: e.target.value})} />
-                                </div>
-                                <Button type="submit">Schedule Meeting</Button>
-                             </form>
-                        </CardContent>
-                    </Card>
-                </TooltipTrigger>
-                <TooltipContent><p>Schedule a meeting with a team member (simulates Google Calendar).</p></TooltipContent>
-            </Tooltip>
-
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><ListTodo/> Upcoming Meetings</CardTitle>
-                </CardHeader>
-                <CardContent>
-                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Date & Time</TableHead>
-                                <TableHead>Attendee</TableHead>
-                                <TableHead className="text-right">Meeting Link</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {meetings.length > 0 ? (
-                                meetings.sort((a,b) => a.date.getTime() - b.date.getTime()).map((meeting) => (
-                                <TableRow key={meeting.id}>
-                                    <TableCell className="font-medium">{meeting.title}</TableCell>
-                                    <TableCell>{format(meeting.date, 'PPP')} at {meeting.time}</TableCell>
-                                    <TableCell>{meeting.attendee}</TableCell>
-                                    <TableCell className="text-right">
-                                        {meeting.meetLink && (
-                                            <Button variant="ghost" size="icon" asChild>
-                                                <a href={meeting.meetLink} target="_blank" rel="noopener noreferrer">
-                                                    <LinkIcon className="h-4 w-4" />
-                                                    <span className="sr-only">Open meeting link</span>
-                                                </a>
-                                            </Button>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                <TableCell colSpan={4} className="text-center h-24">
-                                    No meetings scheduled yet.
-                                </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Card className="lg:col-span-2">
-                         <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-accent"/> High-Priority Issues</CardTitle>
                             <CardDescription>Critical issues identified by the AI that require immediate attention.</CardDescription>
                         </CardHeader>
