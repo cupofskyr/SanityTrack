@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -68,7 +67,7 @@ export default function DashboardLayout({
   const dashboardLink = getDashboardLink();
   const navItems = [
     { href: dashboardLink, icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/taskboard", icon: ClipboardList, label: "Taskboard", roles: ["Employee", "Manager"] },
+    { href: "/dashboard/taskboard", icon: ClipboardList, label: "Taskboard", roles: ["Employee", "Manager"] },
     { href: "/dashboard/training", icon: BookOpen, label: "Training", roles: ["Employee", "Manager", "Owner", "Health Department"] },
     { href: "/dashboard/training/setup", icon: GraduationCap, label: "Training Setup", roles: ["Manager", "Owner"] },
   ];
