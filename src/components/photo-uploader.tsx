@@ -57,7 +57,7 @@ export default function PhotoUploader({ readOnly = false, initialPreview, onPhot
              return;
           }
 
-          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
           setHasCameraPermission(true);
   
           if (videoRef.current) {
