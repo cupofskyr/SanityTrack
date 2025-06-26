@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Textarea } from '@/components/ui/textarea';
-import { suggestTaskAssignment, type SuggestTaskAssignmentOutput } from '@/ai/flows/suggest-task-assignment-flow';
+import { suggestTaskAssignment, type SuggestTaskAssignmentOutput, generateDailyBriefing, type GenerateDailyBriefingOutput, fetchToastData, type ToastPOSData, postJob, type JobPostingInput, generateWarningLetter, type GenerateWarningLetterOutput } from '@/app/actions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -18,16 +18,12 @@ import PhotoUploader from '@/components/photo-uploader';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { fetchToastData, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
 import LiveReviews from '@/components/live-reviews';
-import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
 import { format, differenceInMinutes } from 'date-fns';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { postJob, type JobPostingInput } from '@/ai/flows/post-job-flow';
-import { generateWarningLetter, type GenerateWarningLetterOutput } from '@/ai/flows/generate-warning-letter-flow';
 
 
 type TeamMember = {
@@ -57,6 +53,7 @@ type HiringRequest = {
     shiftType: 'Full-time' | 'Part-time' | 'Contract';
     justification: string;
 };
+type RejectedRequest = HiringRequest & { ownerComment: string; };
 type TimeClockLog = {
     id: number;
     employeeName: string;
