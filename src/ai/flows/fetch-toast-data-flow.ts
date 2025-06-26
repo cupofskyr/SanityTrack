@@ -7,9 +7,15 @@
  * - FetchToastDataInput - The input type for the function.
  * - ToastPOSData - The return type for the function.
  */
-
-import { defineFlow } from 'genkit/flow';
+import { configureGenkit, defineFlow } from 'genkit/flow';
 import { z } from 'zod';
+import { googleAI } from '@genkit-ai/googleai';
+
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
 
 const FetchToastDataInputSchema = z.object({
     location: z.string().describe('The name or ID of the location to fetch data for.'),
