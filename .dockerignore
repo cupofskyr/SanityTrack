@@ -1,24 +1,9 @@
-# Dependencies
+# Docker best practices: exclude files not needed in the image to reduce size and improve security.
 node_modules
-
-# Next.js build cache
 .next/cache
-
-# Local environment variables
+# Exclude local environment variables
 .env
 .env*.local
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Misc
-.DS_Store
-.npm
-*~
-.github
-.vscode
-README.md
+# Exclude Git history
+.git
+.gitignore
