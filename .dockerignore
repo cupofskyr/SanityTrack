@@ -1,0 +1,9 @@
+
+node_modules
+.next/cache
+*.log
+.env
+README.md
+Dockerfile
+.dockerignore
+cloudbuild.yaml
