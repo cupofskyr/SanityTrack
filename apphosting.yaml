@@ -11,3 +11,7 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+  # Add the GOOGLE_API_KEY secret to the run environment
+  secretEnv:
+    - secret: GOOGLE_API_KEY
+      env: GOOGLE_API_KEY
