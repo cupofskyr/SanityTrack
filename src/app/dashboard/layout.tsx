@@ -45,22 +45,37 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [role, setRole] = React.useState("User");
 
-  const getRole = () => {
-    if (pathname.includes("/owner")) return "Owner";
-    if (pathname.includes("/employee")) return "Employee";
-    if (pathname.includes("/manager")) return "Manager";
-    if (pathname.includes("/health-department")) return "Health Department";
-    return "User";
-  };
+  React.useEffect(() => {
+    // On initial load in the browser, try to get the role from session storage
+    const savedRole = sessionStorage.getItem('userRole');
+    if (savedRole) {
+      setRole(savedRole);
+    }
+  }, []);
 
-  const role = getRole();
+  React.useEffect(() => {
+    // When the path changes, detect if it's a role-specific page
+    let detectedRole = "";
+    if (pathname.includes("/owner")) detectedRole = "Owner";
+    else if (pathname.includes("/manager")) detectedRole = "Manager";
+    else if (pathname.includes("/employee")) detectedRole = "Employee";
+    else if (pathname.includes("/health-department")) detectedRole = "Health Department";
+    
+    // If a role page is detected, update the role and save it to session storage
+    if (detectedRole) {
+        sessionStorage.setItem('userRole', detectedRole);
+        setRole(detectedRole);
+    }
+  }, [pathname]);
+
   const getDashboardLink = () => {
     if (role === "Owner") return "/dashboard/owner";
     if (role === "Employee") return "/dashboard/employee";
     if (role === "Manager") return "/dashboard/manager";
     if (role === "Health Department") return "/dashboard/health-department";
-    // Fallback, though ideally we should always have a role
+    // Fallback to a default dashboard if role is not set
     return "/dashboard/employee";
   };
 
