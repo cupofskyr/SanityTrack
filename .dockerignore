@@ -1,9 +1,10 @@
-# Docker best practices: exclude files not needed in the image to reduce size and improve security.
+Dockerfile
+.dockerignore
 node_modules
 .next/cache
-# Exclude local environment variables
+npm-debug.log
+README.md
 .env
-.env*.local
-# Exclude Git history
+.env.local
 .git
-.gitignore
+.vscode
