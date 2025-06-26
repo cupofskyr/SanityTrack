@@ -41,7 +41,7 @@ Analyze this image:
 `,
 });
 
-export const analyzePhotoIssueFlow = ai.defineFlow(
+const analyzePhotoIssueFlow = ai.defineFlow(
   {
     name: 'analyzePhotoIssueFlow',
     inputSchema: AnalyzePhotoInputSchema,

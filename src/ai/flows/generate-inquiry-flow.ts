@@ -40,7 +40,7 @@ Your goals are:
 `,
 });
 
-export const generateInquiryFlow = ai.defineFlow(
+const generateInquiryFlow = ai.defineFlow(
   {
     name: 'generateInquiryFlow',
     inputSchema: GenerateInquiryInputSchema,

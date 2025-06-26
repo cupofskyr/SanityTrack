@@ -38,7 +38,7 @@ async function getSimulatedToastData(input: FetchToastDataInput): Promise<ToastP
 }
 
 
-export const fetchToastDataFlow = ai.defineFlow(
+const fetchToastDataFlow = ai.defineFlow(
   {
     name: 'fetchToastDataFlow',
     inputSchema: FetchToastDataInputSchema,

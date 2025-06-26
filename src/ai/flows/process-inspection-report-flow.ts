@@ -43,7 +43,7 @@ Analyze the notes and provide the structured output. If there are no issues for 
 `,
 });
 
-export const processInspectionReportFlow = ai.defineFlow(
+const processInspectionReportFlow = ai.defineFlow(
   {
     name: 'processInspectionReportFlow',
     inputSchema: ProcessInspectionReportInputSchema,

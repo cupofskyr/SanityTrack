@@ -28,7 +28,7 @@ Text to translate:
 "{{{text}}}"`,
 });
 
-export const translateTextFlow = ai.defineFlow(
+const translateTextFlow = ai.defineFlow(
   {
     name: 'translateTextFlow',
     inputSchema: TranslateTextInputSchema,

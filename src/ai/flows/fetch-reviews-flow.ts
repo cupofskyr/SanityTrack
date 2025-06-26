@@ -54,7 +54,7 @@ const fetchReviewsTool = ai.defineTool(
 
 export type { SummarizeReviewsOutput, SummarizeReviewsInput };
 
-export const summarizeReviewsFlow = ai.defineFlow(
+const summarizeReviewsFlow = ai.defineFlow(
     {
         name: 'summarizeReviewsFlow',
         inputSchema: SummarizeReviewsInputSchema,

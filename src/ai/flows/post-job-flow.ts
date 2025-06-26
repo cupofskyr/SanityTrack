@@ -35,7 +35,7 @@ export async function postJob(input: JobPostingInput): Promise<JobPostingOutput>
 }
 
 
-export const postJobFlow = ai.defineFlow(
+const postJobFlow = ai.defineFlow(
     {
         name: 'postJobFlow',
         inputSchema: JobPostingInputSchema,

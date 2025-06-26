@@ -71,7 +71,7 @@ Your goal is to assign each shift to an employee. Follow these rules:
 `,
 });
 
-export const generateScheduleFlow = ai.defineFlow(
+const generateScheduleFlow = ai.defineFlow(
   {
     name: 'generateScheduleFlow',
     inputSchema: GenerateScheduleInputSchema,

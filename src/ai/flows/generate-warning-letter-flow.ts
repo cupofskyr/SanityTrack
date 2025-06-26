@@ -34,7 +34,7 @@ The email should:
 `,
 });
 
-export const generateWarningLetterFlow = ai.defineFlow(
+const generateWarningLetterFlow = ai.defineFlow(
   {
     name: 'generateWarningLetterFlow',
     inputSchema: GenerateWarningLetterInputSchema,

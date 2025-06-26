@@ -40,7 +40,7 @@ Based on the issue and the team members' roles, suggest the most appropriate per
 `,
 });
 
-export const suggestTaskAssignmentFlow = ai.defineFlow(
+const suggestTaskAssignmentFlow = ai.defineFlow(
   {
     name: 'suggestTaskAssignmentFlow',
     inputSchema: SuggestTaskAssignmentInputSchema,

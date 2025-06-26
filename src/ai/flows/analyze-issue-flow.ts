@@ -43,7 +43,7 @@ Analyze the issue and provide the category, emergency status, urgency, suggested
 `,
 });
 
-export const analyzeIssueFlow = ai.defineFlow(
+const analyzeIssueFlow = ai.defineFlow(
   {
     name: 'analyzeIssueFlow',
     inputSchema: AnalyzeIssueInputSchema,

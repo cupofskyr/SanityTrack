@@ -50,7 +50,7 @@ Example Task:
 `,
 });
 
-export const generateTasksFromInventoryFlow = ai.defineFlow(
+const generateTasksFromInventoryFlow = ai.defineFlow(
   {
     name: 'generateTasksFromInventoryFlow',
     inputSchema: GenerateTasksFromInventoryInputSchema,

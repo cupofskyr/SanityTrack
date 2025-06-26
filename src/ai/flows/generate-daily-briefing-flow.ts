@@ -34,7 +34,7 @@ const prompt = ai.definePrompt({
   `,
 });
 
-export const generateDailyBriefingFlow = ai.defineFlow(
+const generateDailyBriefingFlow = ai.defineFlow(
   {
     name: 'generateDailyBriefingFlow',
     outputSchema: GenerateDailyBriefingOutputSchema,

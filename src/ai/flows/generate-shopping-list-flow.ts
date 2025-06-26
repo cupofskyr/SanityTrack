@@ -47,7 +47,7 @@ Do not add any conversational text or introductions to the shopping list itself.
 `,
 });
 
-export const generateShoppingListFlow = ai.defineFlow(
+const generateShoppingListFlow = ai.defineFlow(
   {
     name: 'generateShoppingListFlow',
     inputSchema: GenerateShoppingListInputSchema,
