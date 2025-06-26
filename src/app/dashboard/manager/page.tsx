@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle, AlertCircle, MailWarning } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle, AlertCircle, MailWarning, HelpCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -28,7 +28,7 @@ import StaffMealManager from '@/components/staff-meal-manager';
 import { format, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { analyzeIssue, generateDailyBriefing, translateText, generateWarningLetter } from '@/app/actions';
+import { analyzeIssueAction, generateDailyBriefingAction, translateTextAction, generateWarningLetterAction, explainTaskImportanceAction } from '@/app/actions';
 import type { GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
 import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
 
@@ -158,6 +158,10 @@ export default function ManagerDashboard() {
     const [isGeneratingWarning, setIsGeneratingWarning] = useState(false);
     const [selectedLogForWarning, setSelectedLogForWarning] = useState<TimeClockLog | null>(null);
 
+    const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
+    const [explanation, setExplanation] = useState('');
+    const [isGeneratingExplanation, setIsGeneratingExplanation] = useState(false);
+
     useEffect(() => {
         const storedRejected = localStorage.getItem('rejectedHiringRequests');
         if (storedRejected) {
@@ -183,7 +187,7 @@ export default function ManagerDashboard() {
 
             setIsGeneratingBriefing(true);
             try {
-                const {data, error} = await generateDailyBriefing();
+                const {data, error} = await generateDailyBriefingAction();
                 if (error || !data) {
                     throw new Error(error || 'Failed to generate briefing');
                 }
@@ -242,7 +246,7 @@ export default function ManagerDashboard() {
     async function handleAnalyzeIssue(values: z.infer<typeof issueAnalyzerSchema>) {
         setIsAnalyzing(true);
         try {
-            const {data, error} = await analyzeIssue({ description: values.description });
+            const {data, error} = await analyzeIssueAction({ description: values.description });
             if (error || !data) {
                  throw new Error(error || "Failed to analyze issue.");
             }
@@ -421,7 +425,7 @@ export default function ManagerDashboard() {
         }
         setTranslatingId(taskId);
         try {
-            const {data, error} = await translateText({ text, targetLanguage: 'Spanish' });
+            const {data, error} = await translateTextAction({ text, targetLanguage: 'Spanish' });
             if (error || !data) {
                 throw new Error(error || 'Failed to translate');
             }
@@ -431,6 +435,24 @@ export default function ManagerDashboard() {
             toast({ variant: 'destructive', title: 'Translation Failed', description: 'Could not translate the task.' });
         } finally {
             setTranslatingId(null);
+        }
+    };
+
+    const handleAskWhy = async (task: DelegatedTask) => {
+        setExplanation('');
+        setIsExplanationDialogOpen(true);
+        setIsGeneratingExplanation(true);
+        try {
+            const {data, error} = await explainTaskImportanceAction({ taskTitle: task.description, taskDescription: `This is a mandatory task from: ${task.source}` });
+            if (error || !data) {
+                throw new Error(error || "Could not get an explanation.");
+            }
+            setExplanation(data.explanation);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'AI Error', description: error.message });
+            setExplanation('Could not load an explanation for this task.');
+        } finally {
+            setIsGeneratingExplanation(false);
         }
     };
     
@@ -476,7 +498,7 @@ export default function ManagerDashboard() {
         setIsGeneratingWarning(true);
         setWarningContent(null);
         try {
-            const {data, error} = await generateWarningLetter({
+            const {data, error} = await generateWarningLetterAction({
                 employeeName: log.employeeName,
                 latenessDetails: details,
             });
@@ -760,34 +782,32 @@ export default function ManagerDashboard() {
                                     {delegatedTasks.map(task => (
                                         <AccordionItem value={`task-${task.id}`} key={task.id}>
                                             <AccordionTrigger className="hover:no-underline text-left">
-                                                <div className="flex w-full items-center justify-between pr-4">
+                                                <div className="flex w-full items-start justify-between pr-4 gap-4">
                                                     <div className='text-left'>
                                                         <p className="font-semibold">{translations[task.id] || task.description}</p>
                                                         <p className="text-xs text-muted-foreground">Source: {task.source}</p>
                                                     </div>
-                                                    <Badge variant={task.status === 'Pending' ? 'destructive' : 'default'} className='whitespace-nowrap'>
+                                                    <Badge variant={task.status === 'Pending' ? 'destructive' : 'default'} className='whitespace-nowrap mt-1'>
                                                         {task.status === 'Pending' ? 'Action Required' : 'Pending Approval'}
                                                     </Badge>
                                                 </div>
                                             </AccordionTrigger>
                                             <AccordionContent>
                                                 <div className='p-4 bg-muted/50 rounded-md m-1 space-y-4'>
-                                                    <div className="flex items-center gap-4">
-                                                        {task.status === 'Pending' ? (
-                                                            <>
-                                                                <div>
-                                                                    <Label className='text-xs text-muted-foreground'>Attach Proof of Completion</Label>
-                                                                    <div className='mt-2'>
-                                                                        <PhotoUploader />
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        {task.status === 'Pending' && (
+                                                                <div className='flex items-end gap-2'>
+                                                                    <div>
+                                                                        <Label className='text-xs text-muted-foreground'>Attach Proof of Completion</Label>
+                                                                        <div className='mt-2'>
+                                                                            <PhotoUploader />
+                                                                        </div>
                                                                     </div>
+                                                                    <Button onClick={() => handleManagerSubmitForApproval(task.id)}>
+                                                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                                                        Submit for Owner Approval
+                                                                    </Button>
                                                                 </div>
-                                                                <Button onClick={() => handleManagerSubmitForApproval(task.id)}>
-                                                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                                                    Submit for Owner Approval
-                                                                </Button>
-                                                            </>
-                                                        ) : (
-                                                            <p className='text-sm text-muted-foreground italic'>This task is awaiting final approval from the owner. No further action is needed.</p>
                                                         )}
                                                         <Button
                                                             variant="outline"
@@ -797,6 +817,14 @@ export default function ManagerDashboard() {
                                                         >
                                                             {translatingId === task.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}
                                                             {translatingId === task.id ? 'Translating...' : translations[task.id] ? 'Show Original' : 'Translate'}
+                                                        </Button>
+                                                         <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleAskWhy(task)}
+                                                        >
+                                                            <HelpCircle className="mr-2 h-4 w-4 text-primary" />
+                                                            Why is this important?
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -1242,6 +1270,30 @@ export default function ManagerDashboard() {
                             Send Email (Simulated)
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isExplanationDialogOpen} onOpenChange={setIsExplanationDialogOpen}>
+                <DialogContent>
+                     <DialogHeader>
+                        <DialogTitle className="font-headline flex items-center gap-2">
+                            <Sparkles className="h-5 w-5 text-primary"/>
+                            AI Task Explanation
+                        </DialogTitle>
+                        <DialogDescription>
+                            Here's why this task is important for our team's success.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {isGeneratingExplanation ? (
+                            <div className="flex items-center justify-center p-8 space-x-2">
+                                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                <p className="text-muted-foreground">AI is preparing the explanation...</p>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-foreground">{explanation}</p>
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
 

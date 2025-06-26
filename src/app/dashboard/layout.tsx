@@ -26,7 +26,8 @@ import {
   GraduationCap,
   Languages,
   UserCog,
-  Loader2
+  Loader2,
+  ChefHat
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,7 @@ export default function DashboardLayout({
   const navItems = [
     { href: dashboardLink, icon: LayoutDashboard, label: "Dashboard" },
     { href: "/dashboard/taskboard", icon: ClipboardList, label: "Taskboard", roles: ["Employee", "Manager"] },
+    { href: "/dashboard/manager/quality-control", icon: ChefHat, label: "Quality Control", roles: ["Manager", "Owner"] },
     { href: "/dashboard/training", icon: BookOpen, label: "Training", roles: ["Employee", "Manager", "Owner", "Health Department"] },
     { href: "/dashboard/training/setup", icon: GraduationCap, label: "Training Setup", roles: ["Manager", "Owner"] },
   ];

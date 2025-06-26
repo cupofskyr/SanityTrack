@@ -5,20 +5,20 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
   analyzeCameraImageAction,
-  fetchToastData,
-  summarizeReviews,
-  postJob,
-  suggestTaskAssignment
+  fetchToastDataAction,
+  summarizeReviewsAction,
+  postJobAction,
+  suggestTaskAssignmentAction,
+  estimateStockLevelAction
 } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, AlertCircle, Rss, BarChart2, Briefcase, UserCheck, Check, X, Send } from 'lucide-react';
+import { Loader2, Sparkles, AlertCircle, Rss, BarChart2, Briefcase, UserCheck, Check, X, Send, Package, ShoppingCart } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
 import {
@@ -29,27 +29,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-type CameraReport = {
-  reportTitle: string;
-  observations: string[];
-  data: Record<string, any>;
-};
-
-type ToastData = {
-  liveSalesToday: number;
-  salesThisMonth: number;
-};
-
-type ReviewSummary = {
-    summary: string;
-    reviews: {
-        source: 'Google' | 'Yelp';
-        rating: number;
-        author: string;
-        comment: string;
-    }[];
-};
+import type { CameraAnalysisOutput } from '@/ai/flows/cameraAnalysisFlow';
+import type { ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
+import type { SummarizeReviewsOutput } from '@/ai/schemas/review-summary-schemas';
+import type { SuggestTaskAssignmentOutput } from '@/ai/schemas/task-assignment-schemas';
+import type { EstimateStockLevelOutput } from '@/ai/schemas/stock-level-schemas';
 
 type HiringRequest = {
     id: number;
@@ -63,6 +47,8 @@ type HiringRequest = {
 
 const locations = ["Downtown", "Uptown", "Suburb"];
 
+const cupStockImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAYAAADw5sJwAAAA60lEQVR4nO3UAQ0AMAjAsKM78OgA/x9I0AElzR2b8/MFAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAN2OFY/gH/9E3AAAAAElFTkSuQmCC";
+
 export default function OwnerDashboard() {
   const { toast } = useToast();
   const camera = {
@@ -72,24 +58,26 @@ export default function OwnerDashboard() {
   };
 
   const [analysisPrompt, setAnalysisPrompt] = useState('How many customers are in line, and what is the estimated wait time? Are any staff members idle?');
-  const [cameraReport, setCameraReport] = useState<CameraReport | null>(null);
+  const [cameraReport, setCameraReport] = useState<CameraAnalysisOutput | null>(null);
   const [isAnalyzingCamera, setIsAnalyzingCamera] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-
+  
   const [selectedLocation, setSelectedLocation] = useState(locations[0]);
-  const [toastData, setToastData] = useState<ToastData | null>(null);
+  const [toastData, setToastData] = useState<ToastPOSData | null>(null);
   const [isFetchingToast, setIsFetchingToast] = useState(false);
 
-  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
+  const [reviewSummary, setReviewSummary] = useState<SummarizeReviewsOutput | null>(null);
   const [isFetchingReviews, setIsFetchingReviews] = useState(false);
 
-  const [taskSuggestion, setTaskSuggestion] = useState<{ suggestedAssignee: string, reasoning: string } | null>(null);
+  const [taskSuggestion, setTaskSuggestion] = useState<SuggestTaskAssignmentOutput | null>(null);
   const [isSuggestingTask, setIsSuggestingTask] = useState(false);
 
   const [hiringRequests, setHiringRequests] = useState<HiringRequest[]>([]);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [requestToReject, setRequestToReject] = useState<HiringRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+
+  const [stockLevel, setStockLevel] = useState<EstimateStockLevelOutput | null>(null);
+  const [isCheckingStock, setIsCheckingStock] = useState(false);
 
   useEffect(() => {
     // Load hiring requests from localStorage on mount
@@ -108,7 +96,6 @@ export default function OwnerDashboard() {
 
   const handleAnalyzeCamera = async () => {
     setIsAnalyzingCamera(true);
-    setCameraError(null);
     setCameraReport(null);
 
     const result = await analyzeCameraImageAction({
@@ -117,7 +104,6 @@ export default function OwnerDashboard() {
     });
 
     if (result.error || !result.data) {
-      setCameraError(result.error || 'An unknown error occurred.');
       toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
     } else {
       setCameraReport(result.data);
@@ -128,7 +114,7 @@ export default function OwnerDashboard() {
 
   const handleFetchToastData = async () => {
       setIsFetchingToast(true);
-      const result = await fetchToastData({ location: selectedLocation });
+      const result = await fetchToastDataAction({ location: selectedLocation });
       if (result.data) {
           setToastData(result.data);
       } else {
@@ -140,7 +126,7 @@ export default function OwnerDashboard() {
   const handleFetchReviews = async (source: 'Google' | 'Yelp') => {
       setIsFetchingReviews(true);
       setReviewSummary(null);
-      const result = await summarizeReviews({ source, location: selectedLocation });
+      const result = await summarizeReviewsAction({ source, location: selectedLocation });
       if (result.data) {
           setReviewSummary(result.data);
           toast({ title: `${source} Reviews Loaded` });
@@ -154,20 +140,33 @@ export default function OwnerDashboard() {
       setIsSuggestingTask(true);
       setTaskSuggestion(null);
       // Dummy data for suggestion
-      const issue = { issueDescription: 'The main POS terminal is crashing repeatedly during peak hours.', teamMembers: [{name: 'Alex Ray', role: 'Manager'}, {name: 'John Doe', role: 'Employee'}] };
-      const result = await suggestTaskAssignment(issue);
+      const issue = { issueDescription: 'The main POS terminal is crashing repeatedly during peak hours.', teamMembers: [{name: 'Alex Ray', role: 'Manager' as const}, {name: 'John Doe', role: 'Employee' as const}] };
+      const result = await suggestTaskAssignmentAction(issue);
       if (result.data) {
-          setTaskSuggestion({ suggestedAssignee: result.data.suggestedAssignee, reasoning: result.data.reasoning });
+          setTaskSuggestion(result.data);
       } else {
           toast({ variant: 'destructive', title: 'Task Suggestion Error', description: result.error });
       }
       setIsSuggestingTask(false);
   };
 
+  const handleCheckStock = async () => {
+    setIsCheckingStock(true);
+    setStockLevel(null);
+    const result = await estimateStockLevelAction({ currentStockImageUri: cupStockImage });
+    if (result.data) {
+      setStockLevel(result.data);
+      toast({title: "Stock Level Assessed"});
+    } else {
+      toast({ variant: 'destructive', title: 'Stock Check Error', description: result.error });
+    }
+    setIsCheckingStock(false);
+  }
+
   const handleApproveRequest = async (request: HiringRequest) => {
     toast({ title: 'Posting Job...', description: `Submitting request for a ${request.role}.` });
     
-    const result = await postJob({
+    const result = await postJobAction({
         role: request.role,
         location: request.location,
         shiftType: request.shiftType,
@@ -269,7 +268,7 @@ export default function OwnerDashboard() {
                 <CardContent>
                     {isSuggestingTask ? <Loader2 className="h-6 w-6 animate-spin" /> : taskSuggestion ? (
                         <Alert>
-                            <AlertTitle>Suggestion: Assign to {taskSuggestion.assignee}</AlertTitle>
+                            <AlertTitle>Suggestion: Assign to {taskSuggestion.suggestedAssignee}</AlertTitle>
                             <AlertDescription>
                                 <strong>Reasoning:</strong> {taskSuggestion.reasoning}
                             </AlertDescription>
@@ -403,14 +402,6 @@ export default function OwnerDashboard() {
             </div>
           </div>
 
-          {cameraError && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{cameraError}</AlertDescription>
-            </Alert>
-          )}
-
           {cameraReport && (
             <div className="space-y-4 pt-4">
               <h4 className="font-headline text-xl">{cameraReport.reportTitle}</h4>
@@ -436,6 +427,47 @@ export default function OwnerDashboard() {
           )}
         </CardContent>
       </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><Package /> Predictive Stock Monitoring</CardTitle>
+                <CardDescription>
+                    Use AI to estimate stock levels from a camera feed. This example uses a pre-set image of coffee cups.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div>
+                    <p className="font-semibold">Camera: Coffee Cup Dispenser</p>
+                    <div className="relative w-full aspect-square rounded-lg overflow-hidden border mt-2">
+                        <Image src={cupStockImage} alt="Coffee cup stock" layout="fill" objectFit="contain" data-ai-hint="coffee cups stack" />
+                    </div>
+                </div>
+                <div className="space-y-4">
+                    <Button onClick={handleCheckStock} disabled={isCheckingStock}>
+                        {isCheckingStock ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4" />}
+                        Check Stock Level
+                    </Button>
+
+                    {stockLevel && (
+                        <Alert>
+                           <AlertTitle className="flex justify-between">
+                                <span>Level: <Badge variant={stockLevel.level === 'Critical' ? 'destructive' : 'secondary'}>{stockLevel.level}</Badge></span>
+                                <span>~{stockLevel.estimatedPercentage}% Full</span>
+                            </AlertTitle>
+                            <AlertDescription className="mt-2">
+                                <strong>Recommendation:</strong> {stockLevel.recommendation}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    {stockLevel?.level === 'Critical' && (
+                        <Button variant="destructive">
+                            <ShoppingCart className="mr-2 h-4 w-4" /> Add to Emergency Order
+                        </Button>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+
        <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
             <DialogContent>
                 <DialogHeader>

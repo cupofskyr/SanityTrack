@@ -4,168 +4,113 @@
 // This file is the single, safe entry point for all AI calls from the client-side UI.
 
 import { analyzeCamera, type CameraAnalysisInput, type CameraAnalysisOutput } from '@/ai/flows/cameraAnalysisFlow';
-import { analyzeIssue as analyzeIssueFlow, type AnalyzeIssueInput, type AnalyzeIssueOutput } from '@/ai/flows/analyze-issue-flow';
-import { analyzePhotoIssue as analyzePhotoIssueFlow, type AnalyzePhotoInput, type AnalyzePhotoOutput } from '@/ai/flows/analyze-photo-issue-flow';
-import { generateDailyBriefing as generateDailyBriefingFlow, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
-import { generateSchedule as generateScheduleFlow, type GenerateScheduleInput, type GenerateScheduleOutput } from '@/ai/flows/ai-shift-planner';
-import { generateShoppingList as generateShoppingListFlow, type GenerateShoppingListInput, type GenerateShoppingListOutput } from '@/ai/flows/generate-shopping-list-flow';
-import { generateTasksFromInventory as generateTasksFromInventoryFlow, type GenerateTasksFromInventoryInput, type GenerateTasksFromInventoryOutput } from '@/ai/flows/generate-tasks-from-inventory';
-import { suggestTaskAssignment as suggestTaskAssignmentFlow, type SuggestTaskAssignmentInput, type SuggestTaskAssignmentOutput } from '@/ai/flows/suggest-task-assignment-flow';
-import { translateText as translateTextFlow, type TranslateTextInput, type TranslateTextOutput } from '@/ai/flows/translate-text-flow';
-import { generateInquiry as generateInquiryFlow, type GenerateInquiryInput, type GenerateInquiryOutput } from '@/ai/flows/generate-inquiry-flow';
-import { processInspectionReport as processInspectionReportFlow, type ProcessInspectionReportInput, type ProcessInspectionReportOutput } from '@/ai/flows/process-inspection-report-flow';
-import { generateWarningLetter as generateWarningLetterFlow, type GenerateWarningLetterInput, type GenerateWarningLetterOutput } from '@/ai/flows/generate-warning-letter-flow';
-import { fetchToastData as fetchToastDataFlow, type FetchToastDataInput, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
-import { summarizeReviews as summarizeReviewsFlow, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/ai/flows/fetch-reviews-flow';
-import { postJob as postJobFlow, type JobPostingInput, type JobPostingOutput } from '@/ai/flows/post-job-flow';
+import { analyzeIssue, type AnalyzeIssueInput, type AnalyzeIssueOutput } from '@/ai/flows/analyze-issue-flow';
+import { analyzePhotoIssue, type AnalyzePhotoInput, type AnalyzePhotoOutput } from '@/ai/flows/analyze-photo-issue-flow';
+import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
+import { generateSchedule, type GenerateScheduleInput, type GenerateScheduleOutput } from '@/ai/flows/ai-shift-planner';
+import { generateShoppingList, type GenerateShoppingListInput, type GenerateShoppingListOutput } from '@/ai/flows/generate-shopping-list-flow';
+import { generateTasksFromInventory, type GenerateTasksFromInventoryInput, type GenerateTasksFromInventoryOutput } from '@/ai/flows/generate-tasks-from-inventory';
+import { suggestTaskAssignment, type SuggestTaskAssignmentInput, type SuggestTaskAssignmentOutput } from '@/ai/flows/suggest-task-assignment-flow';
+import { translateText, type TranslateTextInput, type TranslateTextOutput } from '@/ai/flows/translate-text-flow';
+import { generateInquiry, type GenerateInquiryInput, type GenerateInquiryOutput } from '@/ai/flows/generate-inquiry-flow';
+import { processInspectionReport, type ProcessInspectionReportInput, type ProcessInspectionReportOutput } from '@/ai/flows/process-inspection-report-flow';
+import { generateWarningLetter, type GenerateWarningLetterInput, type GenerateWarningLetterOutput } from '@/ai/flows/generate-warning-letter-flow';
+import { fetchToastData, type FetchToastDataInput, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
+import { summarizeReviews, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/ai/flows/fetch-reviews-flow';
+import { postJob, type JobPostingInput, type JobPostingOutput } from '@/ai/flows/post-job-flow';
+import { compareFoodQuality, type CompareFoodQualityInput, type CompareFoodQualityOutput } from '@/ai/flows/compare-food-quality-flow';
+import { estimateStockLevel, type EstimateStockLevelInput, type EstimateStockLevelOutput } from '@/ai/flows/estimate-stock-level-flow';
+import { explainTaskImportance, type ExplainTaskImportanceInput, type ExplainTaskImportanceOutput } from '@/ai/flows/explain-task-importance-flow';
+
+
+// This wrapper function centralizes error handling for all AI flows.
+async function safeRun<I, O>(flow: (input: I) => Promise<O>, input: I, flowName: string): Promise<{ data: O | null; error: string | null; }> {
+    try {
+        const result = await flow(input);
+        // The AI can sometimes return an empty response without throwing an error.
+        // We ensure that the output is not null or undefined before returning.
+        if (!result) {
+            console.error(`Error in ${flowName}: AI returned an empty response.`);
+            return { data: null, error: `The AI returned an empty response from ${flowName}. Please try again.` };
+        }
+        return { data: result, error: null };
+    } catch (e: any) {
+        console.error(`Error in ${flowName}:`, e);
+        // Return a user-friendly error message.
+        return { data: null, error: `An unexpected error occurred in ${flowName}. Details: ${e.message || 'Unknown error'}` };
+    }
+}
 
 
 export async function analyzeCameraImageAction(input: CameraAnalysisInput): Promise<{ data: CameraAnalysisOutput | null; error: string | null; }> {
-    try {
-        const result = await analyzeCamera(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in analyzeCameraImageAction", error);
-        return { data: null, error: 'Failed to analyze camera image.' };
-    }
+    return safeRun(analyzeCamera, input, 'analyzeCameraImage');
 }
 
-export async function analyzeIssue(input: AnalyzeIssueInput): Promise<{ data: AnalyzeIssueOutput | null; error: string | null; }> {
-    try {
-        const result = await analyzeIssueFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in analyzeIssue", error);
-        return { data: null, error: 'Failed to analyze issue.' };
-    }
+export async function analyzeIssueAction(input: AnalyzeIssueInput): Promise<{ data: AnalyzeIssueOutput | null; error: string | null; }> {
+    return safeRun(analyzeIssue, input, 'analyzeIssue');
 }
 
-export async function analyzePhotoIssue(input: AnalyzePhotoInput): Promise<{ data: AnalyzePhotoOutput | null; error: string | null; }> {
-    try {
-        const result = await analyzePhotoIssueFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in analyzePhotoIssue", error);
-        return { data: null, error: 'Failed to analyze photo.' };
-    }
+export async function analyzePhotoIssueAction(input: AnalyzePhotoInput): Promise<{ data: AnalyzePhotoOutput | null; error: string | null; }> {
+    return safeRun(analyzePhotoIssue, input, 'analyzePhotoIssue');
 }
 
-export async function generateDailyBriefing(): Promise<{ data: GenerateDailyBriefingOutput | null; error: string | null; }> {
-    try {
-        const result = await generateDailyBriefingFlow();
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in generateDailyBriefing", error);
-        return { data: null, error: 'Failed to generate briefing.' };
-    }
+export async function generateDailyBriefingAction(): Promise<{ data: GenerateDailyBriefingOutput | null; error: string | null; }> {
+    // This flow has no input, so we create a dummy wrapper.
+    return safeRun(() => generateDailyBriefing(), {}, 'generateDailyBriefing');
 }
 
-export async function generateSchedule(input: GenerateScheduleInput): Promise<{ data: GenerateScheduleOutput | null; error: string | null; }> {
-    try {
-        const result = await generateScheduleFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in generateSchedule", error);
-        return { data: null, error: 'Failed to generate schedule.' };
-    }
+export async function generateScheduleAction(input: GenerateScheduleInput): Promise<{ data: GenerateScheduleOutput | null; error:string | null; }> {
+    return safeRun(generateSchedule, input, 'generateSchedule');
 }
 
-export async function generateShoppingList(input: GenerateShoppingListInput): Promise<{ data: GenerateShoppingListOutput | null; error: string | null; }> {
-    try {
-        const result = await generateShoppingListFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in generateShoppingList", error);
-        return { data: null, error: 'Failed to generate shopping list.' };
-    }
+export async function generateShoppingListAction(input: GenerateShoppingListInput): Promise<{ data: GenerateShoppingListOutput | null; error: string | null; }> {
+    return safeRun(generateShoppingList, input, 'generateShoppingList');
 }
 
-export async function generateTasksFromInventory(input: GenerateTasksFromInventoryInput): Promise<{ data: GenerateTasksFromInventoryOutput | null; error: string | null; }> {
-    try {
-        const result = await generateTasksFromInventoryFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in generateTasksFromInventory", error);
-        return { data: null, error: 'Failed to generate tasks.' };
-    }
+export async function generateTasksFromInventoryAction(input: GenerateTasksFromInventoryInput): Promise<{ data: GenerateTasksFromInventoryOutput | null; error: string | null; }> {
+    return safeRun(generateTasksFromInventory, input, 'generateTasksFromInventory');
 }
 
-export async function suggestTaskAssignment(input: SuggestTaskAssignmentInput): Promise<{ data: SuggestTaskAssignmentOutput | null; error: string | null; }> {
-    try {
-        const result = await suggestTaskAssignmentFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in suggestTaskAssignment", error);
-        return { data: null, error: 'Failed to suggest task assignment.' };
-    }
+export async function suggestTaskAssignmentAction(input: SuggestTaskAssignmentInput): Promise<{ data: SuggestTaskAssignmentOutput | null; error: string | null; }> {
+    return safeRun(suggestTaskAssignment, input, 'suggestTaskAssignment');
 }
 
-export async function translateText(input: TranslateTextInput): Promise<{ data: TranslateTextOutput | null; error: string | null; }> {
-    try {
-        const result = await translateTextFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in translateText", error);
-        return { data: null, error: 'Failed to translate text.' };
-    }
+export async function translateTextAction(input: TranslateTextInput): Promise<{ data: TranslateTextOutput | null; error: string | null; }> {
+    return safeRun(translateText, input, 'translateText');
 }
 
-export async function generateInquiry(input: GenerateInquiryInput): Promise<{ data: GenerateInquiryOutput | null; error: string | null; }> {
-    try {
-        const result = await generateInquiryFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in generateInquiry", error);
-        return { data: null, error: 'Failed to generate inquiry.' };
-    }
+export async function generateInquiryAction(input: GenerateInquiryInput): Promise<{ data: GenerateInquiryOutput | null; error: string | null; }> {
+    return safeRun(generateInquiry, input, 'generateInquiry');
 }
 
-export async function processInspectionReport(input: ProcessInspectionReportInput): Promise<{ data: ProcessInspectionReportOutput | null; error: string | null; }> {
-    try {
-        const result = await processInspectionReportFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in processInspectionReport", error);
-        return { data: null, error: 'Failed to process inspection report.' };
-    }
+export async function processInspectionReportAction(input: ProcessInspectionReportInput): Promise<{ data: ProcessInspectionReportOutput | null; error: string | null; }> {
+    return safeRun(processInspectionReport, input, 'processInspectionReport');
 }
 
-export async function generateWarningLetter(input: GenerateWarningLetterInput): Promise<{ data: GenerateWarningLetterOutput | null; error: string | null; }> {
-    try {
-        const result = await generateWarningLetterFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in generateWarningLetter", error);
-        return { data: null, error: 'Failed to generate warning letter.' };
-    }
+export async function generateWarningLetterAction(input: GenerateWarningLetterInput): Promise<{ data: GenerateWarningLetterOutput | null; error: string | null; }> {
+    return safeRun(generateWarningLetter, input, 'generateWarningLetter');
 }
 
-export async function fetchToastData(input: FetchToastDataInput): Promise<{ data: ToastPOSData | null; error: string | null; }> {
-    try {
-        const result = await fetchToastDataFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in fetchToastData", error);
-        return { data: null, error: 'Failed to fetch Toast data.' };
-    }
+export async function fetchToastDataAction(input: FetchToastDataInput): Promise<{ data: ToastPOSData | null; error: string | null; }> {
+    return safeRun(fetchToastData, input, 'fetchToastData');
 }
 
-export async function summarizeReviews(input: SummarizeReviewsInput): Promise<{ data: SummarizeReviewsOutput | null; error: string | null; }> {
-    try {
-        const result = await summarizeReviewsFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in summarizeReviews", error);
-        return { data: null, error: 'Failed to summarize reviews.' };
-    }
+export async function summarizeReviewsAction(input: SummarizeReviewsInput): Promise<{ data: SummarizeReviewsOutput | null; error: string | null; }> {
+    return safeRun(summarizeReviews, input, 'summarizeReviews');
 }
 
-export async function postJob(input: JobPostingInput): Promise<{ data: JobPostingOutput | null; error: string | null; }> {
-    try {
-        const result = await postJobFlow(input);
-        return { data: result, error: null };
-    } catch (error) {
-        console.error("Error in postJob", error);
-        return { data: null, error: 'Failed to post job.' };
-    }
+export async function postJobAction(input: JobPostingInput): Promise<{ data: JobPostingOutput | null; error: string | null; }> {
+    return safeRun(postJob, input, 'postJob');
+}
+
+export async function compareFoodQualityAction(input: CompareFoodQualityInput): Promise<{ data: CompareFoodQualityOutput | null; error: string | null; }> {
+    return safeRun(compareFoodQuality, input, 'compareFoodQuality');
+}
+
+export async function estimateStockLevelAction(input: EstimateStockLevelInput): Promise<{ data: EstimateStockLevelOutput | null; error: string | null; }> {
+    return safeRun(estimateStockLevel, input, 'estimateStockLevel');
+}
+
+export async function explainTaskImportanceAction(input: ExplainTaskImportanceInput): Promise<{ data: ExplainTaskImportanceOutput | null; error: string | null; }> {
+    return safeRun(explainTaskImportance, input, 'explainTaskImportance');
 }
