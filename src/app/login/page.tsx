@@ -20,15 +20,7 @@ const FacebookIcon = () => (
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const { signInWithGoogle, loading } = useAuth();
-
-  const handleFacebookSignIn = () => {
-    toast({
-        variant: "default",
-        title: "Feature Not Implemented",
-        description: "Facebook Sign-In requires developer setup and is currently a placeholder.",
-    })
-  }
+  const { signInWithGoogle, signInWithFacebook, loading } = useAuth();
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -47,14 +39,34 @@ export default function LoginPage() {
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <GoogleIcon />}
                   {loading ? 'Signing in...' : 'Continue with Google'}
                 </Button>
-                <Button variant="outline" className="bg-[#1877F2] text-white hover:bg-[#1877F2]/90 hover:text-white" onClick={handleFacebookSignIn}><FacebookIcon/> Continue with Facebook</Button>
+                <Button variant="outline" className="bg-[#1877F2] text-white hover:bg-[#1877F2]/90 hover:text-white" onClick={signInWithFacebook} disabled={loading}>
+                  <FacebookIcon/> Continue with Facebook
+                </Button>
             </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                  Or
+                  </span>
+              </div>
+            </div>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link href="/signup" className="font-semibold text-primary underline-offset-4 hover:underline">
+                Sign up
+              </Link>
+            </p>
             
             <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Live Demo Access</AlertTitle>
                 <AlertDescription>
-                    Google Sign-in is now functional. You can also use the role buttons below for quick access to demo dashboards.
+                    Use the buttons below for quick access to pre-configured demo dashboards.
                 </AlertDescription>
             </Alert>
 
@@ -76,15 +88,11 @@ export default function LoginPage() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                     <span className="bg-card px-2 text-muted-foreground">
-                    Or
+                    For Guests
                     </span>
                 </div>
             </div>
-
-            <div className="space-y-2 text-center">
-                <p className="font-semibold">For Guests & Visitors</p>
-                <p className="text-sm text-muted-foreground">Notice an issue? Help us improve by submitting a report.</p>
-            </div>
+            
             <Button asChild variant="outline" className="w-full">
                 <Link href="/guest/report">
                     <Megaphone className="mr-2 h-5 w-5" />
@@ -98,3 +106,5 @@ export default function LoginPage() {
     </main>
   );
 }
+
+    

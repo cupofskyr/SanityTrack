@@ -3,22 +3,42 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading && !user) {
-      // If not loading and no user, send to login
-      router.replace('/login');
-    } else if (!loading && user) {
-      // If user is available, redirect to a default dashboard.
-      // In a real app, you'd check their role here.
-      router.replace('/dashboard/employee');
+    if (!loading) {
+      if (!user) {
+        router.replace('/login');
+      } else {
+        const role = sessionStorage.getItem('userRole');
+        switch (role) {
+          case 'Owner':
+            router.replace('/dashboard/owner');
+            break;
+          case 'Manager':
+            router.replace('/dashboard/manager');
+            break;
+          case 'Health Department':
+            router.replace('/dashboard/health-department');
+            break;
+          case 'Employee':
+          default:
+            router.replace('/dashboard/employee');
+            break;
+        }
+      }
     }
   }, [user, loading, router]);
 
-  // You can show a loading spinner here while auth state is being determined
-  return null;
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
 }
+
+    

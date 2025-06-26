@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Rss, BarChart2, Briefcase, Check, X, Send, Package, ShoppingCart } from 'lucide-react';
+import { Loader2, Sparkles, Rss, BarChart2, Briefcase, Check, X, Send, Package, ShoppingCart, PlusCircle, Building, User, Phone } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,6 +31,7 @@ import type { ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
 import type { SummarizeReviewsOutput } from '@/ai/schemas/review-summary-schemas';
 import type { EstimateStockLevelOutput } from '@/ai/schemas/stock-level-schemas';
 import OwnerServiceAlertWidget from '@/components/owner-service-alert-widget';
+import { Input } from '@/components/ui/input';
 
 type HiringRequest = {
     id: number;
@@ -63,8 +64,26 @@ export default function OwnerDashboard() {
 
   const [stockLevel, setStockLevel] = useState<EstimateStockLevelOutput | null>(null);
   const [isCheckingStock, setIsCheckingStock] = useState(false);
+  
+  // State for Onboarding Wizard
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(1);
+  const [onboardingData, setOnboardingData] = useState({
+      locationName: '',
+      locationAddress: '',
+      managerName: '',
+      managerEmail: '',
+      contactName: '',
+      contactPhone: '',
+  });
 
   useEffect(() => {
+    // Show onboarding for new users
+    const isNew = sessionStorage.getItem('isNewUser');
+    if (isNew === 'true') {
+        setShowOnboarding(true);
+    }
+  
     // Load hiring requests from localStorage on mount
     const storedRequests = localStorage.getItem('hiringRequests');
     if (storedRequests) {
@@ -73,11 +92,23 @@ export default function OwnerDashboard() {
   }, []);
 
   useEffect(() => {
-    // When location changes, fetch new data
     handleFetchToastData();
-    setReviewSummary(null); // Clear reviews when location changes
+    setReviewSummary(null); 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLocation]);
+  
+  const handleOnboardingNext = () => setOnboardingStep(prev => prev + 1);
+  const handleOnboardingBack = () => setOnboardingStep(prev => prev - 1);
+  
+  const handleCompleteOnboarding = (e: React.FormEvent) => {
+      e.preventDefault();
+      // In a real app, you would save this data to Firestore
+      console.log("Onboarding data submitted:", onboardingData);
+      sessionStorage.removeItem('isNewUser');
+      setShowOnboarding(false);
+      toast({ title: 'Setup Complete!', description: 'Welcome to your SanityTrack dashboard.' });
+  };
+
 
   const handleFetchToastData = async () => {
       setIsFetchingToast(true);
@@ -130,7 +161,6 @@ export default function OwnerDashboard() {
             title: 'Job Posted Successfully!',
             description: `Confirmation ID: ${result.data.confirmationId}`,
         });
-        // Remove from list after successful posting
         const updatedRequests = hiringRequests.filter(r => r.id !== request.id);
         setHiringRequests(updatedRequests);
         localStorage.setItem('hiringRequests', JSON.stringify(updatedRequests));
@@ -154,12 +184,10 @@ export default function OwnerDashboard() {
           return;
       }
 
-      // Add to rejected list for manager's view
       const rejectedList = JSON.parse(localStorage.getItem('rejectedHiringRequests') || '[]');
       rejectedList.push({ ...requestToReject, ownerComment: rejectionReason });
       localStorage.setItem('rejectedHiringRequests', JSON.stringify(rejectedList));
       
-      // Remove from pending list
       const updatedRequests = hiringRequests.filter(r => r.id !== requestToReject.id);
       setHiringRequests(updatedRequests);
       localStorage.setItem('hiringRequests', JSON.stringify(updatedRequests));
@@ -170,8 +198,89 @@ export default function OwnerDashboard() {
       setRequestToReject(null);
   };
 
+  const renderOnboardingStep = () => {
+      switch (onboardingStep) {
+          case 1:
+              return (
+                  <div>
+                      <DialogHeader>
+                          <DialogTitle className="font-headline text-2xl">Step 1: Create Your First Location</DialogTitle>
+                          <DialogDescription>Let's get your main business location set up.</DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 space-y-4">
+                          <div className="grid gap-2">
+                              <Label htmlFor="location-name">Location Name</Label>
+                              <Input id="location-name" placeholder="e.g., Downtown Cafe" value={onboardingData.locationName} onChange={e => setOnboardingData({...onboardingData, locationName: e.target.value})} />
+                          </div>
+                          <div className="grid gap-2">
+                              <Label htmlFor="location-address">Address</Label>
+                              <Input id="location-address" placeholder="e.g., 123 Main St, Anytown, USA" value={onboardingData.locationAddress} onChange={e => setOnboardingData({...onboardingData, locationAddress: e.target.value})} />
+                          </div>
+                      </div>
+                      <DialogFooter>
+                          <Button onClick={handleOnboardingNext} disabled={!onboardingData.locationName || !onboardingData.locationAddress}>Next</Button>
+                      </DialogFooter>
+                  </div>
+              );
+          case 2:
+              return (
+                  <div>
+                      <DialogHeader>
+                          <DialogTitle className="font-headline text-2xl">Step 2: Invite Your Manager</DialogTitle>
+                          <DialogDescription>Who will be managing the day-to-day operations? (This will simulate sending an invite).</DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 space-y-4">
+                          <div className="grid gap-2">
+                              <Label htmlFor="manager-name">Manager's Full Name</Label>
+                              <Input id="manager-name" placeholder="e.g., Jane Smith" value={onboardingData.managerName} onChange={e => setOnboardingData({...onboardingData, managerName: e.target.value})} />
+                          </div>
+                          <div className="grid gap-2">
+                              <Label htmlFor="manager-email">Manager's Email</Label>
+                              <Input id="manager-email" type="email" placeholder="e.g., jane@example.com" value={onboardingData.managerEmail} onChange={e => setOnboardingData({...onboardingData, managerEmail: e.target.value})} />
+                          </div>
+                      </div>
+                      <DialogFooter className="justify-between">
+                          <Button variant="outline" onClick={handleOnboardingBack}>Back</Button>
+                          <Button onClick={handleOnboardingNext} disabled={!onboardingData.managerName || !onboardingData.managerEmail}>Next</Button>
+                      </DialogFooter>
+                  </div>
+              );
+          case 3:
+              return (
+                  <form onSubmit={handleCompleteOnboarding}>
+                      <DialogHeader>
+                          <DialogTitle className="font-headline text-2xl">Step 3: Add a Service Contact</DialogTitle>
+                          <DialogDescription>Add a critical contact like a plumber or electrician. You'll thank yourself later!</DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 space-y-4">
+                          <div className="grid gap-2">
+                              <Label htmlFor="contact-name">Contact Name</Label>
+                              <Input id="contact-name" placeholder="e.g., Joe's Plumbing" value={onboardingData.contactName} onChange={e => setOnboardingData({...onboardingData, contactName: e.target.value})} />
+                          </div>
+                          <div className="grid gap-2">
+                              <Label htmlFor="contact-phone">Phone Number</Label>
+                              <Input id="contact-phone" type="tel" placeholder="e.g., 555-123-4567" value={onboardingData.contactPhone} onChange={e => setOnboardingData({...onboardingData, contactPhone: e.target.value})} />
+                          </div>
+                      </div>
+                      <DialogFooter className="justify-between">
+                          <Button variant="outline" type="button" onClick={handleOnboardingBack}>Back</Button>
+                          <Button type="submit" disabled={!onboardingData.contactName || !onboardingData.contactPhone}>Complete Setup</Button>
+                      </DialogFooter>
+                  </form>
+              );
+          default:
+              return null;
+      }
+  };
+
   return (
     <div className="space-y-6">
+        <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
+            <DialogContent onInteractOutside={(e) => e.preventDefault()} showCloseButton={false}>
+                {renderOnboardingStep()}
+            </DialogContent>
+        </Dialog>
+
        <Card>
             <CardHeader>
                 <CardTitle className="font-headline">Location Overview</CardTitle>
@@ -356,3 +465,5 @@ export default function OwnerDashboard() {
     </div>
   );
 }
+
+    

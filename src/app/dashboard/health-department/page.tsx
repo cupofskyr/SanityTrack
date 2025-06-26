@@ -17,7 +17,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { processInspectionReport, generateInquiry, analyzeIssue } from '@/app/actions';
-import type { ProcessInspectionReportOutput, GenerateInquiryOutput, AnalyzeIssueOutput } from '@/ai/schemas/issue-analysis-schemas';
+import type { AnalyzeIssueOutput } from '@/ai/schemas/issue-analysis-schemas';
+import type { ProcessInspectionReportOutput, GenerateInquiryOutput } from '@/ai/schemas/inquiry-generation-schemas';
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import PhotoUploader from '@/components/photo-uploader';
@@ -123,9 +124,18 @@ export default function HealthDeptDashboard() {
   
   // State for Report Dialog
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  
+  // State for Onboarding Wizard
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingEstablishmentCode, setOnboardingEstablishmentCode] = useState('');
 
 
   useEffect(() => {
+    const isNew = sessionStorage.getItem('isNewUser');
+    if (isNew === 'true') {
+        setShowOnboarding(true);
+    }
+
     const pendingInvestigation = localStorage.getItem('ai-investigation-suggestion');
     if (pendingInvestigation) {
         setReportNotes(pendingInvestigation);
@@ -134,10 +144,25 @@ export default function HealthDeptDashboard() {
             title: "AI Suggestion Loaded",
             description: "The description from the AI Camera has been added to the Inspection Notes."
         });
-        // Scroll to the processor card
         document.getElementById('ai-report-processor-card')?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [toast]);
+  
+  const handleCompleteOnboarding = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onboardingEstablishmentCode.trim()) {
+        toast({ variant: 'destructive', title: 'Invalid Code', description: 'Please enter a valid establishment code to link.' });
+        return;
+    }
+    // Simulate linking
+    setLinkedJurisdictions(prev => [...prev, onboardingEstablishmentCode.trim()]);
+    setSelectedJurisdiction(onboardingEstablishmentCode.trim());
+
+    sessionStorage.removeItem('isNewUser');
+    setShowOnboarding(false);
+    toast({ title: 'Welcome to SanityTrack!', description: 'Your first establishment has been linked.' });
+  };
+
 
   const handleLinkEstablishment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,11 +174,10 @@ export default function HealthDeptDashboard() {
         });
         return;
     }
-    // Simulate linking
     const newJurisdiction = `${newEstablishmentCode.trim()}`;
     if (!linkedJurisdictions.includes(newJurisdiction)) {
         setLinkedJurisdictions([...linkedJurisdictions, newJurisdiction]);
-        setSelectedJurisdiction(newJurisdiction); // Switch to the new one
+        setSelectedJurisdiction(newJurisdiction); 
         toast({
             title: "Establishment Linked!",
             description: `You now have access to ${newEstablishmentCode.trim()}.`,
@@ -170,7 +194,6 @@ export default function HealthDeptDashboard() {
   
   const handleOpenDialog = (task: ComplianceTask | null) => {
     if (task) {
-        // Can't edit `lastCompleted` here, so we omit it
         const { lastCompleted, ...editableTask } = task;
         setCurrentTask(editableTask);
     } else {
@@ -189,10 +212,10 @@ export default function HealthDeptDashboard() {
         return;
     }
 
-    if (currentTask.id) { // Editing
+    if (currentTask.id) { 
         setComplianceTasks(complianceTasks.map(t => (t.id === currentTask.id ? { ...t, ...currentTask } : t)));
         toast({ title: 'Task Updated', description: `"${currentTask.description}" has been updated.` });
-    } else { // Adding
+    } else { 
         const newId = complianceTasks.length > 0 ? Math.max(...complianceTasks.map(t => t.id)) + 1 : 1;
         setComplianceTasks([{ ...currentTask, id: newId }, ...complianceTasks]);
         toast({ title: 'Task Added', description: `"${currentTask.description}" has been created.` });
@@ -236,17 +259,20 @@ export default function HealthDeptDashboard() {
         inspectionDate: format(new Date(), 'yyyy-MM-dd'),
       };
       const result = await processInspectionReport(input);
-      setProcessingResult(result);
+      if (result.error || !result.data) {
+        throw new Error(result.error || "Failed to process report.");
+      }
+      setProcessingResult(result.data);
       toast({
         title: 'AI Processing Complete',
         description: 'Review the generated tasks below and send them to the owner when ready.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({
         variant: 'destructive',
         title: 'AI Error',
-        description: 'Could not process the inspection report.',
+        description: error.message || 'Could not process the inspection report.',
       });
     } finally {
       setIsProcessing(false);
@@ -259,7 +285,6 @@ export default function HealthDeptDashboard() {
           title: "Tasks Sent to Owner",
           description: "The immediate action items have been sent to the business owner."
       });
-      // In a real app, this would also clear the results or update state
       setProcessingResult(null);
       setReportNotes('');
   }
@@ -302,16 +327,17 @@ export default function HealthDeptDashboard() {
         setIsAnalyzing(true);
         try {
             const result = await analyzeIssue({ description: report.issue });
+            if (result.error || !result.data) throw new Error(result.error || 'No data returned from AI.');
             setRecentReports(reports => reports.map(r => 
-                r.id === report.id ? { ...r, aiAnalysis: result } : r
+                r.id === report.id ? { ...r, aiAnalysis: result.data as AnalyzeIssueOutput } : r
             ));
-            setSelectedReportForInvestigation(prev => prev ? {...prev, aiAnalysis: result} : null);
-        } catch (error) {
+            setSelectedReportForInvestigation(prev => prev ? {...prev, aiAnalysis: result.data as AnalyzeIssueOutput} : null);
+        } catch (error: any) {
             console.error(error);
             toast({
                 variant: 'destructive',
                 title: 'AI Analysis Failed',
-                description: 'Could not get an analysis for this issue.',
+                description: error.message || 'Could not get an analysis for this issue.',
             });
         } finally {
             setIsAnalyzing(false);
@@ -330,13 +356,14 @@ export default function HealthDeptDashboard() {
             locationName: report.location,
             ownerName: report.owner,
         });
-        setAiMessage(result);
-    } catch (error) {
+        if (result.error || !result.data) throw new Error(result.error || 'No data returned from AI.');
+        setAiMessage(result.data);
+    } catch (error: any) {
         console.error(error);
         toast({
             variant: 'destructive',
             title: 'AI Error',
-            description: 'Could not generate the message.',
+            description: error.message || 'Could not generate the message.',
         });
     } finally {
         setIsGeneratingMessage(false);
@@ -350,7 +377,6 @@ export default function HealthDeptDashboard() {
         title: "Message Sent & Task Created",
         description: `The owner of ${selectedReportForContact.location} has been notified and a mandatory task was created.`,
     });
-    // In a real app, this would also trigger a database update to create the task.
     setRecentReports(reports => reports.map(r => r.id === selectedReportForContact.id ? { ...r, status: 'Owner Notified' } : r));
   };
   
@@ -384,7 +410,7 @@ export default function HealthDeptDashboard() {
 
   const handleOpenReviewDialog = (task: ComplianceTask) => {
       setTaskToReview(task);
-      setInspectorComments(''); // Reset comments
+      setInspectorComments(''); 
       setIsReviewTaskDialogOpen(true);
   }
 
@@ -394,7 +420,6 @@ export default function HealthDeptDashboard() {
           title: "Review Saved",
           description: `Your comments for "${taskToReview.description}" have been logged.`
       });
-      // In a real app, this would save the comment to a database.
       setIsReviewTaskDialogOpen(false);
       setTaskToReview(null);
   }
@@ -406,6 +431,27 @@ export default function HealthDeptDashboard() {
   return (
     <TooltipProvider>
     <div className="space-y-6">
+      <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()} showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle className="font-headline text-2xl">Welcome to SanityTrack!</DialogTitle>
+            <DialogDescription>
+              As a Health Official, your first step is to link your account to an establishment. Please enter the unique code provided by a business owner to get started.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCompleteOnboarding}>
+            <div className="py-4 space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="onboarding-code">Establishment Code</Label>
+                <Input id="onboarding-code" value={onboardingEstablishmentCode} onChange={(e) => setOnboardingEstablishmentCode(e.target.value)} placeholder="Enter code from owner" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit">Link Establishment & Get Started</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       <Tooltip>
         <TooltipTrigger asChild>
           <Card>
@@ -782,7 +828,6 @@ export default function HealthDeptDashboard() {
         <TooltipContent><p>The master list of all recurring tasks for establishments in your jurisdiction.</p></TooltipContent>
       </Tooltip>
 
-      {/* Add/Edit Task Dialog */}
       <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
         <DialogContent>
             <DialogHeader>
@@ -844,7 +889,6 @@ export default function HealthDeptDashboard() {
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
             <AlertDialogHeader>
@@ -860,7 +904,6 @@ export default function HealthDeptDashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Contact Owner AI Dialog */}
       <Dialog open={isContactOwnerDialogOpen} onOpenChange={setContactOwnerDialogOpen}>
           <DialogContent>
               <DialogHeader>
@@ -899,7 +942,6 @@ export default function HealthDeptDashboard() {
           </DialogContent>
       </Dialog>
       
-      {/* Investigate Report Dialog */}
         <Dialog open={isInvestigateDialogOpen} onOpenChange={setIsInvestigateDialogOpen}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -979,7 +1021,6 @@ export default function HealthDeptDashboard() {
             </DialogContent>
         </Dialog>
 
-        {/* Review Compliance Task Dialog */}
         <Dialog open={isReviewTaskDialogOpen} onOpenChange={setIsReviewTaskDialogOpen}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -1019,3 +1060,5 @@ export default function HealthDeptDashboard() {
     </TooltipProvider>
   );
 }
+
+    
