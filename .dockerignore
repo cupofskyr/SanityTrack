@@ -1,9 +1,19 @@
-node_modules
-.next/cache
-*.log
-.env*
-Dockerfile
-.dockerignore
-README.md
+# Docker ignore rules
+
+# Git files
 .git
+.gitignore
+
+# Node modules
+node_modules
+
+# Next.js build cache
+.next/cache
+
+# Local environment files
+.env
+.env.local
+*.log
+
+# VSCode settings
 .vscode
