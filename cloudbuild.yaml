@@ -1,0 +1,14 @@
+# This is a standard configuration for building a Docker image with Google Cloud Build.
+# It can be used to build and push your container to Google Artifact Registry.
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-app-repo/my-app:latest', '.']
+
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-app-repo/my-app:latest']
+
+# Store the image in Artifact Registry
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/my-app-repo/my-app:latest'
