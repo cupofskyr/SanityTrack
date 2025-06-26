@@ -2,14 +2,13 @@
 "use client";
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
-import { Megaphone, AlertCircle } from 'lucide-react';
-import { signInWithGoogle } from '@/lib/firebase';
+import { Megaphone, AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useAuth } from '@/context/AuthContext';
 
 const GoogleIcon = () => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5"><title>Google</title><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.08-2.58 2.26-4.8 2.26-4.22 0-7.65-3.5-7.65-7.8s3.43-7.8 7.65-7.8c2.45 0 3.99 1.01 4.9 1.94l2.6-2.58C18.94 2.34 16.21 1 12.48 1 5.88 1 1 5.98 1 12.6s4.88 11.6 11.48 11.6c6.26 0 10.74-4.39 10.74-10.92 0-.75-.08-1.48-.22-2.18h-10.5z"/></svg>
@@ -20,27 +19,8 @@ const FacebookIcon = () => (
 );
 
 export default function LoginPage() {
-  const router = useRouter();
   const { toast } = useToast();
-
-  const handleGoogleSignIn = async () => {
-    const user = await signInWithGoogle();
-    if (user) {
-      toast({
-        title: "Sign-In Successful",
-        description: `Welcome back, ${user.displayName}!`,
-      });
-      // For this demo, we'll just send everyone to the employee dashboard.
-      // A real app would check the user's role here.
-      router.push('/dashboard/employee');
-    } else {
-        toast({
-            variant: "destructive",
-            title: "Sign-In Failed",
-            description: "There was a problem signing in with Google. Please try again.",
-        })
-    }
-  };
+  const { signInWithGoogle, loading } = useAuth();
 
   const handleFacebookSignIn = () => {
     toast({
@@ -63,7 +43,10 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-2">
-                <Button variant="outline" onClick={handleGoogleSignIn}><GoogleIcon /> Continue with Google</Button>
+                <Button variant="outline" onClick={signInWithGoogle} disabled={loading}>
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <GoogleIcon />}
+                  {loading ? 'Signing in...' : 'Continue with Google'}
+                </Button>
                 <Button variant="outline" className="bg-[#1877F2] text-white hover:bg-[#1877F2]/90 hover:text-white" onClick={handleFacebookSignIn}><FacebookIcon/> Continue with Facebook</Button>
             </div>
             

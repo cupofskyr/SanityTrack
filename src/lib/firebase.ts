@@ -1,6 +1,5 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,22 +14,5 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
 
-const signInWithGoogle = async () => {
-    try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
-        // You can now access user details like:
-        // user.displayName, user.email, user.photoURL
-        console.log("User signed in: ", user);
-        return user;
-    } catch (error) {
-        console.error("Error during Google sign-in: ", error);
-        return null;
-    }
-};
-
-
-export { app, auth, signInWithGoogle };
+export { app };

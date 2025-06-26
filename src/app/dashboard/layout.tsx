@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   SidebarProvider,
   Sidebar,
@@ -25,7 +25,8 @@ import {
   BookOpen,
   GraduationCap,
   Languages,
-  UserCog
+  UserCog,
+  Loader2
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -37,8 +38,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import GlobalAICamera from "@/components/global-ai-camera";
+import { useAuth } from "@/context/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardLayout({
   children,
@@ -46,6 +49,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading, logout } = useAuth();
   const [role, setRole] = React.useState("User");
 
   React.useEffect(() => {
@@ -79,6 +84,10 @@ export default function DashboardLayout({
     // Fallback to a default dashboard if role is not set
     return "/dashboard/employee";
   };
+  
+  const handleLogout = async () => {
+      await logout();
+  };
 
   const dashboardLink = getDashboardLink();
   const navItems = [
@@ -89,6 +98,15 @@ export default function DashboardLayout({
   ];
 
   const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(role));
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return 'U';
+    const names = name.split(' ');
+    if (names.length > 1) {
+        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
 
   return (
     <SidebarProvider>
@@ -123,24 +141,34 @@ export default function DashboardLayout({
           <GlobalAICamera />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-14 w-full justify-start px-2">
-                <div className="flex w-full items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" data-ai-hint="user avatar" />
-                      <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                    <div className="hidden text-left group-data-[collapsible=icon]:hidden">
-                      <p className="font-semibold">Demo User</p>
-                      <p className="text-xs text-muted-foreground">{role}</p>
+              <Button variant="ghost" className="h-14 w-full justify-start px-2" disabled={loading}>
+                 {loading ? (
+                    <div className="flex items-center w-full gap-2">
+                      <Skeleton className="h-9 w-9 rounded-full" />
+                      <div className="space-y-1 hidden group-data-[collapsible=icon]:hidden">
+                         <Skeleton className="h-4 w-24" />
+                         <Skeleton className="h-3 w-16" />
+                      </div>
                     </div>
-                  </div>
-                  <ChevronDown className="hidden h-4 w-4 group-data-[collapsible=icon]:hidden" />
-                </div>
+                ) : (
+                    <div className="flex w-full items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Avatar className="h-9 w-9">
+                            <AvatarImage src={user?.photoURL || "https://placehold.co/100x100.png"} alt="User Avatar" data-ai-hint="user avatar" />
+                            <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+                            </Avatar>
+                            <div className="hidden text-left group-data-[collapsible=icon]:hidden">
+                            <p className="font-semibold">{user?.displayName || 'Demo User'}</p>
+                            <p className="text-xs text-muted-foreground">{role}</p>
+                            </div>
+                        </div>
+                        <ChevronDown className="hidden h-4 w-4 group-data-[collapsible=icon]:hidden" />
+                    </div>
+                 )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{user ? 'My Account' : 'Account'}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
@@ -156,11 +184,9 @@ export default function DashboardLayout({
                 <span>Permissions</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/login">
+              <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
-                </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -173,7 +199,15 @@ export default function DashboardLayout({
           </div>
           <h1 className="text-2xl font-headline font-bold hidden md:block">{role} Dashboard</h1>
         </header>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-6">
+          {loading ? (
+             <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+             </div>
+          ) : (
+            children
+          )}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );
