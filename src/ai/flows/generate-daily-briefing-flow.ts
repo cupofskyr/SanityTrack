@@ -6,32 +6,21 @@
  * - generateDailyBriefing - A function that generates a daily message for staff.
  * - GenerateDailyBriefingOutput - The return type for the function.
  */
-import { configureGenkit, defineFlow } from 'genkit';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import { GenerateDailyBriefingOutputSchema, type GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
 import { format } from 'date-fns';
+import { z } from 'zod';
 
-configureGenkit({
-  plugins: [googleAI()],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
 
 export async function generateDailyBriefing(): Promise<GenerateDailyBriefingOutput> {
   return generateDailyBriefingFlow();
 }
 
-export const generateDailyBriefingFlow = defineFlow(
-  {
-    name: 'generateDailyBriefingFlow',
-    outputSchema: GenerateDailyBriefingOutputSchema,
-  },
-  async () => {
-    const currentDate = format(new Date(), 'EEEE, MMMM do, yyyy');
-    const llmResponse = await generate({
-      model: googleAI('gemini-1.5-flash-latest'),
-      prompt: `You are a positive and effective restaurant manager starting the day. 
+const prompt = ai.definePrompt({
+    name: 'generateDailyBriefingPrompt',
+    input: { schema: z.object({ currentDate: z.string() }) },
+    output: { schema: GenerateDailyBriefingOutputSchema },
+    prompt: `You are a positive and effective restaurant manager starting the day. 
   Today's date is {{currentDate}}.
 
   Your task is to generate a short, motivational "Daily Briefing" for your staff.
@@ -42,11 +31,16 @@ export const generateDailyBriefingFlow = defineFlow(
 
   This message will be posted on the employee dashboard to align the team for the day.
   `,
-      input: { currentDate },
-      output: {
-        schema: GenerateDailyBriefingOutputSchema,
-      },
-    });
-    return llmResponse.output()!;
+});
+
+export const generateDailyBriefingFlow = ai.defineFlow(
+  {
+    name: 'generateDailyBriefingFlow',
+    outputSchema: GenerateDailyBriefingOutputSchema,
+  },
+  async () => {
+    const currentDate = format(new Date(), 'EEEE, MMMM do, yyyy');
+    const { output } = await prompt({ currentDate });
+    return output!;
   }
 );

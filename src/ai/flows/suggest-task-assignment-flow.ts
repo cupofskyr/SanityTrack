@@ -7,9 +7,7 @@
  * - SuggestTaskAssignmentInput - The input type for the function.
  * - SuggestTaskAssignmentOutput - The return type for the function.
  */
-import { configureGenkit, defineFlow } from 'genkit';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import {
     SuggestTaskAssignmentInputSchema,
     type SuggestTaskAssignmentInput,
@@ -17,26 +15,16 @@ import {
     type SuggestTaskAssignmentOutput
 } from '@/ai/schemas/task-assignment-schemas';
 
-configureGenkit({
-  plugins: [googleAI()],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
 
 export async function suggestTaskAssignment(input: SuggestTaskAssignmentInput): Promise<SuggestTaskAssignmentOutput> {
   return suggestTaskAssignmentFlow(input);
 }
 
-export const suggestTaskAssignmentFlow = defineFlow(
-  {
-    name: 'suggestTaskAssignmentFlow',
-    inputSchema: SuggestTaskAssignmentInputSchema,
-    outputSchema: SuggestTaskAssignmentOutputSchema,
-  },
-  async (input) => {
-    const llmResponse = await generate({
-      model: googleAI('gemini-1.5-flash-latest'),
-      prompt: `You are an expert operations director for a multi-location business.
+const prompt = ai.definePrompt({
+    name: 'suggestTaskAssignmentPrompt',
+    input: { schema: SuggestTaskAssignmentInputSchema },
+    output: { schema: SuggestTaskAssignmentOutputSchema },
+    prompt: `You are an expert operations director for a multi-location business.
 Your goal is to delegate tasks efficiently.
 
 An urgent issue has come up:
@@ -49,11 +37,16 @@ Here is the available team:
 
 Based on the issue and the team members' roles, suggest the most appropriate person to handle this task. Provide a brief, one-sentence reasoning for your choice. For example, if it's a plumbing issue, assign it to a manager who can call a plumber. If it's a simple cleaning task, a regular employee is fine.
 `,
-      input,
-      output: {
-        schema: SuggestTaskAssignmentOutputSchema,
-      },
-    });
-    return llmResponse.output()!;
+});
+
+export const suggestTaskAssignmentFlow = ai.defineFlow(
+  {
+    name: 'suggestTaskAssignmentFlow',
+    inputSchema: SuggestTaskAssignmentInputSchema,
+    outputSchema: SuggestTaskAssignmentOutputSchema,
+  },
+  async (input) => {
+    const { output } = await prompt(input);
+    return output!;
   }
 );

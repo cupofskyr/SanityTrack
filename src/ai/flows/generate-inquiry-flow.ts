@@ -7,9 +7,7 @@
  * - GenerateInquiryInput - The input type for the function.
  * - GenerateInquiryOutput - The return type for the function.
  */
-import { configureGenkit, defineFlow } from 'genkit';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import {
   GenerateInquiryInputSchema,
   type GenerateInquiryInput,
@@ -17,26 +15,16 @@ import {
   type GenerateInquiryOutput,
 } from '@/ai/schemas/inquiry-generation-schemas';
 
-configureGenkit({
-  plugins: [googleAI()],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
 
 export async function generateInquiry(input: GenerateInquiryInput): Promise<GenerateInquiryOutput> {
   return generateInquiryFlow(input);
 }
 
-export const generateInquiryFlow = defineFlow(
-  {
-    name: 'generateInquiryFlow',
-    inputSchema: GenerateInquiryInputSchema,
-    outputSchema: GenerateInquiryOutputSchema,
-  },
-  async (input) => {
-    const llmResponse = await generate({
-      model: googleAI('gemini-1.5-flash-latest'),
-      prompt: `You are a Health Department Agent. Your task is to draft a professional email to a business owner, {{ownerName}}, regarding a guest complaint about their location, {{locationName}}.
+const prompt = ai.definePrompt({
+    name: 'generateInquiryPrompt',
+    input: { schema: GenerateInquiryInputSchema },
+    output: { schema: GenerateInquiryOutputSchema },
+    prompt: `You are a Health Department Agent. Your task is to draft a professional email to a business owner, {{ownerName}}, regarding a guest complaint about their location, {{locationName}}.
 
 The guest reported the following issue:
 "{{{guestReport}}}"
@@ -49,11 +37,16 @@ Your goals are:
 5. Request confirmation of resolution (e.g., a photo or a description of the action taken).
 6. Inform the owner that this has been logged as a mandatory task that requires a formal response.
 `,
-      input,
-      output: {
-        schema: GenerateInquiryOutputSchema,
-      },
-    });
-    return llmResponse.output()!;
+});
+
+export const generateInquiryFlow = ai.defineFlow(
+  {
+    name: 'generateInquiryFlow',
+    inputSchema: GenerateInquiryInputSchema,
+    outputSchema: GenerateInquiryOutputSchema,
+  },
+  async (input) => {
+    const { output } = await prompt(input);
+    return output!;
   }
 );

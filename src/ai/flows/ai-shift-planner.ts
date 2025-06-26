@@ -8,16 +8,8 @@
  * - GenerateScheduleInput - The input type for the generateSchedule function.
  * - GenerateScheduleOutput - The return type for the generateSchedule function.
  */
-import { configureGenkit, defineFlow } from 'genkit';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-
-configureGenkit({
-  plugins: [googleAI()],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
 
 const EmployeeSchema = z.object({
   name: z.string().describe('The name of the employee.'),
@@ -53,16 +45,11 @@ export async function generateSchedule(input: GenerateScheduleInput): Promise<Ge
   return generateScheduleFlow(input);
 }
 
-export const generateScheduleFlow = defineFlow(
-  {
-    name: 'generateScheduleFlow',
-    inputSchema: GenerateScheduleInputSchema,
-    outputSchema: GenerateScheduleOutputSchema,
-  },
-  async (input) => {
-    const llmResponse = await generate({
-      model: googleAI('gemini-1.5-flash-latest'),
-      prompt: `You are an intelligent shift scheduling assistant for a restaurant manager.
+const prompt = ai.definePrompt({
+    name: 'generateSchedulePrompt',
+    input: { schema: GenerateScheduleInputSchema },
+    output: { schema: GenerateScheduleOutputSchema },
+    prompt: `You are an intelligent shift scheduling assistant for a restaurant manager.
 Your task is to create a fair and balanced shift schedule.
 
 Here are the employees and the dates they are NOT available:
@@ -81,11 +68,16 @@ Your goal is to assign each shift to an employee. Follow these rules:
 3.  If a shift cannot be assigned because no one is available, list it in the 'unassignedShifts' field.
 4.  Provide a brief reasoning for your assignment decisions.
 `,
-      input,
-      output: {
-        schema: GenerateScheduleOutputSchema,
-      },
-    });
-    return llmResponse.output()!;
+});
+
+export const generateScheduleFlow = ai.defineFlow(
+  {
+    name: 'generateScheduleFlow',
+    inputSchema: GenerateScheduleInputSchema,
+    outputSchema: GenerateScheduleOutputSchema,
+  },
+  async (input) => {
+    const { output } = await prompt(input);
+    return output!;
   }
 );

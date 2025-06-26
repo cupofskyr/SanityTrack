@@ -8,9 +8,7 @@
  * - AnalyzePhotoInput - The input type for the function.
  * - AnalyzePhotoOutput - The return type for the function.
  */
-import { configureGenkit, defineFlow } from 'genkit';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import {
     AnalyzePhotoInputSchema,
     type AnalyzePhotoInput,
@@ -18,26 +16,15 @@ import {
     type AnalyzePhotoOutput,
 } from '@/ai/schemas/photo-analysis-schemas';
 
-configureGenkit({
-  plugins: [googleAI()],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
-
 export async function analyzePhotoIssue(input: AnalyzePhotoInput): Promise<AnalyzePhotoOutput> {
     return analyzePhotoIssueFlow(input);
 }
 
-export const analyzePhotoIssueFlow = defineFlow(
-  {
-    name: 'analyzePhotoIssueFlow',
-    inputSchema: AnalyzePhotoInputSchema,
-    outputSchema: AnalyzePhotoOutputSchema,
-  },
-  async (input) => {
-    const llmResponse = await generate({
-      model: googleAI('gemini-1.5-flash-latest'),
-      prompt: `You are an AI assistant for a facility management application. Your task is to analyze the provided photo and generate a short, clear, and actionable description of the maintenance or sanitation issue it depicts.
+const prompt = ai.definePrompt({
+    name: 'analyzePhotoIssuePrompt',
+    input: { schema: AnalyzePhotoInputSchema },
+    output: { schema: AnalyzePhotoOutputSchema },
+    prompt: `You are an AI assistant for a facility management application. Your task is to analyze the provided photo and generate a short, clear, and actionable description of the maintenance or sanitation issue it depicts.
 
 Focus on what needs to be done. Be direct.
 
@@ -51,11 +38,16 @@ Good examples:
 Analyze this image:
 {{media url=photoDataUri}}
 `,
-      input,
-      output: {
-        schema: AnalyzePhotoOutputSchema,
-      },
-    });
-    return llmResponse.output()!;
+});
+
+export const analyzePhotoIssueFlow = ai.defineFlow(
+  {
+    name: 'analyzePhotoIssueFlow',
+    inputSchema: AnalyzePhotoInputSchema,
+    outputSchema: AnalyzePhotoOutputSchema,
+  },
+  async (input) => {
+    const { output } = await prompt(input);
+    return output!;
   }
 );

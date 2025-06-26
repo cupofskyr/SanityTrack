@@ -8,9 +8,7 @@
  * - GenerateTasksFromInventoryInput - The input type for the function.
  * - GenerateTasksFromInventoryOutput - The return type for the function.
  */
-import { configureGenkit, defineFlow } from 'genkit';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import {
     GenerateTasksFromInventoryInputSchema, 
     type GenerateTasksFromInventoryInput,
@@ -18,26 +16,16 @@ import {
     type GenerateTasksFromInventoryOutput
 } from '@/ai/schemas/task-generation-schemas';
 
-configureGenkit({
-  plugins: [googleAI()],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
 
 export async function generateTasksFromInventory(input: GenerateTasksFromInventoryInput): Promise<GenerateTasksFromInventoryOutput> {
   return generateTasksFromInventoryFlow(input);
 }
 
-export const generateTasksFromInventoryFlow = defineFlow(
-  {
-    name: 'generateTasksFromInventoryFlow',
-    inputSchema: GenerateTasksFromInventoryInputSchema,
-    outputSchema: GenerateTasksFromInventoryOutputSchema,
-  },
-  async (input) => {
-    const llmResponse = await generate({
-      model: googleAI('gemini-1.5-flash-latest'),
-      prompt: `You are an expert restaurant operations consultant. A new manager is setting up their cleaning and maintenance schedule.
+const prompt = ai.definePrompt({
+    name: 'generateTasksFromInventoryPrompt',
+    input: { schema: GenerateTasksFromInventoryInputSchema },
+    output: { schema: GenerateTasksFromInventoryOutputSchema },
+    prompt: `You are an expert restaurant operations consultant. A new manager is setting up their cleaning and maintenance schedule.
 Your task is to generate a comprehensive list of recurring tasks based on the inventory of their restaurant.
 
 First, create a friendly message for the manager explaining that they should label their equipment with numbers to make tracking easier. For example: "Cooler 1", "Cooler 2", "Fryer 1".
@@ -59,11 +47,16 @@ Focus on standard, essential sanitation and maintenance tasks for a restaurant.
 Example Task:
 { description: "Deep clean Fryer 1 and change oil", frequency: "Weekly" }
 `,
-      input,
-      output: {
-        schema: GenerateTasksFromInventoryOutputSchema,
-      },
-    });
-    return llmResponse.output()!;
+});
+
+export const generateTasksFromInventoryFlow = ai.defineFlow(
+  {
+    name: 'generateTasksFromInventoryFlow',
+    inputSchema: GenerateTasksFromInventoryInputSchema,
+    outputSchema: GenerateTasksFromInventoryOutputSchema,
+  },
+  async (input) => {
+    const { output } = await prompt(input);
+    return output!;
   }
 );

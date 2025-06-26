@@ -7,9 +7,7 @@
  * - AnalyzeIssueInput - The input type for the analyzeIssue function.
  * - AnalyzeIssueOutput - The return type for the analyzeIssue function.
  */
-import { configureGenkit, defineFlow } from 'genkit';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import {
     AnalyzeIssueInputSchema, 
     type AnalyzeIssueInput,
@@ -17,26 +15,16 @@ import {
     type AnalyzeIssueOutput
 } from '@/ai/schemas/issue-analysis-schemas';
 
-configureGenkit({
-  plugins: [googleAI()],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
 
 export async function analyzeIssue(input: AnalyzeIssueInput): Promise<AnalyzeIssueOutput> {
   return analyzeIssueFlow(input);
 }
 
-export const analyzeIssueFlow = defineFlow(
-  {
-    name: 'analyzeIssueFlow',
-    inputSchema: AnalyzeIssueInputSchema,
-    outputSchema: AnalyzeIssueOutputSchema,
-  },
-  async (input) => {
-    const llmResponse = await generate({
-      model: googleAI('gemini-1.5-flash-latest'),
-      prompt: `You are a building maintenance supervisor and health code expert. Your task is to analyze a reported issue, categorize it, determine its urgency, and suggest the right professional to call.
+const prompt = ai.definePrompt({
+    name: 'analyzeIssuePrompt',
+    input: { schema: AnalyzeIssueInputSchema },
+    output: { schema: AnalyzeIssueOutputSchema },
+    prompt: `You are a building maintenance supervisor and health code expert. Your task is to analyze a reported issue, categorize it, determine its urgency, and suggest the right professional to call.
 
 Available categories are: Plumbing, Electrical, Pest Control, HVAC, General Maintenance, Cleaning, Safety, or Unknown.
 - Use "Cleaning" for tasks like spills, grime, or full trash cans.
@@ -52,11 +40,16 @@ Issue Description:
 
 Analyze the issue and provide the category, emergency status, urgency, suggested contact type, and a suggested action for the inspector.
 `,
-      input,
-      output: {
-        schema: AnalyzeIssueOutputSchema,
-      },
-    });
-    return llmResponse.output()!;
+});
+
+export const analyzeIssueFlow = ai.defineFlow(
+  {
+    name: 'analyzeIssueFlow',
+    inputSchema: AnalyzeIssueInputSchema,
+    outputSchema: AnalyzeIssueOutputSchema,
+  },
+  async (input) => {
+    const { output } = await prompt(input);
+    return output!;
   }
 );

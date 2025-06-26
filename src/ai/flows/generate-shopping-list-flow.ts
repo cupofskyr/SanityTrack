@@ -8,44 +8,24 @@
  * - GenerateShoppingListInput - The input type for the function.
  * - GenerateShoppingListOutput - The return type for the function.
  */
-import { configureGenkit, defineFlow } from 'genkit';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import { 
     GenerateShoppingListInputSchema,
     type GenerateShoppingListInput,
     GenerateShoppingListOutputSchema,
     type GenerateShoppingListOutput
 } from '@/ai/schemas/shopping-list-schemas';
-
-configureGenkit({
-  plugins: [googleAI()],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
+import { z } from 'zod';
 
 export async function generateShoppingList(input: GenerateShoppingListInput): Promise<GenerateShoppingListOutput> {
   return generateShoppingListFlow(input);
 }
 
-export const generateShoppingListFlow = defineFlow(
-  {
-    name: 'generateShoppingListFlow',
-    inputSchema: GenerateShoppingListInputSchema,
-    outputSchema: GenerateShoppingListOutputSchema,
-  },
-  async (input) => {
-    const currentDate = new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-
-    const augmentedInput = { ...input, currentDate };
-
-    const llmResponse = await generate({
-      model: googleAI('gemini-1.5-flash-latest'),
-      prompt: `You are an efficient restaurant supply chain assistant. Your task is to generate a shopping list and an email subject line based on a list of inventory items that are below their par (ideal) stock level.
+const prompt = ai.definePrompt({
+    name: 'generateShoppingListPrompt',
+    input: { schema: GenerateShoppingListInputSchema.extend({ currentDate: z.string() }) },
+    output: { schema: GenerateShoppingListOutputSchema },
+    prompt: `You are an efficient restaurant supply chain assistant. Your task is to generate a shopping list and an email subject line based on a list of inventory items that are below their par (ideal) stock level.
 
 Today's date is {{currentDate}}.
 
@@ -64,11 +44,24 @@ Example format for the shopping list:
 
 Do not add any conversational text or introductions to the shopping list itself.
 `,
-      input: augmentedInput,
-      output: {
-        schema: GenerateShoppingListOutputSchema,
-      },
+});
+
+export const generateShoppingListFlow = ai.defineFlow(
+  {
+    name: 'generateShoppingListFlow',
+    inputSchema: GenerateShoppingListInputSchema,
+    outputSchema: GenerateShoppingListOutputSchema,
+  },
+  async (input) => {
+    const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
     });
-    return llmResponse.output()!;
+
+    const augmentedInput = { ...input, currentDate };
+
+    const { output } = await prompt(augmentedInput);
+    return output!;
   }
 );

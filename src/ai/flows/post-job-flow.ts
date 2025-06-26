@@ -3,19 +3,11 @@
 /**
  * @fileOverview An AI flow for simulating posting a job to a job board.
  */
-import { configureGenkit, defineFlow, defineTool } from 'genkit';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import { JobPostingInputSchema, JobPostingOutputSchema, type JobPostingInput, type JobPostingOutput } from '@/ai/schemas/job-posting-schemas';
 
-configureGenkit({
-  plugins: [googleAI()],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
-
 // This is our mock tool. In a real app, this would call the Indeed/Workable API.
-const postToJobBoardTool = defineTool(
+const postToJobBoardTool = ai.defineTool(
   {
     name: 'postToJobBoard',
     description: 'Posts a job listing to an external job board like Indeed.',
@@ -43,7 +35,7 @@ export async function postJob(input: JobPostingInput): Promise<JobPostingOutput>
 }
 
 
-export const postJobFlow = defineFlow(
+export const postJobFlow = ai.defineFlow(
     {
         name: 'postJobFlow',
         inputSchema: JobPostingInputSchema,
@@ -51,19 +43,19 @@ export const postJobFlow = defineFlow(
     },
     async (input) => {
         console.log('Initiating job posting flow for:', input);
-        const llmResponse = await generate({
+        const response = await ai.generate({
             prompt: `The user wants to post a job for a {{role}} at {{location}}. Use the available tools to post this job.`,
-            model: googleAI('gemini-1.5-flash-latest'),
+            model: 'googleai/gemini-1.5-flash-latest',
             tools: [postToJobBoardTool],
-            output: { schema: JobPostingOutputSchema },
-            input,
         });
 
-        const output = llmResponse.output();
+        const output = response.output();
         if (!output) {
             throw new Error("The AI could not post the job. No output was returned.");
         }
         
-        return output;
+        // Since the tool's output schema matches the flow's output schema,
+        // we can cast the tool output directly. This might not always be the case.
+        return output as JobPostingOutput;
     }
 );

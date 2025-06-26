@@ -3,9 +3,7 @@
 /**
  * @fileOverview An AI flow for fetching and summarizing customer reviews for a specific location.
  */
-import { configureGenkit, defineFlow, defineTool } from 'genkit';
-import { generate } from 'genkit/ai';
-import { googleAI } from '@genkit-ai/googleai';
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import {
     ReviewSchema,
@@ -15,14 +13,8 @@ import {
     type SummarizeReviewsOutput,
 } from '@/ai/schemas/review-summary-schemas';
 
-configureGenkit({
-  plugins: [googleAI()],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
-});
-
 // This is our mock tool. In a real app, this would call the Yelp/Google APIs.
-const fetchReviewsTool = defineTool(
+const fetchReviewsTool = ai.defineTool(
   {
     name: 'fetchReviews',
     description: 'Fetches recent customer reviews from a specified source (Google or Yelp) for a specific location.',
@@ -62,22 +54,21 @@ const fetchReviewsTool = defineTool(
 
 export type { SummarizeReviewsOutput, SummarizeReviewsInput };
 
-export const summarizeReviewsFlow = defineFlow(
+export const summarizeReviewsFlow = ai.defineFlow(
     {
         name: 'summarizeReviewsFlow',
         inputSchema: SummarizeReviewsInputSchema,
         outputSchema: SummarizeReviewsOutputSchema,
     },
     async (input) => {
-        const llmResponse = await generate({
+        const response = await ai.generate({
             prompt: `The user wants to see customer reviews for the "{{location}}" location from {{source}}. Use the available tools to fetch them. After fetching, provide a very brief summary of the overall sentiment and include the raw review data.`,
-            model: googleAI('gemini-1.5-flash-latest'),
+            model: 'googleai/gemini-1.5-flash-latest',
             tools: [fetchReviewsTool],
             output: { schema: SummarizeReviewsOutputSchema },
-            input,
         });
         
-        return llmResponse.output()!;
+        return response.output!;
     }
 );
 
