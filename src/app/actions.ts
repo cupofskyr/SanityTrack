@@ -21,6 +21,8 @@ import { postJob, type JobPostingInput, type JobPostingOutput } from '@/ai/flows
 import { compareFoodQuality, type CompareFoodQualityInput, type CompareFoodQualityOutput } from '@/ai/flows/compare-food-quality-flow';
 import { estimateStockLevel, type EstimateStockLevelInput, type EstimateStockLevelOutput } from '@/ai/flows/estimate-stock-level-flow';
 import { explainTaskImportance, type ExplainTaskImportanceInput, type ExplainTaskImportanceOutput } from '@/ai/flows/explain-task-importance-flow';
+import { analyzeWaitTime, type AnalyzeWaitTimeInput } from '@/ai/flows/analyze-wait-time-flow';
+import type { ServiceAlert } from '@/ai/schemas/service-alert-schemas';
 
 
 // This wrapper function centralizes error handling for all AI flows.
@@ -113,4 +115,37 @@ export async function estimateStockLevelAction(input: EstimateStockLevelInput): 
 
 export async function explainTaskImportanceAction(input: ExplainTaskImportanceInput): Promise<{ data: ExplainTaskImportanceOutput | null; error: string | null; }> {
     return safeRun(explainTaskImportance, input, 'explainTaskImportance');
+}
+
+// New action for wait time analysis
+export async function analyzeWaitTimeAction(input: AnalyzeWaitTimeInput) {
+    return safeRun(analyzeWaitTime, input, 'analyzeWaitTime');
+}
+
+// These actions don't call an AI flow, so they don't need the safeRun wrapper.
+// They simulate database interactions. In a real app, you would use Firestore here.
+
+export async function authorizeRecoveryAction(input: { alertId: string; action: 'one_10_dollar_card' | 'dismiss' }): Promise<{ success: boolean; code?: string; }> {
+    console.log(`Authorizing recovery for alert ${input.alertId} with action: ${input.action}`);
+    
+    if (input.action === 'dismiss') {
+        console.log(`Alert ${input.alertId} dismissed.`);
+        // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({ status: 'dismissed' });
+        return { success: true };
+    }
+  
+    const generatedCode = `RECOVERY-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    // Simplified: always assign to John Doe for the demo
+    const assignedEmployeeId = 'John Doe';
+  
+    console.log(`Action dispatched to ${assignedEmployeeId} with code ${generatedCode}`);
+    // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({...});
+
+    return { success: true, code: generatedCode };
+}
+
+export async function resolveServiceAlertAction(input: { alertId: string }): Promise<{ success: boolean }> {
+    console.log(`Resolving service alert ${input.alertId}`);
+    // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({ status: 'resolved', resolvedAt: new Date() });
+    return { success: true };
 }

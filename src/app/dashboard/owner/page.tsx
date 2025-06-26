@@ -4,18 +4,15 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
-  analyzeCameraImageAction,
   fetchToastDataAction,
   summarizeReviewsAction,
   postJobAction,
-  suggestTaskAssignmentAction,
   estimateStockLevelAction
 } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, AlertCircle, Rss, BarChart2, Briefcase, UserCheck, Check, X, Send, Package, ShoppingCart } from 'lucide-react';
+import { Loader2, Sparkles, Rss, BarChart2, Briefcase, Check, X, Send, Package, ShoppingCart } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,11 +26,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { CameraAnalysisOutput } from '@/ai/flows/cameraAnalysisFlow';
+import { Textarea } from '@/components/ui/textarea';
 import type { ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
 import type { SummarizeReviewsOutput } from '@/ai/schemas/review-summary-schemas';
-import type { SuggestTaskAssignmentOutput } from '@/ai/schemas/task-assignment-schemas';
 import type { EstimateStockLevelOutput } from '@/ai/schemas/stock-level-schemas';
+import OwnerServiceAlertWidget from '@/components/owner-service-alert-widget';
 
 type HiringRequest = {
     id: number;
@@ -51,25 +48,13 @@ const cupStockImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAY
 
 export default function OwnerDashboard() {
   const { toast } = useToast();
-  const camera = {
-    id: 'cam-01',
-    location: 'Front Counter',
-    imageUrl: 'https://storage.googleapis.com/gen-ai-recipes/person-in-restaurant.jpg',
-  };
 
-  const [analysisPrompt, setAnalysisPrompt] = useState('How many customers are in line, and what is the estimated wait time? Are any staff members idle?');
-  const [cameraReport, setCameraReport] = useState<CameraAnalysisOutput | null>(null);
-  const [isAnalyzingCamera, setIsAnalyzingCamera] = useState(false);
-  
   const [selectedLocation, setSelectedLocation] = useState(locations[0]);
   const [toastData, setToastData] = useState<ToastPOSData | null>(null);
   const [isFetchingToast, setIsFetchingToast] = useState(false);
 
   const [reviewSummary, setReviewSummary] = useState<SummarizeReviewsOutput | null>(null);
   const [isFetchingReviews, setIsFetchingReviews] = useState(false);
-
-  const [taskSuggestion, setTaskSuggestion] = useState<SuggestTaskAssignmentOutput | null>(null);
-  const [isSuggestingTask, setIsSuggestingTask] = useState(false);
 
   const [hiringRequests, setHiringRequests] = useState<HiringRequest[]>([]);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
@@ -93,24 +78,6 @@ export default function OwnerDashboard() {
     setReviewSummary(null); // Clear reviews when location changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLocation]);
-
-  const handleAnalyzeCamera = async () => {
-    setIsAnalyzingCamera(true);
-    setCameraReport(null);
-
-    const result = await analyzeCameraImageAction({
-      imageUrl: camera.imageUrl,
-      analysisPrompt,
-    });
-
-    if (result.error || !result.data) {
-      toast({ variant: 'destructive', title: 'Analysis Failed', description: result.error });
-    } else {
-      setCameraReport(result.data);
-      toast({ title: 'Analysis Complete' });
-    }
-    setIsAnalyzingCamera(false);
-  };
 
   const handleFetchToastData = async () => {
       setIsFetchingToast(true);
@@ -136,20 +103,6 @@ export default function OwnerDashboard() {
       setIsFetchingReviews(false);
   };
   
-  const handleSuggestTask = async () => {
-      setIsSuggestingTask(true);
-      setTaskSuggestion(null);
-      // Dummy data for suggestion
-      const issue = { issueDescription: 'The main POS terminal is crashing repeatedly during peak hours.', teamMembers: [{name: 'Alex Ray', role: 'Manager' as const}, {name: 'John Doe', role: 'Employee' as const}] };
-      const result = await suggestTaskAssignmentAction(issue);
-      if (result.data) {
-          setTaskSuggestion(result.data);
-      } else {
-          toast({ variant: 'destructive', title: 'Task Suggestion Error', description: result.error });
-      }
-      setIsSuggestingTask(false);
-  };
-
   const handleCheckStock = async () => {
     setIsCheckingStock(true);
     setStockLevel(null);
@@ -235,6 +188,8 @@ export default function OwnerDashboard() {
                 </Select>
             </CardContent>
         </Card>
+
+        <OwnerServiceAlertWidget locationId={selectedLocation} />
         
         <div className="grid gap-6 md:grid-cols-2">
             <Card>
@@ -262,19 +217,35 @@ export default function OwnerDashboard() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><UserCheck /> AI Task Delegation</CardTitle>
-                    <CardDescription>Get an AI suggestion for who should handle a critical task.</CardDescription>
+                    <CardTitle className="font-headline flex items-center gap-2"><Package /> Predictive Stock Monitoring</CardTitle>
+                    <CardDescription>
+                        Use AI to estimate stock levels from a camera feed of the coffee cups.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    {isSuggestingTask ? <Loader2 className="h-6 w-6 animate-spin" /> : taskSuggestion ? (
-                        <Alert>
-                            <AlertTitle>Suggestion: Assign to {taskSuggestion.suggestedAssignee}</AlertTitle>
-                            <AlertDescription>
-                                <strong>Reasoning:</strong> {taskSuggestion.reasoning}
+                <CardContent className="flex flex-col items-center gap-4">
+                     <div className="relative w-48 h-48 rounded-lg overflow-hidden border">
+                        <Image src={cupStockImage} alt="Coffee cup stock" layout="fill" objectFit="contain" data-ai-hint="coffee cups stack" />
+                    </div>
+                    <Button onClick={handleCheckStock} disabled={isCheckingStock} className="w-full">
+                        {isCheckingStock ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4" />}
+                        Check Stock Level
+                    </Button>
+
+                    {stockLevel && (
+                        <Alert className="w-full">
+                           <AlertTitle className="flex justify-between">
+                                <span>Level: <Badge variant={stockLevel.level === 'Critical' ? 'destructive' : 'secondary'}>{stockLevel.level}</Badge></span>
+                                <span>~{stockLevel.estimatedPercentage}% Full</span>
+                            </AlertTitle>
+                            <AlertDescription className="mt-2">
+                                <strong>Recommendation:</strong> {stockLevel.recommendation}
                             </AlertDescription>
                         </Alert>
-                    ) : (
-                         <Button onClick={handleSuggestTask}>Suggest Assignee for POS issue</Button>
+                    )}
+                    {stockLevel?.level === 'Critical' && (
+                        <Button variant="destructive" className="w-full">
+                            <ShoppingCart className="mr-2 h-4 w-4" /> Add to Emergency Order
+                        </Button>
                     )}
                 </CardContent>
             </Card>
@@ -357,116 +328,6 @@ export default function OwnerDashboard() {
             )}
         </CardContent>
       </Card>
-
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline">Camera Analysis</CardTitle>
-          <CardDescription>
-            Analyze a snapshot from a camera feed using a custom prompt. This feature uses Gemini 1.5 to provide detailed insights.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div>
-              <p><strong>Location:</strong> {camera.location}</p>
-              <div className="relative w-full aspect-video rounded-lg overflow-hidden border mt-2">
-                <Image src={camera.imageUrl} alt="Camera Feed Snapshot" layout="fill" objectFit="cover" data-ai-hint="security camera" />
-              </div>
-            </div>
-            <div className="space-y-4">
-               <div className="grid w-full gap-2">
-                <Label htmlFor="analysis-prompt">What do you want to know?</Label>
-                <Textarea
-                  id="analysis-prompt"
-                  rows={4}
-                  value={analysisPrompt}
-                  onChange={(e) => setAnalysisPrompt(e.target.value)}
-                  placeholder="e.g., Count customers. Note handwashing events. Estimate wait times."
-                />
-              </div>
-              
-              <Button onClick={handleAnalyzeCamera} disabled={isAnalyzingCamera}>
-                {isAnalyzingCamera ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    AI is Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Analyze Feed
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {cameraReport && (
-            <div className="space-y-4 pt-4">
-              <h4 className="font-headline text-xl">{cameraReport.reportTitle}</h4>
-              <div className="grid md:grid-cols-2 gap-4">
-                <Card>
-                    <CardHeader><CardTitle className="text-base">Observations</CardTitle></CardHeader>
-                    <CardContent>
-                      <ul className="list-disc list-inside space-y-1 text-sm">
-                        {cameraReport.observations.map((obs, index) => <li key={index}>{obs}</li>)}
-                      </ul>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader><CardTitle className="text-base">Extracted Data</CardTitle></CardHeader>
-                    <CardContent>
-                      <pre className="text-sm bg-muted p-2 rounded-md overflow-x-auto">
-                        {JSON.stringify(cameraReport.data, null, 2)}
-                      </pre>
-                    </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><Package /> Predictive Stock Monitoring</CardTitle>
-                <CardDescription>
-                    Use AI to estimate stock levels from a camera feed. This example uses a pre-set image of coffee cups.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                <div>
-                    <p className="font-semibold">Camera: Coffee Cup Dispenser</p>
-                    <div className="relative w-full aspect-square rounded-lg overflow-hidden border mt-2">
-                        <Image src={cupStockImage} alt="Coffee cup stock" layout="fill" objectFit="contain" data-ai-hint="coffee cups stack" />
-                    </div>
-                </div>
-                <div className="space-y-4">
-                    <Button onClick={handleCheckStock} disabled={isCheckingStock}>
-                        {isCheckingStock ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4" />}
-                        Check Stock Level
-                    </Button>
-
-                    {stockLevel && (
-                        <Alert>
-                           <AlertTitle className="flex justify-between">
-                                <span>Level: <Badge variant={stockLevel.level === 'Critical' ? 'destructive' : 'secondary'}>{stockLevel.level}</Badge></span>
-                                <span>~{stockLevel.estimatedPercentage}% Full</span>
-                            </AlertTitle>
-                            <AlertDescription className="mt-2">
-                                <strong>Recommendation:</strong> {stockLevel.recommendation}
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                    {stockLevel?.level === 'Critical' && (
-                        <Button variant="destructive">
-                            <ShoppingCart className="mr-2 h-4 w-4" /> Add to Emergency Order
-                        </Button>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
 
        <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
             <DialogContent>

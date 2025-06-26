@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { analyzePhotoIssueAction, translateTextAction } from '@/app/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
+import EmployeeServiceAlertWidget from "@/components/employee-service-alert-widget";
 
 
 const initialTasks = [
@@ -331,6 +332,7 @@ export default function EmployeeDashboard() {
                 </AlertDescription>
             </Alert>
         )}
+       <EmployeeServiceAlertWidget />
       <Tooltip>
         <TooltipTrigger asChild>
            <Card className="lg:col-span-2">
