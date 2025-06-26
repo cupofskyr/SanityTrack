@@ -67,7 +67,12 @@ const summarizeReviewsFlow = ai.defineFlow(
             output: { schema: SummarizeReviewsOutputSchema },
         });
         
-        return response.output!;
+        const output = response.output;
+
+        if (!output) {
+            throw new Error('The AI returned an unexpected response. Please try again.');
+        }
+        return output;
     }
 );
 

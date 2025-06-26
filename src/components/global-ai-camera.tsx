@@ -39,8 +39,12 @@ export default function GlobalAICamera() {
         setIsAnalyzing(true);
         setAnalysisResult(null);
         try {
-            const { suggestion } = await analyzePhotoIssue({ photoDataUri: photoForAnalysis });
-            setAnalysisResult(suggestion);
+            const result = await analyzePhotoIssue({ photoDataUri: photoForAnalysis });
+            if (result.error) {
+                toast({ variant: 'destructive', title: 'AI Analysis Failed', description: result.error });
+            } else if (result.data) {
+                setAnalysisResult(result.data.suggestion);
+            }
         } catch (error) {
             console.error(error);
             toast({ variant: 'destructive', title: 'AI Analysis Failed', description: 'Could not analyze the photo.' });

@@ -103,11 +103,19 @@ export default function InventoryManager() {
         try {
             const itemsToOrder = itemsBelowPar.map(({name, par, currentCount}) => ({name, par, currentCount}));
             const result = await generateShoppingList({ items: itemsToOrder });
-            setShoppingListResult(result);
-            toast({
-                title: 'Shopping List Ready!',
-                description: 'The AI has generated your reorder list.',
-            });
+            if (result.error || !result.data) {
+                toast({
+                    variant: 'destructive',
+                    title: 'AI Error',
+                    description: result.error || 'There was a problem generating the shopping list.',
+                });
+            } else {
+                setShoppingListResult(result.data);
+                toast({
+                    title: 'Shopping List Ready!',
+                    description: 'The AI has generated your reorder list.',
+                });
+            }
         } catch (error) {
             console.error("Failed to generate shopping list", error);
             toast({

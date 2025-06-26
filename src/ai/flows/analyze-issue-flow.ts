@@ -49,9 +49,7 @@ const analyzeIssueFlow = ai.defineFlow(
     outputSchema: AnalyzeIssueOutputSchema,
   },
   async (input) => {
-    const response = await prompt(input);
-    const output = response.output;
-
+    const { output } = await prompt(input);
     if (!output) {
       throw new Error('The AI returned an unexpected response. Please try rephrasing your issue.');
     }

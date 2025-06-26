@@ -43,9 +43,13 @@ export default function AISetupAssistant({ onTasksSuggested }: AISetupAssistantP
     setError(null);
 
     try {
-      const response = await generateTasksFromInventory(values);
-      setSetupInstructions(response.setupInstructions);
-      onTasksSuggested(response.tasks);
+      const result = await generateTasksFromInventory(values);
+      if (result.error || !result.data) {
+        setError(result.error || "Failed to generate tasks. Please try again.");
+      } else {
+        setSetupInstructions(result.data.setupInstructions);
+        onTasksSuggested(result.data.tasks);
+      }
     } catch (e) {
       setError("Failed to generate tasks. Please try again.");
       console.error(e);

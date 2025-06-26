@@ -28,7 +28,17 @@ export default function LiveReviews({ location }: LiveReviewsProps) {
                 location,
             }
             const response = await summarizeReviews(input);
-            setResult(response);
+            
+            if (response.error || !response.data) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'AI Error',
+                    description: response.error || `Failed to fetch reviews from ${source}.`,
+                });
+                return;
+            }
+
+            setResult(response.data);
             toast({
                 title: `${source} Reviews Loaded`,
                 description: `The AI has fetched and summarized the latest reviews for ${location}.`,

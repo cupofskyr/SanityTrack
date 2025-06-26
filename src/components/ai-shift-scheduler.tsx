@@ -144,11 +144,17 @@ export default function AIShiftScheduler() {
 
         try {
             const response = await generateSchedule(input);
-            setResult(response);
+            
+            if (response.error || !response.data) {
+                toast({ variant: "destructive", title: "AI Error", description: response.error || "Failed to generate schedule." });
+                return;
+            }
+
+            setResult(response.data);
             
             const updatedShifts = [...shifts];
 
-            response.assignments.forEach(assignment => {
+            response.data.assignments.forEach(assignment => {
                 const shiftIndex = updatedShifts.findIndex(s => s.id === assignment.shiftId);
                 if (shiftIndex !== -1) {
                     updatedShifts[shiftIndex].assignedTo = assignment.employeeName;
