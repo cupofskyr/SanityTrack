@@ -18,6 +18,7 @@ export async function generateDailyBriefing(): Promise<GenerateDailyBriefingOutp
 
 const prompt = ai.definePrompt({
     name: 'generateDailyBriefingPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: z.object({ currentDate: z.string() }) },
     output: { schema: GenerateDailyBriefingOutputSchema },
     prompt: `You are a positive and effective restaurant manager starting the day. 

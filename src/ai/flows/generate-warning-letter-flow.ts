@@ -17,6 +17,7 @@ export async function generateWarningLetter(input: GenerateWarningLetterInput): 
 
 const prompt = ai.definePrompt({
     name: 'generateWarningLetterPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: GenerateWarningLetterInputSchema },
     output: { schema: GenerateWarningLetterOutputSchema },
     prompt: `You are a professional and fair HR manager. Your task is to draft a formal warning email to an employee regarding their punctuality. The tone should be firm and clear, but not overly aggressive. It should serve as a formal record.

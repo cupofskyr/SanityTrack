@@ -47,6 +47,7 @@ export async function generateSchedule(input: GenerateScheduleInput): Promise<Ge
 
 const prompt = ai.definePrompt({
     name: 'generateSchedulePrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: GenerateScheduleInputSchema },
     output: { schema: GenerateScheduleOutputSchema },
     prompt: `You are an intelligent shift scheduling assistant for a restaurant manager.

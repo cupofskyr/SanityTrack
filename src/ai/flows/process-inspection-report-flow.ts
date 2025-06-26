@@ -25,6 +25,7 @@ export async function processInspectionReport(
 
 const prompt = ai.definePrompt({
     name: 'processInspectionReportPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: ProcessInspectionReportInputSchema },
     output: { schema: ProcessInspectionReportOutputSchema },
     prompt: `You are an expert health inspector supervisor reviewing a report for {{locationName}} from an inspection on {{inspectionDate}}.

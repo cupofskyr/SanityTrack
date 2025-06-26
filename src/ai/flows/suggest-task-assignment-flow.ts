@@ -22,6 +22,7 @@ export async function suggestTaskAssignment(input: SuggestTaskAssignmentInput): 
 
 const prompt = ai.definePrompt({
     name: 'suggestTaskAssignmentPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: SuggestTaskAssignmentInputSchema },
     output: { schema: SuggestTaskAssignmentOutputSchema },
     prompt: `You are an expert operations director for a multi-location business.

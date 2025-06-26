@@ -22,6 +22,7 @@ export async function generateInquiry(input: GenerateInquiryInput): Promise<Gene
 
 const prompt = ai.definePrompt({
     name: 'generateInquiryPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: GenerateInquiryInputSchema },
     output: { schema: GenerateInquiryOutputSchema },
     prompt: `You are a Health Department Agent. Your task is to draft a professional email to a business owner, {{ownerName}}, regarding a guest complaint about their location, {{locationName}}.

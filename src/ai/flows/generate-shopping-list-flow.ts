@@ -23,6 +23,7 @@ export async function generateShoppingList(input: GenerateShoppingListInput): Pr
 
 const prompt = ai.definePrompt({
     name: 'generateShoppingListPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: GenerateShoppingListInputSchema.extend({ currentDate: z.string() }) },
     output: { schema: GenerateShoppingListOutputSchema },
     prompt: `You are an efficient restaurant supply chain assistant. Your task is to generate a shopping list and an email subject line based on a list of inventory items that are below their par (ideal) stock level.

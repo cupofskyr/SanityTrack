@@ -23,6 +23,7 @@ export async function generateTasksFromInventory(input: GenerateTasksFromInvento
 
 const prompt = ai.definePrompt({
     name: 'generateTasksFromInventoryPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: GenerateTasksFromInventoryInputSchema },
     output: { schema: GenerateTasksFromInventoryOutputSchema },
     prompt: `You are an expert restaurant operations consultant. A new manager is setting up their cleaning and maintenance schedule.

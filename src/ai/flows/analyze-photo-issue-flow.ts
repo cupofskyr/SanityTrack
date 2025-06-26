@@ -22,6 +22,7 @@ export async function analyzePhotoIssue(input: AnalyzePhotoInput): Promise<Analy
 
 const prompt = ai.definePrompt({
     name: 'analyzePhotoIssuePrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: AnalyzePhotoInputSchema },
     output: { schema: AnalyzePhotoOutputSchema },
     prompt: `You are an AI assistant for a facility management application. Your task is to analyze the provided photo and generate a short, clear, and actionable description of the maintenance or sanitation issue it depicts.
