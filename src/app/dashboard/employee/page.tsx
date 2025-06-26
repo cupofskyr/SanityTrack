@@ -28,9 +28,11 @@ const initialTasks = [
   { id: 4, name: "Mandatory Team Meeting: Q3 Planning", area: "Main Office", priority: "High", status: "Pending" }
 ];
 
-const initialCompletedTasks = [
-  { id: 4, name: "Empty trash bins", area: "All Areas", completedAt: "2024-05-20 09:00" },
-  { id: 5, name: "Wipe down dining tables", area: "Dining Area", completedAt: "2024-05-20 08:30" },
+type Task = typeof initialTasks[0];
+
+const initialCompletedTasks: (Task & {completedAt: string})[] = [
+  { id: 5, name: "Empty trash bins", area: "All Areas", priority: "Low", status: "Approved", completedAt: "2024-05-20 09:00" },
+  { id: 6, name: "Wipe down dining tables", area: "Dining Area", priority: "Medium", status: "Approved", completedAt: "2024-05-20 08:30" },
 ];
 
 const initialIssues = [
@@ -70,7 +72,7 @@ const employeeShift = { start: "09:00", end: "17:00" };
 
 
 export default function EmployeeDashboard() {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [completedTasks, setCompletedTasks] = useState(initialCompletedTasks);
   const [issues, setIssues] = useState(initialIssues);
   const [reviews, setReviews] = useState(initialReviews);
@@ -102,6 +104,7 @@ export default function EmployeeDashboard() {
   const [isTranslatingBriefing, setIsTranslatingBriefing] = useState(false);
   
   const [mySchedule, setMySchedule] = useState<Shift[]>([]);
+  const [isTaskDialogsOpen, setIsTaskDialogsOpen] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     // This effect simulates fetching the schedule from a shared source (localStorage)
@@ -175,6 +178,25 @@ export default function EmployeeDashboard() {
       title: "Clocked Out",
       description: `You clocked out at ${new Date().toLocaleTimeString()}. Have a great day!`,
     });
+  };
+  
+  const handleCompleteTask = (taskToComplete: Task) => {
+    setTasks(tasks.filter((task) => task.id !== taskToComplete.id));
+
+    const newCompletedTask = {
+      ...taskToComplete,
+      status: 'Pending Review' as const, // Set status for review
+      completedAt: format(new Date(), "yyyy-MM-dd HH:mm"),
+    };
+    setCompletedTasks([newCompletedTask, ...completedTasks]);
+
+    toast({
+      title: 'Task Submitted for Review',
+      description: `Your completion for "${taskToComplete.name}" has been sent to the manager for approval.`,
+    });
+    
+    // Close the specific dialog for this task
+    setIsTaskDialogsOpen(prev => ({...prev, [taskToComplete.id]: false}));
   };
 
   const handleReportIssue = (e: React.FormEvent) => {
@@ -472,7 +494,7 @@ export default function EmployeeDashboard() {
                         <Badge variant="outline">{task.status}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Dialog>
+                        <Dialog open={isTaskDialogsOpen[task.id] || false} onOpenChange={(isOpen) => setIsTaskDialogsOpen(prev => ({...prev, [task.id]: isOpen}))}>
                           <DialogTrigger asChild>
                             <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">Complete Task</Button>
                           </DialogTrigger>
@@ -485,13 +507,9 @@ export default function EmployeeDashboard() {
                             </DialogHeader>
                             <PhotoUploader />
                             <DialogFooter>
-                              <Button type="submit" className="bg-primary hover:bg-primary/90" onClick={() => {
-                                toast({
-                                    title: "Task Submitted for Review",
-                                    description: `Your completion for "${task.name}" has been sent to the manager.`,
-                                });
-                                // Note: In a real app, this would close the dialog and update the task state.
-                            }}>Submit Completion</Button>
+                              <Button type="button" className="bg-primary hover:bg-primary/90" onClick={() => handleCompleteTask(task)}>
+                                Submit Completion
+                              </Button>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
@@ -664,20 +682,29 @@ export default function EmployeeDashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="font-headline flex items-center gap-2"><CheckCircle /> Completed Recently</CardTitle>
+               <CardDescription>A list of tasks you've recently completed, pending manager approval.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Task</TableHead>
-                    <TableHead className="text-right">Completed At</TableHead>
+                    <TableHead>Area</TableHead>
+                    <TableHead>Completed At</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {completedTasks.map((task) => (
                     <TableRow key={task.id}>
                       <TableCell>{task.name}</TableCell>
-                      <TableCell className="text-right text-muted-foreground">{task.completedAt}</TableCell>
+                      <TableCell>{task.area}</TableCell>
+                      <TableCell className="text-muted-foreground">{task.completedAt}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={task.status === "Pending Review" ? "secondary" : "default"}>
+                          {task.status}
+                        </Badge>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -802,5 +829,3 @@ export default function EmployeeDashboard() {
     </TooltipProvider>
   );
 }
-
-    
