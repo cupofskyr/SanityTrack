@@ -98,13 +98,19 @@ export default function TrainingPage() {
                 </CardHeader>
                 <CardContent>
                     <MenuGame />
+                    <Alert className="mt-6 bg-gray-900 text-white border-gray-700 dark:bg-gray-800 dark:border-gray-600">
+                        <AlertTitle className="font-semibold text-white">Leaderboard Coming Soon!</AlertTitle>
+                        <AlertDescription className="text-gray-300 dark:text-gray-400">
+                            Keep practicing! A leaderboard will be added soon to see how you rank against your teammates.
+                        </AlertDescription>
+                    </Alert>
                 </CardContent>
             </Card>
 
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><Video/> Speed Run Challenge</CardTitle>
-                    <CardDescription>Think you're the fastest? Upload a video of you making a menu item and compete for the top spot on the leaderboard! Each month the #1 ranking gets a 500$ bonus</CardDescription>
+                    <CardDescription>Think you're the fastest? Upload a video of you making a menu item and compete for the top spot on the leaderboard! Each month the #1 ranking gets a $500 bonus.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
@@ -150,74 +156,80 @@ export default function TrainingPage() {
                             Videos don't automatically determine your time. Honesty is key to a fun competition!
                         </AlertDescription>
                     </Alert>
+                </CardContent>
+            </Card>
 
-                    <div className="mt-6 space-y-8">
-                        <div>
-                            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><Trophy className="text-accent" /> Leaderboard</h3>
-                            <div className="border rounded-lg">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-[50px]">Rank</TableHead>
-                                            <TableHead>User</TableHead>
-                                            <TableHead>Location</TableHead>
-                                            <TableHead>Menu Item</TableHead>
-                                            <TableHead className="text-right">Time (s)</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {videos.length > 0 ? (
-                                            videos
-                                                .sort((a, b) => a.time - b.time)
-                                                .map((video, index) => (
-                                                    <TableRow key={video.id}>
-                                                        <TableCell className="font-bold">{index + 1}</TableCell>
-                                                        <TableCell>{video.user}</TableCell>
-                                                        <TableCell>{video.location}</TableCell>
-                                                        <TableCell>{video.item}</TableCell>
-                                                        <TableCell className="text-right font-mono">{video.time}</TableCell>
-                                                    </TableRow>
-                                                ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell colSpan={5} className="h-24 text-center">
-                                                    No submissions yet. Be the first!
-                                                </TableCell>
+            <Card>
+                <CardHeader>
+                    <h3 className="text-lg font-semibold flex items-center gap-2"><Trophy className="text-accent" /> Leaderboard</h3>
+                </CardHeader>
+                <CardContent>
+                    <div className="border rounded-lg">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[50px]">Rank</TableHead>
+                                    <TableHead>User</TableHead>
+                                    <TableHead>Location</TableHead>
+                                    <TableHead>Menu Item</TableHead>
+                                    <TableHead className="text-right">Time (s)</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {videos.length > 0 ? (
+                                    videos
+                                        .sort((a, b) => a.time - b.time)
+                                        .map((video, index) => (
+                                            <TableRow key={video.id}>
+                                                <TableCell className="font-bold">{index + 1}</TableCell>
+                                                <TableCell>{video.user}</TableCell>
+                                                <TableCell>{video.location}</TableCell>
+                                                <TableCell>{video.item}</TableCell>
+                                                <TableCell className="text-right font-mono">{video.time}</TableCell>
                                             </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4"><PlayCircle /> View Submissions</h3>
-                            {videos.length > 0 ? (
-                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                                    {videos.map(video => (
-                                        <Card key={video.id} className="overflow-hidden">
-                                            <div className="aspect-video bg-black">
-                                                <video src={video.videoUrl} controls className="w-full h-full object-cover" />
-                                            </div>
-                                            <CardContent className="p-4">
-                                                <p className="font-semibold">{video.item}</p>
-                                                <div className="text-sm text-muted-foreground flex justify-between items-center">
-                                                    <span>By: {video.user} at {video.location}</span>
-                                                    <span className="font-bold text-base text-foreground">{video.time}s</span>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center text-muted-foreground border-2 border-dashed rounded-lg p-12">
-                                    <Video className="mx-auto h-12 w-12" />
-                                    <p className="mt-4 font-semibold">No speed runs submitted yet.</p>
-                                    <p className="text-sm">Upload a video to get on the leaderboard.</p>
-                                </div>
-                            )}
-                        </div>
+                                        ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="h-24 text-center">
+                                            No submissions yet. Be the first!
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                     <h3 className="text-lg font-semibold flex items-center gap-2"><PlayCircle /> View Submissions</h3>
+                </CardHeader>
+                <CardContent>
+                     {videos.length > 0 ? (
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {videos.map(video => (
+                                <Card key={video.id} className="overflow-hidden">
+                                    <div className="aspect-video bg-black">
+                                        <video src={video.videoUrl} controls className="w-full h-full object-cover" />
+                                    </div>
+                                    <CardContent className="p-4">
+                                        <p className="font-semibold">{video.item}</p>
+                                        <div className="text-sm text-muted-foreground flex justify-between items-center">
+                                            <span>By: {video.user} at {video.location}</span>
+                                            <span className="font-bold text-base text-foreground">{video.time}s</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center text-muted-foreground border-2 border-dashed rounded-lg p-12">
+                            <Video className="mx-auto h-12 w-12" />
+                            <p className="mt-4 font-semibold">No speed runs submitted yet.</p>
+                            <p className="text-sm">Upload a video to get on the leaderboard.</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
