@@ -18,7 +18,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { generateSchedule, type GenerateScheduleInput, type GenerateScheduleOutput } from "@/app/actions";
+import { generateSchedule } from "@/app/actions";
+import type { GenerateScheduleInput, GenerateScheduleOutput } from "@/ai/flows/ai-shift-planner";
 
 type Shift = {
   id: string;

@@ -16,7 +16,8 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from '@/components/ui/textarea';
-import { processInspectionReport, generateInquiry, analyzeIssue, type ProcessInspectionReportOutput, type GenerateInquiryOutput, type AnalyzeIssueOutput } from '@/app/actions';
+import { processInspectionReport, generateInquiry, analyzeIssue } from '@/app/actions';
+import type { ProcessInspectionReportOutput, GenerateInquiryOutput, AnalyzeIssueOutput } from '@/ai/schemas/issue-analysis-schemas';
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import PhotoUploader from '@/components/photo-uploader';
@@ -258,7 +259,7 @@ export default function HealthDeptDashboard() {
           title: "Tasks Sent to Owner",
           description: "The immediate action items have been sent to the business owner."
       });
-      // Here you would typically also clear the results or update state
+      // In a real app, this would also clear the results or update state
       setProcessingResult(null);
       setReportNotes('');
   }
@@ -1018,5 +1019,3 @@ export default function HealthDeptDashboard() {
     </TooltipProvider>
   );
 }
-
-    

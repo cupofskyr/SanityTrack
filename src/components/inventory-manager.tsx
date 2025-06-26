@@ -12,7 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
-import { generateShoppingList, type GenerateShoppingListOutput } from '@/app/actions';
+import { generateShoppingList } from '@/app/actions';
+import type { GenerateShoppingListOutput } from '@/ai/schemas/shopping-list-schemas';
 import { Textarea } from './ui/textarea';
 
 type InventoryItem = {

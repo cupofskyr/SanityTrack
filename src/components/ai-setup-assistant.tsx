@@ -12,7 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2, Wand2, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { generateTasksFromInventory } from "@/app/actions";
-import { GenerateTasksFromInventoryInputSchema, type GenerateTasksFromInventoryOutput, type GenerateTasksFromInventoryInput } from "@/ai/schemas/task-generation-schemas";
+import { GenerateTasksFromInventoryInputSchema } from "@/ai/schemas/task-generation-schemas";
+import type { GenerateTasksFromInventoryOutput, GenerateTasksFromInventoryInput } from "@/ai/schemas/task-generation-schemas";
 
 
 type AISetupAssistantProps = {

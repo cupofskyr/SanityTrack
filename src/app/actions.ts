@@ -1,6 +1,8 @@
 
 'use server';
 
+// This file is the single, safe entry point for all AI calls from the client-side UI.
+
 import { analyzeIssue as analyzeIssueFlow, type AnalyzeIssueInput, type AnalyzeIssueOutput } from '@/ai/flows/analyze-issue-flow';
 import { analyzePhotoIssue as analyzePhotoIssueFlow, type AnalyzePhotoInput, type AnalyzePhotoOutput } from '@/ai/flows/analyze-photo-issue-flow';
 import { generateDailyBriefing as generateDailyBriefingFlow, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
@@ -15,24 +17,6 @@ import { generateWarningLetter as generateWarningLetterFlow, type GenerateWarnin
 import { fetchToastData as fetchToastDataFlow, type FetchToastDataInput, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
 import { summarizeReviews as summarizeReviewsFlow, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/ai/flows/fetch-reviews-flow';
 import { postJob as postJobFlow, type JobPostingInput, type JobPostingOutput } from '@/ai/flows/post-job-flow';
-
-// Re-export types for client-side usage
-export type {
-    AnalyzeIssueInput, AnalyzeIssueOutput,
-    AnalyzePhotoInput, AnalyzePhotoOutput,
-    GenerateDailyBriefingOutput,
-    GenerateScheduleInput, GenerateScheduleOutput,
-    GenerateShoppingListInput, GenerateShoppingListOutput,
-    GenerateTasksFromInventoryInput, GenerateTasksFromInventoryOutput,
-    SuggestTaskAssignmentInput, SuggestTaskAssignmentOutput,
-    TranslateTextInput, TranslateTextOutput,
-    GenerateInquiryInput, GenerateInquiryOutput,
-    ProcessInspectionReportInput, ProcessInspectionReportOutput,
-    GenerateWarningLetterInput, GenerateWarningLetterOutput,
-    FetchToastDataInput, ToastPOSData,
-    SummarizeReviewsInput, SummarizeReviewsOutput,
-    JobPostingInput, JobPostingOutput
-};
 
 
 export async function analyzeIssue(input: AnalyzeIssueInput): Promise<AnalyzeIssueOutput> {

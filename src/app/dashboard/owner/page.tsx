@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Textarea } from '@/components/ui/textarea';
-import { suggestTaskAssignment, type SuggestTaskAssignmentOutput, generateDailyBriefing, type GenerateDailyBriefingOutput, fetchToastData, type ToastPOSData, postJob, type JobPostingInput, generateWarningLetter, type GenerateWarningLetterOutput } from '@/app/actions';
+import { suggestTaskAssignment, generateDailyBriefing, fetchToastData, postJob, generateWarningLetter } from '@/app/actions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -24,6 +24,11 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import type { SuggestTaskAssignmentOutput } from '@/ai/schemas/task-assignment-schemas';
+import type { GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
+import type { ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
+import type { JobPostingInput } from '@/ai/schemas/job-posting-schemas';
+import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
 
 
 type TeamMember = {

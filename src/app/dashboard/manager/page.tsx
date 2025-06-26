@@ -28,7 +28,9 @@ import StaffMealManager from '@/components/staff-meal-manager';
 import { format, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { analyzeIssue, generateDailyBriefing, translateText, generateWarningLetter, type GenerateDailyBriefingOutput, type GenerateWarningLetterOutput } from '@/app/actions';
+import { analyzeIssue, generateDailyBriefing, translateText, generateWarningLetter } from '@/app/actions';
+import type { GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
+import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },
