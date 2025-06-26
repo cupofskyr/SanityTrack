@@ -1,25 +1,36 @@
+# Stage 1: Build the application
+FROM node:20-slim AS builder
 
-# 1. Installer Stage
-FROM node:20-slim AS deps
+# Set working directory
 WORKDIR /app
-COPY package.json package-lock.json ./
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
 RUN npm ci
 
-# 2. Builder Stage
-FROM node:20-slim AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy the rest of the application code
 COPY . .
+
+# Build the Next.js application
 RUN npm run build
 
-# 3. Runner Stage
+# Stage 2: Create the production image
 FROM node:20-slim AS runner
+
 WORKDIR /app
+
+# Set production environment
 ENV NODE_ENV=production
+# Expose the port the app runs on
 ENV PORT=3000
 
-COPY --from=builder /app/public ./public
+# Copy the standalone output from the builder stage
 COPY --from=builder /app/.next/standalone ./
+# Copy the public and static folders
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/static ./.next/static
 
+# The server is started from server.js in the standalone output
 CMD ["node", "server.js"]

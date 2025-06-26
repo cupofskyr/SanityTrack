@@ -1,9 +1,9 @@
-
 node_modules
 .next/cache
 *.log
-.env
-README.md
+.env*
 Dockerfile
 .dockerignore
-cloudbuild.yaml
+README.md
+.git
+.vscode
