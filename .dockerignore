@@ -1,19 +1,24 @@
-# Docker ignore rules
-
-# Git files
-.git
-.gitignore
-
-# Node modules
+# Dependencies
 node_modules
 
 # Next.js build cache
 .next/cache
 
-# Local environment files
+# Local environment variables
 .env
-.env.local
-*.log
+.env*.local
 
-# VSCode settings
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Misc
+.DS_Store
+.npm
+*~
+.github
 .vscode
+README.md
