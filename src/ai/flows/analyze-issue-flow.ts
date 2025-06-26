@@ -6,7 +6,9 @@
  * - AnalyzeIssueInput - The input type for the analyzeIssue function.
  * - AnalyzeIssueOutput - The return type for the analyzeIssue function.
  */
-import { ai } from '@/ai/genkit';
+import { configureGenkit, defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
     AnalyzeIssueInputSchema, 
     type AnalyzeIssueInput,
@@ -14,19 +16,25 @@ import {
     type AnalyzeIssueOutput
 } from '@/ai/schemas/issue-analysis-schemas';
 
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
+
 export async function analyzeIssue(input: AnalyzeIssueInput): Promise<AnalyzeIssueOutput> {
   return analyzeIssueFlow(input);
 }
 
-export const analyzeIssueFlow = ai.defineFlow(
+export const analyzeIssueFlow = defineFlow(
   {
     name: 'analyzeIssueFlow',
     inputSchema: AnalyzeIssueInputSchema,
     outputSchema: AnalyzeIssueOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const llmResponse = await generate({
+      model: googleAI('gemini-1.5-flash-latest'),
       prompt: `You are a building maintenance supervisor and health code expert. Your task is to analyze a reported issue, categorize it, determine its urgency, and suggest the right professional to call.
 
 Available categories are: Plumbing, Electrical, Pest Control, HVAC, General Maintenance, Cleaning, Safety, or Unknown.
@@ -48,6 +56,6 @@ Analyze the issue and provide the category, emergency status, urgency, suggested
         schema: AnalyzeIssueOutputSchema,
       },
     });
-    return llmResponse.output!;
+    return llmResponse.output()!;
   }
 );

@@ -7,8 +7,16 @@
  * - GenerateScheduleInput - The input type for the generateSchedule function.
  * - GenerateScheduleOutput - The return type for the generateSchedule function.
  */
-import { ai } from '@/ai/genkit';
+import { configureGenkit, defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';
+
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
 
 const EmployeeSchema = z.object({
   name: z.string().describe('The name of the employee.'),
@@ -44,15 +52,15 @@ export async function generateSchedule(input: GenerateScheduleInput): Promise<Ge
   return generateScheduleFlow(input);
 }
 
-export const generateScheduleFlow = ai.defineFlow(
+export const generateScheduleFlow = defineFlow(
   {
     name: 'generateScheduleFlow',
     inputSchema: GenerateScheduleInputSchema,
     outputSchema: GenerateScheduleOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const llmResponse = await generate({
+      model: googleAI('gemini-1.5-flash-latest'),
       prompt: `You are an intelligent shift scheduling assistant for a restaurant manager.
 Your task is to create a fair and balanced shift schedule.
 
@@ -77,6 +85,6 @@ Your goal is to assign each shift to an employee. Follow these rules:
         schema: GenerateScheduleOutputSchema,
       },
     });
-    return llmResponse.output!;
+    return llmResponse.output()!;
   }
 );

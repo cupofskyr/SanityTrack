@@ -6,7 +6,9 @@
  * - GenerateInquiryInput - The input type for the function.
  * - GenerateInquiryOutput - The return type for the function.
  */
-import { ai } from '@/ai/genkit';
+import { configureGenkit, defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
   GenerateInquiryInputSchema,
   type GenerateInquiryInput,
@@ -14,19 +16,25 @@ import {
   type GenerateInquiryOutput,
 } from '@/ai/schemas/inquiry-generation-schemas';
 
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
+
 export async function generateInquiry(input: GenerateInquiryInput): Promise<GenerateInquiryOutput> {
   return generateInquiryFlow(input);
 }
 
-export const generateInquiryFlow = ai.defineFlow(
+export const generateInquiryFlow = defineFlow(
   {
     name: 'generateInquiryFlow',
     inputSchema: GenerateInquiryInputSchema,
     outputSchema: GenerateInquiryOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const llmResponse = await generate({
+      model: googleAI('gemini-1.5-flash-latest'),
       prompt: `You are a Health Department Agent. Your task is to draft a professional email to a business owner, {{ownerName}}, regarding a guest complaint about their location, {{locationName}}.
 
 The guest reported the following issue:
@@ -45,6 +53,6 @@ Your goals are:
         schema: GenerateInquiryOutputSchema,
       },
     });
-    return llmResponse.output!;
+    return llmResponse.output()!;
   }
 );

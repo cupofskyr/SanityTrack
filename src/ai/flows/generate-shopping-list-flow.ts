@@ -7,7 +7,9 @@
  * - GenerateShoppingListInput - The input type for the function.
  * - GenerateShoppingListOutput - The return type for the function.
  */
-import { ai } from '@/ai/genkit';
+import { configureGenkit, defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import { 
     GenerateShoppingListInputSchema,
     type GenerateShoppingListInput,
@@ -15,11 +17,17 @@ import {
     type GenerateShoppingListOutput
 } from '@/ai/schemas/shopping-list-schemas';
 
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
+
 export async function generateShoppingList(input: GenerateShoppingListInput): Promise<GenerateShoppingListOutput> {
   return generateShoppingListFlow(input);
 }
 
-export const generateShoppingListFlow = ai.defineFlow(
+export const generateShoppingListFlow = defineFlow(
   {
     name: 'generateShoppingListFlow',
     inputSchema: GenerateShoppingListInputSchema,
@@ -34,8 +42,8 @@ export const generateShoppingListFlow = ai.defineFlow(
 
     const augmentedInput = { ...input, currentDate };
 
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const llmResponse = await generate({
+      model: googleAI('gemini-1.5-flash-latest'),
       prompt: `You are an efficient restaurant supply chain assistant. Your task is to generate a shopping list and an email subject line based on a list of inventory items that are below their par (ideal) stock level.
 
 Today's date is {{currentDate}}.
@@ -60,6 +68,6 @@ Do not add any conversational text or introductions to the shopping list itself.
         schema: GenerateShoppingListOutputSchema,
       },
     });
-    return llmResponse.output!;
+    return llmResponse.output()!;
   }
 );

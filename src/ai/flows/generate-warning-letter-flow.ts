@@ -2,7 +2,9 @@
 /**
  * @fileOverview An AI flow for generating a warning letter about punctuality.
  */
-import { ai } from '@/ai/genkit';
+import { configureGenkit, defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
   GenerateWarningLetterInputSchema,
   type GenerateWarningLetterInput,
@@ -10,19 +12,25 @@ import {
   type GenerateWarningLetterOutput,
 } from '@/ai/schemas/warning-letter-schemas';
 
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
+
 export async function generateWarningLetter(input: GenerateWarningLetterInput): Promise<GenerateWarningLetterOutput> {
   return generateWarningLetterFlow(input);
 }
 
-export const generateWarningLetterFlow = ai.defineFlow(
+export const generateWarningLetterFlow = defineFlow(
   {
     name: 'generateWarningLetterFlow',
     inputSchema: GenerateWarningLetterInputSchema,
     outputSchema: GenerateWarningLetterOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const llmResponse = await generate({
+      model: googleAI('gemini-1.5-flash-latest'),
       prompt: `You are a professional and fair HR manager. Your task is to draft a formal warning email to an employee regarding their punctuality. The tone should be firm and clear, but not overly aggressive. It should serve as a formal record.
 
 Employee Name: {{employeeName}}
@@ -40,6 +48,6 @@ The email should:
         schema: GenerateWarningLetterOutputSchema,
       },
     });
-    return llmResponse.output!;
+    return llmResponse.output()!;
   }
 );

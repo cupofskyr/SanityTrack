@@ -7,7 +7,9 @@
  * - GenerateTasksFromInventoryInput - The input type for the function.
  * - GenerateTasksFromInventoryOutput - The return type for the function.
  */
-import { ai } from '@/ai/genkit';
+import { configureGenkit, defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
     GenerateTasksFromInventoryInputSchema, 
     type GenerateTasksFromInventoryInput,
@@ -15,20 +17,25 @@ import {
     type GenerateTasksFromInventoryOutput
 } from '@/ai/schemas/task-generation-schemas';
 
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
 
 export async function generateTasksFromInventory(input: GenerateTasksFromInventoryInput): Promise<GenerateTasksFromInventoryOutput> {
   return generateTasksFromInventoryFlow(input);
 }
 
-export const generateTasksFromInventoryFlow = ai.defineFlow(
+export const generateTasksFromInventoryFlow = defineFlow(
   {
     name: 'generateTasksFromInventoryFlow',
     inputSchema: GenerateTasksFromInventoryInputSchema,
     outputSchema: GenerateTasksFromInventoryOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const llmResponse = await generate({
+      model: googleAI('gemini-1.5-flash-latest'),
       prompt: `You are an expert restaurant operations consultant. A new manager is setting up their cleaning and maintenance schedule.
 Your task is to generate a comprehensive list of recurring tasks based on the inventory of their restaurant.
 
@@ -56,6 +63,6 @@ Example Task:
         schema: GenerateTasksFromInventoryOutputSchema,
       },
     });
-    return llmResponse.output!;
+    return llmResponse.output()!;
   }
 );

@@ -5,23 +5,31 @@
  * - generateDailyBriefing - A function that generates a daily message for staff.
  * - GenerateDailyBriefingOutput - The return type for the function.
  */
-import { ai } from '@/ai/genkit';
+import { configureGenkit, defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import { GenerateDailyBriefingOutputSchema, type GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
 import { format } from 'date-fns';
+
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
 
 export async function generateDailyBriefing(): Promise<GenerateDailyBriefingOutput> {
   return generateDailyBriefingFlow();
 }
 
-export const generateDailyBriefingFlow = ai.defineFlow(
+export const generateDailyBriefingFlow = defineFlow(
   {
     name: 'generateDailyBriefingFlow',
     outputSchema: GenerateDailyBriefingOutputSchema,
   },
   async () => {
     const currentDate = format(new Date(), 'EEEE, MMMM do, yyyy');
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const llmResponse = await generate({
+      model: googleAI('gemini-1.5-flash-latest'),
       prompt: `You are a positive and effective restaurant manager starting the day. 
   Today's date is {{currentDate}}.
 
@@ -38,6 +46,6 @@ export const generateDailyBriefingFlow = ai.defineFlow(
         schema: GenerateDailyBriefingOutputSchema,
       },
     });
-    return llmResponse.output!;
+    return llmResponse.output()!;
   }
 );

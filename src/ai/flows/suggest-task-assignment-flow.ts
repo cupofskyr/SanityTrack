@@ -6,7 +6,9 @@
  * - SuggestTaskAssignmentInput - The input type for the function.
  * - SuggestTaskAssignmentOutput - The return type for the function.
  */
-import { ai } from '@/ai/genkit';
+import { configureGenkit, defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
     SuggestTaskAssignmentInputSchema,
     type SuggestTaskAssignmentInput,
@@ -14,19 +16,25 @@ import {
     type SuggestTaskAssignmentOutput
 } from '@/ai/schemas/task-assignment-schemas';
 
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
+
 export async function suggestTaskAssignment(input: SuggestTaskAssignmentInput): Promise<SuggestTaskAssignmentOutput> {
   return suggestTaskAssignmentFlow(input);
 }
 
-export const suggestTaskAssignmentFlow = ai.defineFlow(
+export const suggestTaskAssignmentFlow = defineFlow(
   {
     name: 'suggestTaskAssignmentFlow',
     inputSchema: SuggestTaskAssignmentInputSchema,
     outputSchema: SuggestTaskAssignmentOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const llmResponse = await generate({
+      model: googleAI('gemini-1.5-flash-latest'),
       prompt: `You are an expert operations director for a multi-location business.
 Your goal is to delegate tasks efficiently.
 
@@ -45,6 +53,6 @@ Based on the issue and the team members' roles, suggest the most appropriate per
         schema: SuggestTaskAssignmentOutputSchema,
       },
     });
-    return llmResponse.output!;
+    return llmResponse.output()!;
   }
 );

@@ -7,7 +7,9 @@
  * - ProcessInspectionReportInput - The input type for the function.
  * - ProcessInspectionReportOutput - The return type for the function.
  */
-import { ai } from '@/ai/genkit';
+import { configureGenkit, defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
   ProcessInspectionReportInputSchema,
   type ProcessInspectionReportInput,
@@ -15,21 +17,27 @@ import {
   type ProcessInspectionReportOutput,
 } from '@/ai/schemas/inspection-report-schemas';
 
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
+
 export async function processInspectionReport(
   input: ProcessInspectionReportInput
 ): Promise<ProcessInspectionReportOutput> {
   return processInspectionReportFlow(input);
 }
 
-export const processInspectionReportFlow = ai.defineFlow(
+export const processInspectionReportFlow = defineFlow(
   {
     name: 'processInspectionReportFlow',
     inputSchema: ProcessInspectionReportInputSchema,
     outputSchema: ProcessInspectionReportOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const llmResponse = await generate({
+      model: googleAI('gemini-1.5-flash-latest'),
       prompt: `You are an expert health inspector supervisor reviewing a report for {{locationName}} from an inspection on {{inspectionDate}}.
 Your job is to analyze the inspector's notes and extract two types of information:
 
@@ -48,6 +56,6 @@ Analyze the notes and provide the structured output. If there are no issues for 
         schema: ProcessInspectionReportOutputSchema,
       },
     });
-    return llmResponse.output!;
+    return llmResponse.output()!;
   }
 );

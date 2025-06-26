@@ -7,7 +7,9 @@
  * - AnalyzePhotoInput - The input type for the function.
  * - AnalyzePhotoOutput - The return type for the function.
  */
-import { ai } from '@/ai/genkit';
+import { configureGenkit, defineFlow } from 'genkit/flow';
+import { generate } from 'genkit/ai';
+import { googleAI } from '@genkit-ai/googleai';
 import {
     AnalyzePhotoInputSchema,
     type AnalyzePhotoInput,
@@ -15,21 +17,25 @@ import {
     type AnalyzePhotoOutput,
 } from '@/ai/schemas/photo-analysis-schemas';
 
+configureGenkit({
+  plugins: [googleAI()],
+  logLevel: 'debug',
+  enableTracingAndMetrics: true,
+});
 
 export async function analyzePhotoIssue(input: AnalyzePhotoInput): Promise<AnalyzePhotoOutput> {
     return analyzePhotoIssueFlow(input);
 }
 
-
-export const analyzePhotoIssueFlow = ai.defineFlow(
+export const analyzePhotoIssueFlow = defineFlow(
   {
     name: 'analyzePhotoIssueFlow',
     inputSchema: AnalyzePhotoInputSchema,
     outputSchema: AnalyzePhotoOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
+    const llmResponse = await generate({
+      model: googleAI('gemini-1.5-flash-latest'),
       prompt: `You are an AI assistant for a facility management application. Your task is to analyze the provided photo and generate a short, clear, and actionable description of the maintenance or sanitation issue it depicts.
 
 Focus on what needs to be done. Be direct.
@@ -49,6 +55,6 @@ Analyze this image:
         schema: AnalyzePhotoOutputSchema,
       },
     });
-    return llmResponse.output!;
+    return llmResponse.output()!;
   }
 );
