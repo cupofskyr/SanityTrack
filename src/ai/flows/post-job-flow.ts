@@ -49,7 +49,7 @@ export const postJobFlow = ai.defineFlow(
             tools: [postToJobBoardTool],
         });
 
-        const output = response.output();
+        const output = response.output;
         if (!output) {
             throw new Error("The AI could not post the job. No output was returned.");
         }
