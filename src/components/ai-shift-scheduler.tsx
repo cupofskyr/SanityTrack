@@ -27,6 +27,7 @@ type Shift = {
   startTime: string;
   endTime: string;
   assignedTo?: string;
+  status?: 'scheduled' | 'offered';
 };
 
 // Mock data, in a real app this would come from a database.
@@ -94,6 +95,7 @@ export default function AIShiftScheduler() {
                     date: dateStr,
                     startTime: shiftTime.startTime,
                     endTime: shiftTime.endTime,
+                    status: 'scheduled' as const,
                 };
             });
         
@@ -123,7 +125,7 @@ export default function AIShiftScheduler() {
     
     const handleManualAssignment = (shiftId: string, employeeName: string) => {
         setShifts(shifts.map(shift => 
-            shift.id === shiftId ? { ...shift, assignedTo: employeeName === 'unassign' ? undefined : employeeName } : shift
+            shift.id === shiftId ? { ...shift, assignedTo: employeeName === 'unassign' ? undefined : employeeName, status: 'scheduled' } : shift
         ));
     };
 
@@ -347,7 +349,7 @@ export default function AIShiftScheduler() {
                             <TableRow>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Time</TableHead>
-                                <TableHead className="w-[200px]">Assigned To</TableHead>
+                                <TableHead className="w-[250px]">Assigned To</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -357,23 +359,28 @@ export default function AIShiftScheduler() {
                                     <TableCell>{format(parseDate(shift.date), 'PPP')}</TableCell>
                                     <TableCell>{shift.startTime} - {shift.endTime}</TableCell>
                                     <TableCell>
-                                        <Select
-                                            value={shift.assignedTo || 'unassign'}
-                                            onValueChange={(employeeName) => handleManualAssignment(shift.id, employeeName)}
-                                            disabled={isPublished}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Assign Employee" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="unassign">
-                                                    <span className="text-muted-foreground">Unassigned</span>
-                                                </SelectItem>
-                                                {employees.map(emp => (
-                                                    <SelectItem key={emp.name} value={emp.name}>{emp.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="flex items-center gap-2">
+                                            <Select
+                                                value={shift.assignedTo || 'unassign'}
+                                                onValueChange={(employeeName) => handleManualAssignment(shift.id, employeeName)}
+                                                disabled={isPublished}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Assign Employee" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="unassign">
+                                                        <span className="text-muted-foreground">Unassigned</span>
+                                                    </SelectItem>
+                                                    {employees.map(emp => (
+                                                        <SelectItem key={emp.name} value={emp.name}>{emp.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {shift.status === 'offered' && (
+                                                <Badge variant="secondary" className="bg-accent/80 whitespace-nowrap">Offered</Badge>
+                                            )}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="ghost" size="icon" onClick={() => handleDeleteShift(shift.id)} disabled={isPublished}>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone, Sparkles, Loader2, User, Phone, Mail, UtensilsCrossed, Languages } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone, Sparkles, Loader2, User, Phone, Mail, UtensilsCrossed, Languages, ArrowRightLeft } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -63,6 +63,7 @@ type Shift = {
     startTime: string;
     endTime: string;
     assignedTo?: string;
+    status?: 'scheduled' | 'offered';
 };
 
 // Simulation data for this employee
@@ -103,16 +104,15 @@ export default function EmployeeDashboard() {
   const [translatedBriefing, setTranslatedBriefing] = useState<{title: string, message: string} | null>(null);
   const [isTranslatingBriefing, setIsTranslatingBriefing] = useState(false);
   
-  const [mySchedule, setMySchedule] = useState<Shift[]>([]);
+  const [allShifts, setAllShifts] = useState<Shift[]>([]);
   const [isTaskDialogsOpen, setIsTaskDialogsOpen] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     // This effect simulates fetching the schedule from a shared source (localStorage)
     const publishedScheduleJSON = localStorage.getItem('published-schedule');
     if (publishedScheduleJSON) {
-        const allShifts: Shift[] = JSON.parse(publishedScheduleJSON);
-        const userShifts = allShifts.filter(shift => shift.assignedTo === employeeName);
-        setMySchedule(userShifts);
+        const shiftsFromStorage: Shift[] = JSON.parse(publishedScheduleJSON);
+        setAllShifts(shiftsFromStorage);
     }
   }, []);
 
@@ -336,6 +336,35 @@ export default function EmployeeDashboard() {
     const [year, month, day] = dateString.split('-').map(Number);
     return new Date(year, month - 1, day);
   };
+  
+  const handleOfferShift = (shiftId: string) => {
+    const updatedShifts = allShifts.map(s => 
+        s.id === shiftId ? { ...s, status: 'offered' as const } : s
+    );
+    localStorage.setItem('published-schedule', JSON.stringify(updatedShifts));
+    setAllShifts(updatedShifts);
+    toast({
+        title: "Shift Offered",
+        description: "Your shift is now available for others to claim."
+    });
+  };
+
+  const handleClaimShift = (shiftId: string) => {
+    const updatedShifts = allShifts.map(s => 
+        s.id === shiftId 
+        ? { ...s, assignedTo: employeeName, status: 'scheduled' as const } 
+        : s
+    );
+    localStorage.setItem('published-schedule', JSON.stringify(updatedShifts));
+    setAllShifts(updatedShifts);
+    toast({
+        title: "Shift Claimed!",
+        description: "The shift has been added to your schedule."
+    });
+  };
+
+  const mySchedule = allShifts.filter(shift => shift.assignedTo === employeeName);
+  const availableShifts = allShifts.filter(shift => shift.status === 'offered' && shift.assignedTo !== employeeName);
 
 
   return (
@@ -531,7 +560,7 @@ export default function EmployeeDashboard() {
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="font-headline flex items-center gap-2"><CalendarDays /> My Schedule & Availability</CardTitle>
-              <CardDescription>View your upcoming shifts and set your unavailable days for the next scheduling period.</CardDescription>
+              <CardDescription>View your upcoming shifts, offer a shift to a colleague, and set your unavailable days.</CardDescription>
             </CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-6">
                 <div>
@@ -550,20 +579,28 @@ export default function EmployeeDashboard() {
                 </div>
                 <div>
                     <h3 className="font-semibold mb-2 text-sm">Upcoming Shifts</h3>
-                    <div className="border rounded-md p-4 space-y-2 min-h-[290px]">
+                    <div className="border rounded-md p-1 space-y-2 min-h-[290px]">
                         {mySchedule.length > 0 ? (
                            <Table>
                                <TableHeader>
                                    <TableRow>
                                        <TableHead>Date</TableHead>
                                        <TableHead>Shift</TableHead>
+                                       <TableHead className="text-right">Action</TableHead>
                                    </TableRow>
                                </TableHeader>
                                <TableBody>
                                    {mySchedule.sort((a,b) => a.date.localeCompare(b.date)).map(shift => (
-                                       <TableRow key={shift.id}>
+                                       <TableRow key={shift.id} className={shift.status === 'offered' ? 'bg-accent/10' : ''}>
                                            <TableCell className="font-medium">{format(parseDate(shift.date), "EEE, MMM dd")}</TableCell>
                                            <TableCell>{shift.startTime} - {shift.endTime}</TableCell>
+                                           <TableCell className="text-right">
+                                                {shift.status === 'offered' ? (
+                                                    <Badge variant="secondary">Offered</Badge>
+                                                ) : (
+                                                    <Button variant="outline" size="sm" onClick={() => handleOfferShift(shift.id)}>Offer</Button>
+                                                )}
+                                           </TableCell>
                                        </TableRow>
                                    ))}
                                </TableBody>
@@ -580,6 +617,52 @@ export default function EmployeeDashboard() {
         </TooltipTrigger>
         <TooltipContent>
             <p>View your shifts and set days you're unavailable.</p>
+        </TooltipContent>
+      </Tooltip>
+      
+      <Tooltip>
+        <TooltipTrigger asChild>
+            <Card className="lg:col-span-2">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><ArrowRightLeft /> Available Shifts to Claim</CardTitle>
+                    <CardDescription>Shifts offered by your colleagues. Claiming a shift will automatically add it to your schedule.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Shift</TableHead>
+                                <TableHead>Offered By</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {availableShifts.length > 0 ? (
+                                availableShifts.map(shift => (
+                                    <TableRow key={shift.id}>
+                                        <TableCell>{format(parseDate(shift.date), "EEE, MMM dd")}</TableCell>
+                                        <TableCell>{shift.startTime} - {shift.endTime}</TableCell>
+                                        <TableCell>{shift.assignedTo}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button size="sm" onClick={() => handleClaimShift(shift.id)}>Claim Shift</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                        There are no available shifts to claim right now.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </TooltipTrigger>
+        <TooltipContent>
+            <p>Pick up shifts offered by other employees.</p>
         </TooltipContent>
       </Tooltip>
 
