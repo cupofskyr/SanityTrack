@@ -73,7 +73,7 @@ export default function DashboardLayout({
     { href: "/dashboard/training/setup", icon: GraduationCap, label: "Training Setup", roles: ["Manager", "Owner"] },
   ];
 
-  const filteredNavItems = navItems.filter(item => item.roles.includes(role));
+  const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(role));
 
   return (
     <SidebarProvider>
