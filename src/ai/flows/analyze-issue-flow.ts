@@ -22,6 +22,7 @@ export async function analyzeIssue(input: AnalyzeIssueInput): Promise<AnalyzeIss
 
 const prompt = ai.definePrompt({
     name: 'analyzeIssuePrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: AnalyzeIssueInputSchema },
     output: { schema: AnalyzeIssueOutputSchema },
     prompt: `You are a building maintenance supervisor and health code expert. Your task is to analyze a reported issue, categorize it, determine its urgency, and suggest the right professional to call.
