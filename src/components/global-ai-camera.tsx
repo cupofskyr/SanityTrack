@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Camera, Sparkles, Loader2, Clipboard, AlertTriangle, FilePen, Edit } from 'lucide-react';
 import PhotoUploader from './photo-uploader';
-import { analyzePhotoIssue } from '@/ai/flows/analyze-photo-issue-flow';
+import { analyzePhotoIssue } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle } from './ui/alert';
 

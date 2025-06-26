@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
-import { summarizeReviews, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/ai/flows/fetch-reviews-flow';
+import { summarizeReviews, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Star, Rss } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';

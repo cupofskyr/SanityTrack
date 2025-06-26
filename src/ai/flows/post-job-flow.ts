@@ -1,5 +1,4 @@
 
-'use server';
 /**
  * @fileOverview An AI flow for simulating posting a job to a job board.
  */

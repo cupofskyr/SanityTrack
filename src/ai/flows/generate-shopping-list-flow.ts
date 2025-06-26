@@ -1,5 +1,4 @@
 
-'use server';
 
 /**
  * @fileOverview An AI flow for generating a shopping list from inventory data.

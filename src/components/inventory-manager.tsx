@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
-import { generateShoppingList, type GenerateShoppingListOutput } from '@/ai/flows/generate-shopping-list-flow';
+import { generateShoppingList, type GenerateShoppingListOutput } from '@/app/actions';
 import { Textarea } from './ui/textarea';
 
 type InventoryItem = {

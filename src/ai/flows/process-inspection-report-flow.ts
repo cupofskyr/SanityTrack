@@ -1,5 +1,4 @@
 
-'use server';
 
 /**
  * @fileOverview An AI flow for processing a health inspector's report.

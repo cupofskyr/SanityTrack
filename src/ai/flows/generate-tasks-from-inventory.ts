@@ -1,5 +1,4 @@
 
-'use server';
 
 /**
  * @fileOverview An AI flow for generating a list of recurring tasks based on restaurant inventory.

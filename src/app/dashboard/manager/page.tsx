@@ -22,16 +22,13 @@ import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, Extern
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { analyzeIssue } from '@/ai/flows/analyze-issue-flow';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import PhotoUploader from '@/components/photo-uploader';
-import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
 import StaffMealManager from '@/components/staff-meal-manager';
 import { format, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { translateText } from '@/ai/flows/translate-text-flow';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { generateWarningLetter, type GenerateWarningLetterOutput } from '@/ai/flows/generate-warning-letter-flow';
+import { analyzeIssue, generateDailyBriefing, translateText, generateWarningLetter, type GenerateDailyBriefingOutput, type GenerateWarningLetterOutput } from '@/app/actions';
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },

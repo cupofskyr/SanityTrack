@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Wand2, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { generateTasksFromInventory } from "@/ai/flows/generate-tasks-from-inventory";
+import { generateTasksFromInventory } from "@/app/actions";
 import { GenerateTasksFromInventoryInputSchema, type GenerateTasksFromInventoryOutput, type GenerateTasksFromInventoryInput } from "@/ai/schemas/task-generation-schemas";
 
 

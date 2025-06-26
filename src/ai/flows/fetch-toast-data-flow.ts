@@ -1,5 +1,4 @@
 
-'use server';
 
 /**
  * @fileOverview An AI flow for fetching simulated sales data from a Toast POS for a specific location.

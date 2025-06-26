@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle, Send, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { generateSchedule, type GenerateScheduleInput, type GenerateScheduleOutput } from "@/ai/flows/ai-shift-planner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { generateSchedule, type GenerateScheduleInput, type GenerateScheduleOutput } from "@/app/actions";
 
 type Shift = {
   id: string;

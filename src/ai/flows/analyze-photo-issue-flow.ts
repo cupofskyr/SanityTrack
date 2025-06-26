@@ -1,5 +1,4 @@
 
-'use server';
 
 /**
  * @fileOverview An AI flow for analyzing a photo to suggest a maintenance or cleaning issue.

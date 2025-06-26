@@ -1,5 +1,4 @@
 
-'use server';
 /**
  * @fileOverview An AI flow for generating a daily briefing for staff.
  *

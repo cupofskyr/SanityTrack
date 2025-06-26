@@ -15,8 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { analyzePhotoIssue } from '@/ai/flows/analyze-photo-issue-flow';
-import { translateText } from "@/ai/flows/translate-text-flow";
+import { analyzePhotoIssue, translateText } from '@/app/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 
