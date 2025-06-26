@@ -42,6 +42,9 @@ export const generateDailyBriefingFlow = ai.defineFlow(
   async () => {
     const currentDate = format(new Date(), 'EEEE, MMMM do, yyyy');
     const { output } = await prompt({ currentDate });
-    return output!;
+    if (!output) {
+      throw new Error('The AI returned an unexpected response. Please try again.');
+    }
+    return output;
   }
 );

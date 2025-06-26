@@ -48,6 +48,9 @@ export const suggestTaskAssignmentFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await prompt(input);
-    return output!;
+    if (!output) {
+        throw new Error('The AI returned an unexpected response. Please try again.');
+    }
+    return output;
   }
 );

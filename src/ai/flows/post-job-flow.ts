@@ -44,9 +44,10 @@ export const postJobFlow = ai.defineFlow(
     async (input) => {
         console.log('Initiating job posting flow for:', input);
         const response = await ai.generate({
-            prompt: `The user wants to post a job for a {{role}} at {{location}}. Use the available tools to post this job.`,
+            prompt: `The user wants to post a job for a {{role}} at {{location}}. Use the available tools to post this job. After the tool runs, return its results directly.`,
             model: 'googleai/gemini-1.5-flash-latest',
             tools: [postToJobBoardTool],
+            output: { schema: JobPostingOutputSchema }
         });
 
         const output = response.output;
@@ -54,8 +55,6 @@ export const postJobFlow = ai.defineFlow(
             throw new Error("The AI could not post the job. No output was returned.");
         }
         
-        // Since the tool's output schema matches the flow's output schema,
-        // we can cast the tool output directly. This might not always be the case.
-        return output as JobPostingOutput;
+        return output;
     }
 );

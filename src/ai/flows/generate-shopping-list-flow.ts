@@ -63,6 +63,9 @@ export const generateShoppingListFlow = ai.defineFlow(
     const augmentedInput = { ...input, currentDate };
 
     const { output } = await prompt(augmentedInput);
-    return output!;
+    if (!output) {
+      throw new Error('The AI returned an unexpected response. Please try again.');
+    }
+    return output;
   }
 );
