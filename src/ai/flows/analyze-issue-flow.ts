@@ -6,7 +6,7 @@
  * - AnalyzeIssueInput - The input type for the analyzeIssue function.
  * - AnalyzeIssueOutput - The return type for the analyzeIssue function.
  */
-import { configureGenkit, defineFlow } from 'genkit/flow';
+import { configureGenkit, defineFlow } from 'genkit';
 import { generate } from 'genkit/ai';
 import { googleAI } from '@genkit-ai/googleai';
 import {

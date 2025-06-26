@@ -2,7 +2,7 @@
 /**
  * @fileOverview An AI flow for fetching and summarizing customer reviews for a specific location.
  */
-import { configureGenkit, defineFlow, defineTool } from 'genkit/flow';
+import { configureGenkit, defineFlow, defineTool } from 'genkit';
 import { generate } from 'genkit/ai';
 import { googleAI } from '@genkit-ai/googleai';
 import { z } from 'zod';

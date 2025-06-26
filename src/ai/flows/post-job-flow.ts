@@ -2,7 +2,7 @@
 /**
  * @fileOverview An AI flow for simulating posting a job to a job board.
  */
-import { configureGenkit, defineFlow, defineTool } from 'genkit/flow';
+import { configureGenkit, defineFlow, defineTool } from 'genkit';
 import { generate } from 'genkit/ai';
 import { googleAI } from '@genkit-ai/googleai';
 import { JobPostingInputSchema, JobPostingOutputSchema, type JobPostingInput, type JobPostingOutput } from '@/ai/schemas/job-posting-schemas';

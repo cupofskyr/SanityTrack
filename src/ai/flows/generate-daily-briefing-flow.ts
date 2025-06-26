@@ -5,7 +5,7 @@
  * - generateDailyBriefing - A function that generates a daily message for staff.
  * - GenerateDailyBriefingOutput - The return type for the function.
  */
-import { configureGenkit, defineFlow } from 'genkit/flow';
+import { configureGenkit, defineFlow } from 'genkit';
 import { generate } from 'genkit/ai';
 import { googleAI } from '@genkit-ai/googleai';
 import { GenerateDailyBriefingOutputSchema, type GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';

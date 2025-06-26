@@ -6,7 +6,7 @@
  * - SuggestTaskAssignmentInput - The input type for the function.
  * - SuggestTaskAssignmentOutput - The return type for the function.
  */
-import { configureGenkit, defineFlow } from 'genkit/flow';
+import { configureGenkit, defineFlow } from 'genkit';
 import { generate } from 'genkit/ai';
 import { googleAI } from '@genkit-ai/googleai';
 import {

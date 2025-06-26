@@ -2,7 +2,7 @@
 /**
  * @fileOverview An AI flow for translating text into different languages.
  */
-import { configureGenkit, defineFlow } from 'genkit/flow';
+import { configureGenkit, defineFlow } from 'genkit';
 import { generate } from 'genkit/ai';
 import { googleAI } from '@genkit-ai/googleai';
 import {

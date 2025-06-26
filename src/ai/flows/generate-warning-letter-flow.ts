@@ -2,7 +2,7 @@
 /**
  * @fileOverview An AI flow for generating a warning letter about punctuality.
  */
-import { configureGenkit, defineFlow } from 'genkit/flow';
+import { configureGenkit, defineFlow } from 'genkit';
 import { generate } from 'genkit/ai';
 import { googleAI } from '@genkit-ai/googleai';
 import {

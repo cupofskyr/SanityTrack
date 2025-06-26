@@ -7,7 +7,7 @@
  * - FetchToastDataInput - The input type for the function.
  * - ToastPOSData - The return type for the function.
  */
-import { configureGenkit, defineFlow } from 'genkit/flow';
+import { configureGenkit, defineFlow } from 'genkit';
 import { z } from 'zod';
 import { googleAI } from '@genkit-ai/googleai';
 
