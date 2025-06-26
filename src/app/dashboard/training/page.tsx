@@ -5,7 +5,7 @@ import { useState } from 'react';
 import MenuGame from '@/components/menu-game';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { BookOpen, Calculator, ShieldQuestion, Video, Upload, Trophy, PlayCircle, Lightbulb } from 'lucide-react';
+import { BookOpen, Video, Upload, Trophy, PlayCircle, Lightbulb } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

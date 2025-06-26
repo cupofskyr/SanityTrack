@@ -22,10 +22,6 @@ import {
   User,
   LogOut,
   ChevronDown,
-  CalendarDays,
-  Boxes,
-  Wrench,
-  ShieldCheck,
   BookOpen,
   GraduationCap,
   Languages,
@@ -65,36 +61,19 @@ export default function DashboardLayout({
     if (role === "Employee") return "/dashboard/employee";
     if (role === "Manager") return "/dashboard/manager";
     if (role === "Health Department") return "/dashboard/health-department";
-    return "/dashboard";
+    // Fallback, though ideally we should always have a role
+    return "/dashboard/employee";
   };
 
-  const baseNavItems = [
-    { href: getDashboardLink(), icon: LayoutDashboard, label: "Dashboard" },
+  const dashboardLink = getDashboardLink();
+  const navItems = [
+    { href: dashboardLink, icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/taskboard", icon: ClipboardList, label: "Taskboard", roles: ["Employee", "Manager"] },
+    { href: "/dashboard/training", icon: BookOpen, label: "Training", roles: ["Employee", "Manager", "Owner", "Health Department"] },
+    { href: "/dashboard/training/setup", icon: GraduationCap, label: "Training Setup", roles: ["Manager", "Owner"] },
   ];
 
-  if (role !== "Health Department") {
-      baseNavItems.push({ href: "/dashboard/training", icon: BookOpen, label: "Training" });
-  }
-
-  if (role !== 'Owner') {
-    baseNavItems.push({ href: "/taskboard", icon: ClipboardList, label: "Taskboard" });
-  }
-
-  const managerNavItems = [
-    { href: "/dashboard/manager/shifts", icon: CalendarDays, label: "Shift Planner" },
-    { href: "/dashboard/manager/inventory", icon: Boxes, label: "Inventory & Counting" },
-    { href: "/dashboard/manager/equipment", icon: Wrench, label: "Equipment Setup" },
-  ];
-
-  let navItems = [...baseNavItems];
-  if (role === "Manager") {
-    navItems.push(...managerNavItems);
-  }
-  
-  if ((role === "Manager" || role === "Owner") && role !== "Health Department") {
-    navItems.push({ href: "/dashboard/training/setup", icon: GraduationCap, label: "Training Setup" });
-  }
-
+  const filteredNavItems = navItems.filter(item => item.roles.includes(role));
 
   return (
     <SidebarProvider>
@@ -109,11 +88,11 @@ export default function DashboardLayout({
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname.startsWith(item.href) && (item.href.length > getDashboardLink().length || item.href === getDashboardLink())}
+                  isActive={pathname === item.href}
                   tooltip={item.label}
                 >
                   <Link href={item.href}>

@@ -1,19 +1,36 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCX9jrXU9EmS6pRu5U94MzhldbXYV3CqrM",
-  authDomain: "sample-firebase-ai-app-5c1af.firebaseapp.com",
-  projectId: "sample-firebase-ai-app-5c1af",
-  storageBucket: "sample-firebase-ai-app-5c1af.firebasestorage.app",
-  messagingSenderId: "1030956896329",
-  appId: "1:1030956896329:web:3cc01ae68f8ab9fe5fef98"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
-export { app };
+const signInWithGoogle = async () => {
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        // You can now access user details like:
+        // user.displayName, user.email, user.photoURL
+        console.log("User signed in: ", user);
+        return user;
+    } catch (error) {
+        console.error("Error during Google sign-in: ", error);
+        return null;
+    }
+};
+
+
+export { app, auth, signInWithGoogle };
