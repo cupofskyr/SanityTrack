@@ -20,6 +20,11 @@ const nextConfig = {
         hostname: 'storage.googleapis.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'tb-static.uber.com',
+        pathname: '/**',
+      },
     ],
   },
 };

@@ -22,19 +22,27 @@ type MenuItem = {
   imageUrl: string;
 };
 
+const imageUrls = [
+    "https://tb-static.uber.com/prod/image-proc/processed_images/830faaecef3aebb5bb2de26d41c840c5/bc9c318a9c96996e2d990faf2b0c65f6.jpeg",
+    "https://tb-static.uber.com/prod/image-proc/processed_images/465bb34b23e531d8c3055fbdbfc0f43b/bc9c318a9c96996e2d990faf2b0c65f6.jpeg",
+    "https://tb-static.uber.com/prod/image-proc/processed_images/ac77868697dcba84c4c2b224858d8a6a/bc9c318a9c96996e2d990faf2b0c65f6.jpeg",
+    "https://tb-static.uber.com/prod/image-proc/processed_images/482048fe5a60fe2c0ccb00074e43b7ea/bc9c318a9c96996e2d990faf2b0c65f6.jpeg",
+    "https://tb-static.uber.com/prod/image-proc/processed_images/f1ec6b730ff3a8b636060a29a7133882/bc9c318a9c96996e2d990faf2b0c65f6.jpeg"
+];
+
 const initialMenuItems: MenuItem[] = [
-    { id: 1, name: 'Bi-Frost Berry Blast', description: 'A frosty blast of mixed berries and acai, blended with Skyr.', ingredients: 'Skyr, Acai, Strawberries, Blueberries, Bananas, Granola', allergens: 'Dairy, Gluten', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 2, name: 'Cloudy Morning Bowl', description: 'A tropical mix of mango and pineapple with the richness of peanut butter and almonds.', ingredients: 'Skyr, Mango, Pineapple, Banana, Almond Milk, Almonds, Peanut Butter, Dates, Granola, Strawberries, Dark Chocolate', allergens: 'Dairy, Nuts, Gluten', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 3, name: 'Frost Giant Fuel Bowl', description: 'A vibrant blue bowl packed with fruit and protein for a powerful start.', ingredients: 'Skyr, Coconut, Blue Spirulina, Strawberries, Raspberries, Red Apples, Dates, Granola, Dark Chocolate, Peanut Butter', allergens: 'Dairy, Nuts, Gluten', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 4, name: 'God of Thunder', description: 'A divine mix of acai, banana, and vanilla with rich toppings.', ingredients: 'Acai, Banana, Almond Milk, Skyr, Blueberries, Strawberries, Vanilla, Granola, Coconut, Cacao Nibs, Honey', allergens: 'Dairy, Nuts, Gluten', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 5, name: 'The Hammer Smash', description: 'A powerful bowl smashed with peanut butter, acai, and banana.', ingredients: 'Acai, Banana, Peanut Butter, Chia Seeds, Almond Milk, Dates, Cocoa Nibs, Almonds, Dark Chocolate', allergens: 'Nuts', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 6, name: 'Mjolnir Mega Bowl', description: 'A mighty bowl worthy of Mjolnir, packed with tropical fruits, protein, and a coffee kick.', ingredients: 'Skyr, Mango, Pineapple, Banana, Almond Milk, Collagen, Coffee Powder, Peanut Butter, Dates, Granola, Strawberries, Coconut Flakes, Chocolate, Honey', allergens: 'Dairy, Nuts, Gluten', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 7, name: 'Valkyrie Victory Bowl', description: 'A victorious bowl of berries and acai, perfect for a champion.', ingredients: 'Skyr, Blueberries, Raspberries, Strawberries, Acai, Granola, Chia Seeds', allergens: 'Dairy, Gluten', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 8, name: 'Viking Vacation Bowl', description: 'A tropical vacation in a bowl for any Viking.', ingredients: 'Acai, Blueberries, Raspberries, Strawberries, Banana, Almond Milk, Granola, Mango, Pineapple, Coconut, Honey', allergens: 'Nuts, Gluten', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 9, name: 'Cloudy Morning Shake', description: 'A creamy and tropical shake to start your morning.', ingredients: 'Skyr, Mango, Pineapple, Orange, Banana, Almond Milk, Almonds, Peanut Butter, Dates', allergens: 'Dairy, Nuts', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 10, name: 'Green Goddess', description: 'A vibrant green shake with a ginger kick.', ingredients: 'Skyr, Pineapple, Spinach, Ginger, Almond Milk', allergens: 'Dairy, Nuts', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 11, name: 'Greenland', description: 'A refreshing green shake with avocado and lemon.', ingredients: 'Skyr, Avocado, Spinach, Lemon Juice, Ginger, Almond Milk', allergens: 'Dairy, Nuts', imageUrl: 'https://placehold.co/600x400.png' },
-    { id: 12, name: 'Loki\'s Elixr', description: 'A mischievous and delicious elixir with a unique blend of fruits and vegetables.', ingredients: 'Skyr, Mango, Avocado, Spinach, Carrots, Orange, Ginger, Lime Juice', allergens: 'Dairy', imageUrl: 'https://placehold.co/600x400.png' }
+    { id: 1, name: 'Bi-Frost Berry Blast', description: 'A frosty blast of mixed berries and acai, blended with Skyr.', ingredients: 'Skyr, Acai, Strawberries, Blueberries, Bananas, Granola', allergens: 'Dairy, Gluten', imageUrl: imageUrls[0] },
+    { id: 2, name: 'Cloudy Morning Bowl', description: 'A tropical mix of mango and pineapple with the richness of peanut butter and almonds.', ingredients: 'Skyr, Mango, Pineapple, Banana, Almond Milk, Almonds, Peanut Butter, Dates, Granola, Strawberries, Dark Chocolate', allergens: 'Dairy, Nuts, Gluten', imageUrl: imageUrls[1] },
+    { id: 3, name: 'Frost Giant Fuel Bowl', description: 'A vibrant blue bowl packed with fruit and protein for a powerful start.', ingredients: 'Skyr, Coconut, Blue Spirulina, Strawberries, Raspberries, Red Apples, Dates, Granola, Dark Chocolate, Peanut Butter', allergens: 'Dairy, Nuts, Gluten', imageUrl: imageUrls[2] },
+    { id: 4, name: 'God of Thunder', description: 'A divine mix of acai, banana, and vanilla with rich toppings.', ingredients: 'Acai, Banana, Almond Milk, Skyr, Blueberries, Strawberries, Vanilla, Granola, Coconut, Cacao Nibs, Honey', allergens: 'Dairy, Nuts, Gluten', imageUrl: imageUrls[3] },
+    { id: 5, name: 'The Hammer Smash', description: 'A powerful bowl smashed with peanut butter, acai, and banana.', ingredients: 'Acai, Banana, Peanut Butter, Chia Seeds, Almond Milk, Dates, Cocoa Nibs, Almonds, Dark Chocolate', allergens: 'Nuts', imageUrl: imageUrls[4] },
+    { id: 6, name: 'Mjolnir Mega Bowl', description: 'A mighty bowl worthy of Mjolnir, packed with tropical fruits, protein, and a coffee kick.', ingredients: 'Skyr, Mango, Pineapple, Banana, Almond Milk, Collagen, Coffee Powder, Peanut Butter, Dates, Granola, Strawberries, Coconut Flakes, Chocolate, Honey', allergens: 'Dairy, Nuts, Gluten', imageUrl: imageUrls[0] },
+    { id: 7, name: 'Valkyrie Victory Bowl', description: 'A victorious bowl of berries and acai, perfect for a champion.', ingredients: 'Skyr, Blueberries, Raspberries, Strawberries, Acai, Granola, Chia Seeds', allergens: 'Dairy, Gluten', imageUrl: imageUrls[1] },
+    { id: 8, name: 'Viking Vacation Bowl', description: 'A tropical vacation in a bowl for any Viking.', ingredients: 'Acai, Blueberries, Raspberries, Strawberries, Banana, Almond Milk, Granola, Mango, Pineapple, Coconut, Honey', allergens: 'Nuts, Gluten', imageUrl: imageUrls[2] },
+    { id: 9, name: 'Cloudy Morning Shake', description: 'A creamy and tropical shake to start your morning.', ingredients: 'Skyr, Mango, Pineapple, Orange, Banana, Almond Milk, Almonds, Peanut Butter, Dates', allergens: 'Dairy, Nuts', imageUrl: imageUrls[3] },
+    { id: 10, name: 'Green Goddess', description: 'A vibrant green shake with a ginger kick.', ingredients: 'Skyr, Pineapple, Spinach, Ginger, Almond Milk', allergens: 'Dairy, Nuts', imageUrl: imageUrls[4] },
+    { id: 11, name: 'Greenland', description: 'A refreshing green shake with avocado and lemon.', ingredients: 'Skyr, Avocado, Spinach, Lemon Juice, Ginger, Almond Milk', allergens: 'Dairy, Nuts', imageUrl: imageUrls[0] },
+    { id: 12, name: 'Loki\'s Elixr', description: 'A mischievous and delicious elixir with a unique blend of fruits and vegetables.', ingredients: 'Skyr, Mango, Avocado, Spinach, Carrots, Orange, Ginger, Lime Juice', allergens: 'Dairy', imageUrl: imageUrls[1] }
 ];
 
 type VideoSubmission = {
