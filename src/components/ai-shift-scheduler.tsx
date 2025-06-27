@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -124,9 +123,19 @@ export default function AIShiftScheduler() {
     };
     
     const handleManualAssignment = (shiftId: string, employeeName: string) => {
-        setShifts(shifts.map(shift => 
-            shift.id === shiftId ? { ...shift, assignedTo: employeeName === 'unassign' ? undefined : employeeName, status: 'scheduled' } : shift
-        ));
+        const updatedShifts = shifts.map(shift => 
+            shift.id === shiftId ? { ...shift, assignedTo: employeeName === 'unassign' ? undefined : employeeName, status: 'scheduled' as const } : shift
+        );
+        setShifts(updatedShifts);
+
+        // If the schedule is already published, re-publish the changes.
+        if (isPublished) {
+            localStorage.setItem('published-schedule', JSON.stringify(updatedShifts));
+            toast({
+                title: "Schedule Updated",
+                description: "Your changes have been published to employees in real-time."
+            });
+        }
     };
 
     const handleGenerateSchedule = async () => {
