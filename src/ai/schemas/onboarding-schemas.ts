@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview Schemas and types for the AI onboarding flows.
  */
