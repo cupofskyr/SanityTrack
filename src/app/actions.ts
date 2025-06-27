@@ -138,37 +138,39 @@ export async function masterOnboardingParserAction(input: OnboardingParserInput)
     return safeRun(masterOnboardingParser, input, 'masterOnboardingParser');
 }
 
+// Refactored to use the safeRun wrapper for consistency and robust error handling.
 export async function queryKnowledgeBaseAction(input: { question: string }): Promise<{ data: { answer: string; source: string } | null; error: string | null; }> {
-    // 1. Simulate the retrieval step of RAG
-    let retrievedContext = "No relevant information found in the knowledge base. Try asking about the 'Valkyrie Victory Bowl' or the 'closing checklist'.";
-    let source = "Knowledge Base";
+    
+    const ragFlow = async (ragInput: { question: string }): Promise<{ answer: string; source: string; }> => {
+        // 1. Simulate the retrieval step of RAG
+        let retrievedContext = "No relevant information found in the knowledge base. Try asking about the 'Valkyrie Victory Bowl' or the 'closing checklist'.";
+        let source = "Knowledge Base";
 
-    if (input.question.toLowerCase().includes("valkyrie")) {
-        retrievedContext = "The Valkyrie Victory Bowl is a high-protein bowl made with vanilla skyr, strawberries, blueberries, and a sprinkle of almond granola. It should be served in the standard blue bowl. - from Q3_Menu_Specials.pdf";
-        source = "Q3_Menu_Specials.pdf";
-    } else if (input.question.toLowerCase().includes("closing")) {
-        retrievedContext = "End-of-day closing checklist requires all counters to be wiped, floors mopped, and the back door must be photographed in a locked position. - from new_closing_checklist.jpg";
-        source = "new_closing_checklist.jpg";
-    }
+        if (ragInput.question.toLowerCase().includes("valkyrie")) {
+            retrievedContext = "The Valkyrie Victory Bowl is a high-protein bowl made with vanilla skyr, strawberries, blueberries, and a sprinkle of almond granola. It should be served in the standard blue bowl. - from Q3_Menu_Specials.pdf";
+            source = "Q3_Menu_Specials.pdf";
+        } else if (ragInput.question.toLowerCase().includes("closing")) {
+            retrievedContext = "End-of-day closing checklist requires all counters to be wiped, floors mopped, and the back door must be photographed in a locked position. - from new_closing_checklist.jpg";
+            source = "new_closing_checklist.jpg";
+        }
 
-    // 2. Augment the prompt and call the AI flow
-    const flowInput: QueryKnowledgeBaseInput = {
-        question: input.question,
-        context: retrievedContext
+        // 2. Augment the prompt and call the AI flow
+        const flowInput: QueryKnowledgeBaseInput = {
+            question: ragInput.question,
+            context: retrievedContext
+        };
+
+        const result = await queryKnowledgeBase(flowInput);
+        
+        if (!result?.answer) {
+             throw new Error("AI returned an empty or invalid response for the answer.");
+        }
+        
+        // Augment the successful result with the source
+        return { answer: result.answer, source: source };
     };
 
-    try {
-        const result = await queryKnowledgeBase(flowInput);
-        if (!result || !result.answer) {
-            console.error(`Error in queryKnowledgeBase: AI returned an empty response.`);
-            return { data: null, error: `The AI returned an empty response. Please try again.` };
-        }
-        // Augment the successful result with the source
-        return { data: { answer: result.answer, source: source }, error: null };
-    } catch (e: any) {
-        console.error(`Error in queryKnowledgeBase:`, e);
-        return { data: null, error: `An unexpected error occurred. Details: ${e.message || 'Unknown error'}` };
-    }
+    return safeRun(ragFlow, input, 'queryKnowledgeBase');
 }
 
 // New action for Sentinel Agent
