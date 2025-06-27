@@ -16,7 +16,7 @@ import { generateInquiry, type GenerateInquiryInput, type GenerateInquiryOutput 
 import { processInspectionReport, type ProcessInspectionReportInput, type ProcessInspectionReportOutput } from '@/ai/flows/process-inspection-report-flow';
 import { generateWarningLetter, type GenerateWarningLetterInput, type GenerateWarningLetterOutput } from '@/ai/flows/generate-warning-letter-flow';
 import { fetchToastData, type FetchToastDataInput, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
-import { summarizeReviews, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/ai/flows/fetch-reviews-flow';
+import { summarizeReviews, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/ai/schemas/review-summary-schemas';
 import { postJob, type JobPostingInput, type JobPostingOutput } from '@/ai/flows/post-job-flow';
 import { compareFoodQuality, type CompareFoodQualityInput, type CompareFoodQualityOutput } from '@/ai/flows/compare-food-quality-flow';
 import { estimateStockLevel, type EstimateStockLevelInput, type EstimateStockLevelOutput } from '@/ai/flows/estimate-stock-level-flow';
@@ -28,6 +28,7 @@ import { masterOnboardingParser } from '@/ai/flows/master-onboarding-parser-flow
 import { queryKnowledgeBase, type QueryKnowledgeBaseInput, type QueryKnowledgeBaseOutput } from '@/ai/flows/knowledge-rag-flow';
 import { runMasterAgentDecision, type MasterAgentInput, type MasterAgentOutput } from '@/ai/flows/master-agent-decision-flow';
 import type { OnboardingInterviewInput, OnboardingInterviewOutput, OnboardingParserInput, OnboardingParserOutput } from '@/ai/schemas/onboarding-schemas';
+import { scanInvoice, type ScanInvoiceInput, type ScanInvoiceOutput } from '@/ai/flows/scan-invoice-flow';
 
 
 // This wrapper function centralizes error handling for all AI flows.
@@ -126,6 +127,12 @@ export async function explainTaskImportanceAction(input: ExplainTaskImportanceIn
 export async function analyzeWaitTimeAction(input: AnalyzeWaitTimeInput) {
     return safeRun(analyzeWaitTime, input, 'analyzeWaitTime');
 }
+
+// New action for scanning invoices
+export async function scanInvoiceAction(input: ScanInvoiceInput): Promise<{ data: ScanInvoiceOutput | null; error: string | null; }> {
+    return safeRun(scanInvoice, input, 'scanInvoice');
+}
+
 
 // New actions for AI Onboarding
 export async function continueOnboardingInterviewAction(input: OnboardingInterviewInput): Promise<{ data: OnboardingInterviewOutput | null; error: string | null; }> {

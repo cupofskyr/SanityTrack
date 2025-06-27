@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle, AlertCircle, MailWarning, HelpCircle } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle, AlertCircle, MailWarning, HelpCircle, Utensils } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -627,6 +627,29 @@ export default function ManagerDashboard() {
                     </CardContent>
                 </Card>
             )}
+
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                             <CardTitle className="font-headline flex items-center gap-2"><Utensils /> AI Spoilage Alerts</CardTitle>
+                            <CardDescription>The AI scans inventory batches daily to identify items nearing expiration, helping to reduce waste.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <Alert>
+                                <Sparkles className="h-4 w-4" />
+                                <AlertTitle>AI Task: Use First!</AlertTitle>
+                                <AlertDescription>
+                                The batch of 'Skyr (in kg)' received on {format(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), 'PPP')} is nearing its expiration. A 'Use First' task has been assigned to the kitchen team to prevent waste.
+                                </AlertDescription>
+                            </Alert>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>AI-powered alerts to minimize food spoilage and waste.</p>
+                </TooltipContent>
+            </Tooltip>
 
             <Tooltip>
                 <TooltipTrigger asChild>

@@ -1,42 +1,74 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, PlusCircle, Sparkles, Loader2, Send } from 'lucide-react';
+import { Trash2, PlusCircle, Sparkles, Loader2, Send, Package, Link as LinkIcon, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
-import { generateShoppingList } from '@/app/actions';
+import { generateShoppingListAction, scanInvoiceAction } from '@/app/actions';
 import type { GenerateShoppingListOutput } from '@/ai/schemas/shopping-list-schemas';
+import type { ScanInvoiceOutput } from '@/ai/schemas/invoice-scan-schemas';
 import { Textarea } from './ui/textarea';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { add, format, formatDistanceToNow } from 'date-fns';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from './ui/dialog';
+import PhotoUploader from './photo-uploader';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+
+type Batch = {
+    id: string;
+    quantity: number;
+    receivedAt: Date;
+    expiresAt: Date;
+};
 
 type InventoryItem = {
     id: number;
     name: string;
     par: number;
-    currentCount: number;
+    batches: Batch[];
 };
+
+type ScannedItem = {
+    name: string;
+    quantity: number;
+    matched: boolean;
+};
+
+const initialInventory: InventoryItem[] = [
+    { id: 1, name: 'Bananas (by count)', par: 50, batches: [
+        { id: 'b1', quantity: 30, receivedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), expiresAt: add(new Date(), { days: 4 }) },
+        { id: 'b2', quantity: 30, receivedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), expiresAt: add(new Date(), { days: 6 }) },
+    ]},
+    { id: 2, name: 'Strawberries (in lbs)', par: 10, batches: [
+        { id: 's1', quantity: 5, receivedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), expiresAt: add(new Date(), { days: 3 }) },
+    ]},
+    { id: 3, name: 'Skyr (in kg)', par: 15, batches: [
+        { id: 'sk1', quantity: 10, receivedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), expiresAt: add(new Date(), { days: 10 }) },
+    ]},
+];
 
 export default function InventoryManager() {
     const { toast } = useToast();
-    const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([
-        { id: 1, name: 'Bananas (by count)', par: 50, currentCount: 60 },
-        { id: 2, name: 'Strawberries (in lbs)', par: 10, currentCount: 5 },
-        { id: 3, name: 'Blueberries (in lbs)', par: 8, currentCount: 9 },
-        { id: 4, name: 'Skyr (in kg)', par: 15, currentCount: 10 },
-        { id: 5, name: 'Protein Powder (in kg)', par: 5, currentCount: 5 },
-    ]);
+    const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(initialInventory);
     const [newItem, setNewItem] = useState({ name: '', par: ''});
-    const [countingFrequency, setCountingFrequency] = useState('1');
-
-    const [isGenerating, setIsGenerating] = useState(false);
+    
+    // AI Reorder state
+    const [isGeneratingList, setIsGeneratingList] = useState(false);
     const [shoppingListResult, setShoppingListResult] = useState<GenerateShoppingListOutput | null>(null);
+
+    // AI Receiving state
+    const [isReceivingDialogOpen, setIsReceivingDialogOpen] = useState(false);
+    const [invoicePhoto, setInvoicePhoto] = useState<string | null>(null);
+    const [isScanning, setIsScanning] = useState(false);
+    const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
 
     const handleAddItem = (e: React.FormEvent) => {
         e.preventDefault();
@@ -53,7 +85,7 @@ export default function InventoryManager() {
             id: newId,
             name: newItem.name,
             par: parseInt(newItem.par, 10),
-            currentCount: 0,
+            batches: [],
         };
         setInventoryItems([...inventoryItems, newInventoryItem]);
         setNewItem({ name: '', par: '' });
@@ -75,15 +107,6 @@ export default function InventoryManager() {
         }
     };
     
-    const handleCountChange = (id: number, value: string) => {
-        const count = parseInt(value, 10);
-        setInventoryItems(
-            inventoryItems.map(item =>
-                item.id === id ? { ...item, currentCount: isNaN(count) ? 0 : count } : item
-            )
-        );
-    };
-
     const handleParChange = (id: number, value: string) => {
         const par = parseInt(value, 10);
         setInventoryItems(
@@ -94,15 +117,21 @@ export default function InventoryManager() {
     };
 
     const itemsBelowPar = useMemo(() => {
-        return inventoryItems.filter(item => item.currentCount < item.par);
+        return inventoryItems.filter(item => {
+            const currentCount = item.batches.reduce((sum, batch) => sum + batch.quantity, 0);
+            return currentCount < item.par;
+        }).map(item => ({
+            ...item,
+            currentCount: item.batches.reduce((sum, batch) => sum + batch.quantity, 0)
+        }));
     }, [inventoryItems]);
 
     const handleGenerateList = async () => {
-        setIsGenerating(true);
+        setIsGeneratingList(true);
         setShoppingListResult(null);
         try {
             const itemsToOrder = itemsBelowPar.map(({name, par, currentCount}) => ({name, par, currentCount}));
-            const result = await generateShoppingList({ items: itemsToOrder });
+            const result = await generateShoppingListAction({ items: itemsToOrder });
             if (result.error || !result.data) {
                 toast({
                     variant: 'destructive',
@@ -118,13 +147,8 @@ export default function InventoryManager() {
             }
         } catch (error) {
             console.error("Failed to generate shopping list", error);
-            toast({
-                variant: 'destructive',
-                title: 'AI Error',
-                description: 'There was a problem generating the shopping list.',
-            });
         } finally {
-            setIsGenerating(false);
+            setIsGeneratingList(false);
         }
     };
     
@@ -134,59 +158,142 @@ export default function InventoryManager() {
             description: 'In a real application, this would send an email to your supplier.',
         });
     };
+    
+    const handleScanInvoice = async () => {
+        if (!invoicePhoto) return;
+        setIsScanning(true);
+        setScannedItems([]);
+        try {
+            const knownItems = inventoryItems.map(item => item.name);
+            const result = await scanInvoiceAction({ invoiceImageUri: invoicePhoto, knownItems });
+            if (result.error || !result.data) {
+                throw new Error(result.error || "Failed to scan invoice");
+            }
+
+            const processedItems = result.data.scannedItems.map(scanned => ({
+                name: scanned.itemName,
+                quantity: scanned.quantity,
+                matched: knownItems.some(known => known.toLowerCase().includes(scanned.itemName.toLowerCase()) || scanned.itemName.toLowerCase().includes(known.toLowerCase()))
+            }));
+            
+            setScannedItems(processedItems);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'AI Scan Failed', description: error.message });
+        } finally {
+            setIsScanning(false);
+        }
+    };
+
+    const handleConfirmDelivery = () => {
+        const updatedItems = [...inventoryItems];
+
+        scannedItems.forEach(scannedItem => {
+            const itemIndex = updatedItems.findIndex(invItem => invItem.name.toLowerCase() === scannedItem.name.toLowerCase());
+            if (itemIndex > -1) {
+                const newBatch: Batch = {
+                    id: `${updatedItems[itemIndex].id}-${Date.now()}`,
+                    quantity: scannedItem.quantity,
+                    receivedAt: new Date(),
+                    // Shelf life is hardcoded to 7 days for this demo
+                    expiresAt: add(new Date(), { days: 7 })
+                };
+                updatedItems[itemIndex].batches.push(newBatch);
+            }
+        });
+
+        setInventoryItems(updatedItems);
+        toast({ title: "Inventory Updated!", description: "New batches have been added from the invoice."});
+        
+        // Reset dialog state
+        setIsReceivingDialogOpen(false);
+        setInvoicePhoto(null);
+        setScannedItems([]);
+    };
 
     return (
         <div className="space-y-6">
              <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline">Add & Manage Inventory</CardTitle>
+                <CardHeader className="flex-row items-start justify-between">
+                    <div>
+                        <CardTitle className="font-headline">Add & Manage Inventory</CardTitle>
+                        <CardDescription>Add new items to track. Batches are added via the "Receive Inventory" feature.</CardDescription>
+                    </div>
+                     <Dialog open={isReceivingDialogOpen} onOpenChange={setIsReceivingDialogOpen}>
+                        <DialogTrigger asChild>
+                             <Button><Download className="mr-2 h-4 w-4" /> Receive Inventory</Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                             <DialogHeader>
+                                <DialogTitle className="font-headline">AI-Assisted Receiving</DialogTitle>
+                                <DialogDescription>Take a photo of a paper invoice. The AI will scan it and help you update your stock levels.</DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4 space-y-4">
+                               <PhotoUploader onPhotoDataChange={setInvoicePhoto} />
+                               {invoicePhoto && (
+                                   <Button className="w-full" onClick={handleScanInvoice} disabled={isScanning}>
+                                       {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                       Scan Invoice with AI
+                                   </Button>
+                               )}
+                                {scannedItems.length > 0 && (
+                                    <div className="space-y-2">
+                                        <Label>Scanned Items</Label>
+                                        <Table>
+                                            <TableHeader><TableRow><TableHead>Item Name</TableHead><TableHead>Quantity</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                                            <TableBody>
+                                                {scannedItems.map((item, i) => (
+                                                    <TableRow key={i}>
+                                                        <TableCell>{item.name}</TableCell>
+                                                        <TableCell>{item.quantity}</TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={item.matched ? 'default' : 'destructive'}>{item.matched ? 'Matched' : 'Unmatched'}</Badge>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                        <p className="text-xs text-muted-foreground">Unmatched items will be ignored. Add them to your inventory list first if you wish to track them.</p>
+                                    </div>
+                                )}
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsReceivingDialogOpen(false)}>Cancel</Button>
+                                <Button onClick={handleConfirmDelivery} disabled={scannedItems.length === 0}>Confirm & Add to Inventory</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                     </Dialog>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent>
                     <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div className="grid gap-2">
                             <Label htmlFor="item-name">New Item Name</Label>
-                            <Input 
-                                id="item-name" 
-                                placeholder="e.g., Strawberry Boxes" 
-                                value={newItem.name}
-                                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                            />
+                            <Input id="item-name" placeholder="e.g., Protein Powder (kg)" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}/>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="item-par">Par Level (Ideal Count)</Label>
-                            <Input 
-                                id="item-par" 
-                                type="number" 
-                                placeholder="e.g., 15"
-                                value={newItem.par}
-                                onChange={(e) => setNewItem({ ...newItem, par: e.target.value })}
-                            />
+                            <Input id="item-par" type="number" placeholder="e.g., 5" value={newItem.par} onChange={(e) => setNewItem({ ...newItem, par: e.target.value })}/>
                         </div>
-                        <Button type="submit" className="w-full md:w-auto">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Item
-                        </Button>
+                        <Button type="submit" className="w-full md:w-auto"><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button>
                     </form>
-
-                    <div className="grid md:w-1/3 gap-2">
-                        <Label htmlFor="counting-frequency">Counting Frequency</Label>
-                        <Select value={countingFrequency} onValueChange={setCountingFrequency}>
-                            <SelectTrigger id="counting-frequency">
-                                <SelectValue placeholder="Select frequency" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="1">Once a week (Sunday)</SelectItem>
-                                <SelectItem value="2">Twice a week (Wed, Sun)</SelectItem>
-                                <SelectItem value="3">Three times a week (Wed, Fri, Sun)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
                 </CardContent>
             </Card>
+
+             <Alert variant="default" className="bg-primary/5 border-primary/20 text-primary [&>svg]:text-primary">
+                <Sparkles className="h-4 w-4" />
+                <AlertTitle className="font-semibold">Unlock Live Inventory!</AlertTitle>
+                <AlertDescription className="flex justify-between items-center">
+                    Tired of manual counts? Connect your POS to enable real-time, automated inventory tracking.
+                    <Button size="sm" variant="outline" className="text-primary border-primary hover:bg-primary/10 hover:text-primary">
+                        <LinkIcon className="mr-2 h-4 w-4" /> Connect your POS
+                    </Button>
+                </AlertDescription>
+            </Alert>
+
 
             <Card className="lg:col-span-3 border-primary bg-primary/5">
                 <CardHeader>
                     <CardTitle className="font-headline text-primary flex items-center gap-2"><Sparkles /> AI Reorder Assistant</CardTitle>
-                    <CardDescription>When items are below par, the AI can generate a shopping list for you. Automated emails and alarms will notify the manager.</CardDescription>
+                    <CardDescription>When items are below par, the AI can generate a shopping list for you. Connect your POS to unlock predictive ordering based on sales trends.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-row items-center justify-between rounded-lg border bg-card text-card-foreground p-4">
@@ -196,8 +303,8 @@ export default function InventoryManager() {
                                 {itemsBelowPar.length} item(s) are below par and require reordering.
                             </p>
                         </div>
-                        <Button onClick={handleGenerateList} disabled={isGenerating || itemsBelowPar.length === 0}>
-                            {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button onClick={handleGenerateList} disabled={isGeneratingList || itemsBelowPar.length === 0}>
+                            {isGeneratingList && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Generate Shopping List
                         </Button>
                     </div>
@@ -227,69 +334,55 @@ export default function InventoryManager() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Current Inventory List</CardTitle>
+                    <CardTitle className="font-headline">Current Inventory & Batches</CardTitle>
                     <CardDescription>
-                        Update the "Current Count" after receiving a delivery. Adjust "Par Level" to change reorder points. The AI uses this data to create shopping lists.
+                        This is the master list of all inventory. The current count is the sum of all its batches. FIFO is used for depletion.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="border rounded-md">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Item</TableHead>
-                                    <TableHead>Par Level</TableHead>
-                                    <TableHead>Current Count</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {inventoryItems.length > 0 ? (
-                                    inventoryItems.map((item) => {
-                                        const isLow = item.currentCount < item.par;
-                                        return (
-                                        <TableRow key={item.id} className={cn(isLow && "bg-destructive/10 hover:bg-destructive/20")}>
-                                            <TableCell className="font-medium">{item.name}</TableCell>
-                                            <TableCell>
-                                                <Input 
-                                                    type="number"
-                                                    value={item.par}
-                                                    onChange={(e) => handleParChange(item.id, e.target.value)}
-                                                    className="w-24 h-8"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input 
-                                                    type="number"
-                                                    value={item.currentCount}
-                                                    onChange={(e) => handleCountChange(item.id, e.target.value)}
-                                                    className="w-24 h-8"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={isLow ? "destructive" : "outline"}>
-                                                    {isLow ? "Low Stock" : "OK"}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                    <span className="sr-only">Remove</span>
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    )})
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center h-24">
-                                            No inventory items added yet.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
+                   <Accordion type="multiple" className="w-full">
+                    {inventoryItems.map(item => {
+                        const totalCount = item.batches.reduce((sum, batch) => sum + batch.quantity, 0);
+                        const isLow = totalCount < item.par;
+                        return (
+                            <AccordionItem value={`item-${item.id}`} key={item.id}>
+                                <AccordionTrigger className={cn("hover:no-underline", isLow && "bg-destructive/10 px-4 rounded-t-md")}>
+                                    <div className="flex-1 text-left">
+                                        <div className="flex justify-between w-full">
+                                            <span className="font-semibold">{item.name}</span>
+                                            <Badge variant={isLow ? "destructive" : "outline"}>
+                                                {totalCount} / {item.par}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="p-0">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Batch Quantity</TableHead>
+                                                <TableHead>Received</TableHead>
+                                                <TableHead>Expires</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {item.batches.length > 0 ? (
+                                                item.batches.sort((a,b) => a.receivedAt.getTime() - b.receivedAt.getTime()).map(batch => (
+                                                <TableRow key={batch.id}>
+                                                    <TableCell>{batch.quantity}</TableCell>
+                                                    <TableCell>{formatDistanceToNow(batch.receivedAt, { addSuffix: true })}</TableCell>
+                                                    <TableCell>{formatDistanceToNow(batch.expiresAt, { addSuffix: true })}</TableCell>
+                                                </TableRow>
+                                            ))) : (
+                                                 <TableRow><TableCell colSpan={3} className="text-center h-16">No batches. Use "Receive Inventory".</TableCell></TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </AccordionContent>
+                            </AccordionItem>
+                        );
+                    })}
+                   </Accordion>
                 </CardContent>
             </Card>
         </div>
