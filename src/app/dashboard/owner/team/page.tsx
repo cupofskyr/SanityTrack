@@ -13,8 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { PlusCircle, MoreHorizontal, Pencil } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 type TeamMember = {
   id: number;
@@ -30,7 +30,7 @@ const initialTeamMembers: TeamMember[] = [
   { id: 2, name: 'Casey Lee', email: 'casey.lee@example.com', role: 'Manager', status: 'Active', avatar: 'https://placehold.co/100x100/FF5722/FFFFFF.png' },
   { id: 3, name: 'John Doe', email: 'john.doe@example.com', role: 'Employee', status: 'Active', avatar: 'https://placehold.co/100x100/4CAF50/FFFFFF.png' },
   { id: 4, name: 'Inspector Gadget', email: 'inspector.gadget@health.gov', role: 'Health Department', status: 'Active', avatar: 'https://placehold.co/100x100/2196F3/FFFFFF.png' },
-  { id: 5, name: 'jane.smith@example.com', name: 'Jane Smith', email: 'jane.smith@example.com', role: 'Employee', status: 'Pending', avatar: 'https://placehold.co/100x100/9E9E9E/FFFFFF.png' },
+  { id: 5, name: 'Jane Smith', email: 'jane.smith@example.com', role: 'Employee', status: 'Pending', avatar: 'https://placehold.co/100x100/9E9E9E/FFFFFF.png' },
 ];
 
 export default function TeamPage() {
@@ -40,6 +40,10 @@ export default function TeamPage() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
     const [newMember, setNewMember] = useState({ name: '', email: '', role: 'Employee' as TeamMember['role'] });
+
+    const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+    const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
+    const [editedRole, setEditedRole] = useState<TeamMember['role']>('Employee');
 
     const handleInvite = (e: React.FormEvent) => {
         e.preventDefault();
@@ -70,6 +74,20 @@ export default function TeamPage() {
         toast({ title: 'Member Removed', description: `${memberToDelete.name} has been removed from the team.` });
         setIsDeleteDialogOpen(false);
         setMemberToDelete(null);
+    };
+
+    const openPermissionsDialog = (member: TeamMember) => {
+        setMemberToEdit(member);
+        setEditedRole(member.role);
+        setIsPermissionsDialogOpen(true);
+    };
+
+    const handleSavePermissions = () => {
+        if (!memberToEdit) return;
+        setTeam(team.map(m => m.id === memberToEdit.id ? { ...m, role: editedRole } : m));
+        toast({ title: 'Permissions Updated', description: `${memberToEdit.name}'s role has been changed to ${editedRole}.` });
+        setIsPermissionsDialogOpen(false);
+        setMemberToEdit(null);
     };
 
     return (
@@ -126,7 +144,10 @@ export default function TeamPage() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem>Edit Permissions</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => openPermissionsDialog(member)}>
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Edit Permissions
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem disabled={member.status === 'Pending'}>Resend Invite</DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem className="text-destructive" onClick={() => openDeleteDialog(member)}>
@@ -195,6 +216,37 @@ export default function TeamPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Permissions for {memberToEdit?.name}</DialogTitle>
+                        <DialogDescription>
+                            Change the role for this team member. This will affect what they can see and do in the app.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="role-edit">Role</Label>
+                            <Select value={editedRole} onValueChange={val => setEditedRole(val as TeamMember['role'])}>
+                                <SelectTrigger id="role-edit">
+                                    <SelectValue placeholder="Select a role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Employee">Employee</SelectItem>
+                                    <SelectItem value="Manager">Manager</SelectItem>
+                                    <SelectItem value="Owner">Owner</SelectItem>
+                                    <SelectItem value="Health Department">Health Department</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="secondary" onClick={() => setIsPermissionsDialogOpen(false)}>Cancel</Button>
+                        <Button type="button" onClick={handleSavePermissions}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
