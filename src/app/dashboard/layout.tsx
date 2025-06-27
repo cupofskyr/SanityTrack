@@ -30,7 +30,8 @@ import {
   ChefHat,
   CalendarClock,
   Database,
-  BrainCircuit
+  BrainCircuit,
+  Bot
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,7 @@ export default function DashboardLayout({
   const dashboardLink = getDashboardLink();
   const navItems = [
     { href: dashboardLink, icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/dashboard/owner/agent-rules", icon: Bot, label: "Agent Rules", roles: ["Owner"]},
     { href: "/dashboard/manager/shifts", icon: CalendarClock, label: "Shifts", roles: ["Manager", "Owner"]},
     { href: "/dashboard/taskboard", icon: ClipboardList, label: "Taskboard", roles: ["Employee", "Manager"] },
     { href: "/dashboard/manager/quality-control", icon: ChefHat, label: "Quality Control", roles: ["Manager", "Owner"] },

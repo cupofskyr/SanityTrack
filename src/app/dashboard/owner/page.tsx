@@ -9,12 +9,12 @@ import {
   postJobAction,
   estimateStockLevelAction,
   generateDailyBriefingAction,
-  generateWarningLetterAction,
+  runMasterAgentCycleAction,
 } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Rss, BarChart2, Briefcase, Check, X, Send, Package, ShoppingCart, PlusCircle, Building, User, Phone, Megaphone } from 'lucide-react';
+import { Loader2, Sparkles, Rss, BarChart2, Briefcase, Check, X, Send, Package, ShoppingCart, PlusCircle, Building, User, Phone, Megaphone, Activity, Bot } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -36,8 +36,9 @@ import type { EstimateStockLevelOutput } from '@/ai/schemas/stock-level-schemas'
 import OwnerServiceAlertWidget from '@/components/owner-service-alert-widget';
 import { Input } from '@/components/ui/input';
 import type { GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
-import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
 import OnboardingInterview from '@/components/onboarding/onboarding-interview';
+import type { MasterAgentOutput } from '@/ai/schemas/agent-schemas';
+import { formatDistanceToNow } from 'date-fns';
 
 type Location = {
   id: number;
@@ -57,10 +58,14 @@ type HiringRequest = {
     justification: string;
 };
 
+type AgentActivityLog = MasterAgentOutput & {
+  timestamp: Date;
+};
+
 export default function OwnerDashboard() {
   const { toast } = useToast();
 
-  const [isNewUser, setIsNewUser] = useState(true); // This would be determined by checking your database
+  const [isNewUser, setIsNewUser] = useState(false); // Default to false, check on mount
   const [locations, setLocations] = useState<Location[]>([]);
   
   const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(undefined);
@@ -83,6 +88,22 @@ export default function OwnerDashboard() {
 
   const [dailyBriefing, setDailyBriefing] = useState<GenerateDailyBriefingOutput | null>(null);
   const [isBriefingDialogOpen, setIsBriefingDialogOpen] = useState(false);
+  
+  const [agentActivity, setAgentActivity] = useState<AgentActivityLog[]>([]);
+  const [isAgentRunning, setIsAgentRunning] = useState(false);
+
+  useEffect(() => {
+    // In a real app, you'd fetch locations from Firestore.
+    // We check if it's a new user by seeing if they have any locations.
+    const storedLocations = JSON.parse(localStorage.getItem('sanity-track-locations') || '[]');
+    setLocations(storedLocations);
+    if (storedLocations.length === 0) {
+        setIsNewUser(true);
+    } else {
+        setIsNewUser(false);
+    }
+  }, []);
+
 
   useEffect(() => {
     if (locations.length > 0 && !selectedLocation) {
@@ -112,9 +133,10 @@ export default function OwnerDashboard() {
   }, []);
   
   const handleOnboardingComplete = () => {
-        setIsNewUser(false); // Onboarding is done!
+        setIsNewUser(false);
         // In a real app, you would now fetch the newly created data (locations, tasks, etc.)
-        // from Firestore to populate the dashboard.
+        // from Firestore to populate the dashboard. For now, we prompt to add a location.
+        localStorage.setItem('sanity-track-locations', JSON.stringify([])); // Mark onboarding as "done"
         toast({ title: "Setup Complete!", description: "Welcome to your new dashboard. Please add a location to begin." });
   };
     
@@ -139,7 +161,9 @@ export default function OwnerDashboard() {
           manager: newLocationData.managerName,
           inspectionCode: `${newLocationData.name.substring(0, 2).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
       };
-      setLocations(prev => [...prev, newLoc]);
+      const updatedLocations = [...locations, newLoc];
+      setLocations(updatedLocations);
+      localStorage.setItem('sanity-track-locations', JSON.stringify(updatedLocations));
       toast({ title: 'Location Added', description: `${newLocationData.name} has been added.` });
       setNewLocationData({ name: '', managerName: '', managerEmail: '' });
       setIsAddLocationDialogOpen(false);
@@ -233,6 +257,43 @@ export default function OwnerDashboard() {
       setIsRejectDialogOpen(false);
       setRejectionReason('');
       setRequestToReject(null);
+  };
+
+  const handleRunAgent = async () => {
+    setIsAgentRunning(true);
+    // This simulates the data the agent would gather
+    const simulatedState = {
+        cameraObservations: ["Spill detected on floor near counter."],
+        stockLevels: [{ item: 'Coffee Cups', level: 'Critical' as const }],
+        openTasks: [],
+    };
+    
+    // In a real app, you'd fetch the configured rules from Firestore.
+    // For this demo, we'll use a simplified version.
+    const simulatedRules = [
+        { id: 'auto-spill-cleaner', name: 'Auto-Tasker for Spills', description: '...', isEnabled: true },
+        { id: 'auto-restock-alerter', name: 'Proactive Restock Alerter', description: '...', isEnabled: true },
+    ];
+
+    const result = await runMasterAgentCycleAction({
+        rules: simulatedRules,
+        currentState: simulatedState
+    });
+
+    if (result.data) {
+        setAgentActivity(prev => [{ ...result.data!, timestamp: new Date() }, ...prev]);
+        toast({
+            title: "Agent Cycle Complete",
+            description: result.data.actionTaken,
+        });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Agent Cycle Failed',
+            description: result.error,
+        });
+    }
+    setIsAgentRunning(false);
   };
 
     if (isNewUser) {
@@ -367,6 +428,42 @@ export default function OwnerDashboard() {
 
         {selectedLocation && <OwnerServiceAlertWidget locationId={selectedLocation.name} />}
         
+        <Card>
+            <CardHeader className="flex-row items-center justify-between">
+                <div>
+                    <CardTitle className="font-headline flex items-center gap-2"><Bot /> Sentinel Agent Activity Log</CardTitle>
+                    <CardDescription>A live feed of actions taken by the autonomous AI agent.</CardDescription>
+                </div>
+                 <Button onClick={handleRunAgent} disabled={isAgentRunning}>
+                    {isAgentRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Activity className="mr-2 h-4 w-4" />}
+                    Run Agent Cycle
+                </Button>
+            </CardHeader>
+            <CardContent>
+                {agentActivity.length > 0 ? (
+                    <div className="space-y-4 max-h-72 overflow-y-auto pr-2">
+                        {agentActivity.map((log, index) => (
+                            <div key={index} className="flex gap-4">
+                                <div className="flex flex-col items-center">
+                                    <div className="p-2 rounded-full bg-primary text-primary-foreground"><Bot className="h-5 w-5" /></div>
+                                    <div className="flex-1 w-px bg-border"></div>
+                                </div>
+                                <div className="pb-4">
+                                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(log.timestamp, { addSuffix: true })}</p>
+                                    <p className="font-semibold">{log.actionTaken}</p>
+                                    <p className="text-sm text-muted-foreground italic">"{log.reasoning}"</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center text-sm text-muted-foreground p-8 border-dashed border-2 rounded-md">
+                        No agent activity recorded yet. Click "Run Agent Cycle" to have the AI check for tasks.
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+
         <div className="grid gap-6 md:grid-cols-2">
             <Card>
                 <CardHeader>
