@@ -33,7 +33,8 @@ import { generatePermitChecklist, type GeneratePermitChecklistInput, type Genera
 import { optimizeOrder } from '@/ai/flows/optimizeOrderFlow';
 import type { ShoppingListItem, OptimizeOrderOutput } from '@/ai/schemas/ordering-schemas';
 import { generateGhostShopperInvite, type GenerateGhostShopperInviteInput, type GenerateGhostShopperInviteOutput } from '@/ai/flows/generate-ghost-shopper-invite-flow';
-import { generateBusinessReport, type GenerateBusinessReportInput, type GenerateBusinessReportOutput } from '@/ai/flows/generate-business-report-flow';
+import { generateBusinessReport, type GenerateBusinessReportOutput } from '@/ai/flows/generate-business-report-flow';
+import type { GenerateBusinessReportInput } from '@/ai/schemas/business-report-schemas';
 
 
 // This wrapper function centralizes error handling for all AI flows.
@@ -198,8 +199,52 @@ export async function generateGhostShopperInviteAction(input: GenerateGhostShopp
     return safeRun(generateGhostShopperInvite, input, 'generateGhostShopperInvite');
 }
 
-export async function generateBusinessReportAction(input: GenerateBusinessReportInput): Promise<{ data: GenerateBusinessReportOutput | null; error: string | null; }> {
-    return safeRun(generateBusinessReport, input, 'generateBusinessReport');
+export async function generateBusinessReportAction(input: {
+    location: string;
+    dateRange: string;
+    documentTypes: string[];
+}): Promise<{ data: GenerateBusinessReportOutput | null; error: string | null; }> {
+    const { location, dateRange, documentTypes } = input;
+
+    // 1. Construct the report title
+    const reportTitle = `${dateRange} Report for ${location}`;
+
+    // 2. Simulate gathering data based on selections
+    let documentSummaries = `Report Data Context for ${location} covering ${documentTypes.join(', ')}:\n`;
+    let hasData = false;
+
+    if (location === 'All Locations' || location === 'Downtown') {
+        if (documentTypes.includes('Operational Reports')) {
+            documentSummaries += `- Downtown: July Activity Log shows 15 high-priority tasks completed, 2 QA failures on 'Classic Burger'.\n`;
+            documentSummaries += `- Downtown: July Compliance Report shows 98% score. Minor deduction for unlocked back door on July 15th.\n`;
+            hasData = true;
+        }
+        if (documentTypes.includes('Employee Files')) {
+            documentSummaries += `- Downtown Employee (John Doe): Food Handler Permit expires August 15, 2024.\n`;
+            hasData = true;
+        }
+    }
+    if (location === 'All Locations' || location === 'Uptown') {
+         if (documentTypes.includes('Operational Reports')) {
+            documentSummaries += `- Uptown: July Activity Log shows all tasks completed on time. No QA failures.\n`;
+            hasData = true;
+        }
+         if (documentTypes.includes('Employee Files')) {
+            documentSummaries += `- Uptown Employee (Jane Smith): All certificates are current. Perfect attendance record.\n`;
+            hasData = true;
+        }
+    }
+    if (!hasData) {
+        documentSummaries = "No relevant data found for the selected criteria.";
+    }
+
+    // 3. Call the flow
+    const flowInput: GenerateBusinessReportInput = {
+        reportTitle: reportTitle,
+        documentSummaries: documentSummaries
+    };
+
+    return safeRun(generateBusinessReport, flowInput, 'generateBusinessReport');
 }
 
 

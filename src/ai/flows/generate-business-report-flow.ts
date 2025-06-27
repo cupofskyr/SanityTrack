@@ -25,10 +25,9 @@ const prompt = ai.definePrompt({
     input: { schema: GenerateBusinessReportInputSchema },
     output: { schema: GenerateBusinessReportOutputSchema },
     prompt: `You are an expert business analyst and operations consultant for a restaurant chain.
-    Your task is to analyze a collection of operational documents for a specific location over a given period and generate a concise, insightful report for the owner.
+    Your task is to analyze a collection of operational documents and generate a concise, insightful report for the owner.
 
-    Location: {{location}}
-    Date Range: {{dateRange}}
+    Report Focus: {{reportTitle}}
 
     DOCUMENT DATA:
     ---

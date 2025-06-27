@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { generateBusinessReportAction } from '@/app/actions';
 import type { GenerateBusinessReportOutput } from '@/ai/schemas/business-report-schemas';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Mock Data representing the centralized document store
 const mockData = {
@@ -54,25 +55,18 @@ export default function DocumentsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<GenerateBusinessReportOutput | null>(null);
     const [analysisParams, setAnalysisParams] = useState({ location: 'Downtown', dateRange: 'Last 30 Days' });
+    const [documentTypes, setDocumentTypes] = useState<string[]>(['Operational Reports', 'Employee Files']);
+    const availableDocumentTypes = ['Operational Reports', 'Employee Files', 'Maintenance Logs'];
 
     const handleGenerateReport = async () => {
         setIsLoading(true);
         setAnalysisResult(null);
 
         try {
-            // Simulate gathering document data into a string for the AI prompt
-            const documentSummaries = `
-                Location: ${analysisParams.location}
-                - July Activity Log: 15 high-priority tasks completed, 2 QA failures on 'Classic Burger'.
-                - July Compliance Report: 98% score. Minor deduction for unlocked back door on July 15th.
-                - Employee File (John Doe): Food Handler Permit expires August 15, 2024.
-                - Employee File (Casey Lee): All certificates are current.
-            `;
-
             const response = await generateBusinessReportAction({
                 location: analysisParams.location,
                 dateRange: analysisParams.dateRange,
-                documentSummaries: documentSummaries
+                documentTypes: documentTypes
             });
 
             if (response.error || !response.data) {
@@ -108,15 +102,18 @@ export default function DocumentsPage() {
              <Card className="border-primary bg-primary/5">
                 <CardHeader>
                     <CardTitle className="font-headline text-primary flex items-center gap-2"><Sparkles /> AI Business Analyst</CardTitle>
-                    <CardDescription>Select a location and time period, and the AI will analyze all associated documents to generate a high-level strategic report.</CardDescription>
+                    <CardDescription>Select a location, time period, and data types, and the AI will analyze all associated documents to generate a high-level strategic report.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid md:grid-cols-3 gap-4">
+                <CardContent className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
                         <div className="grid gap-2">
                             <Label>Location</Label>
                             <Select value={analysisParams.location} onValueChange={(val) => setAnalysisParams(p => ({...p, location: val}))}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>{Object.keys(mockData).map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}</SelectContent>
+                                <SelectContent>
+                                    <SelectItem value="All Locations">All Locations</SelectItem>
+                                    {Object.keys(mockData).map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
+                                </SelectContent>
                             </Select>
                         </div>
                          <div className="grid gap-2">
@@ -130,13 +127,31 @@ export default function DocumentsPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="flex items-end">
-                             <Button onClick={handleGenerateReport} disabled={isLoading} className="w-full">
-                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BarChart className="mr-2 h-4 w-4" />}
-                                Generate Report
-                            </Button>
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Data to Analyze</Label>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 items-center rounded-md border p-3">
+                            {availableDocumentTypes.map(type => (
+                                <div key={type} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={type}
+                                        checked={documentTypes.includes(type)}
+                                        onCheckedChange={(checked) => {
+                                            return checked
+                                                ? setDocumentTypes([...documentTypes, type])
+                                                : setDocumentTypes(documentTypes.filter((t) => t !== type));
+                                        }}
+                                    />
+                                    <Label htmlFor={type} className="font-normal">{type}</Label>
+                                </div>
+                            ))}
                         </div>
                     </div>
+                    <Button onClick={handleGenerateReport} disabled={isLoading}>
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BarChart className="mr-2 h-4 w-4" />}
+                        Generate Report
+                    </Button>
+
                     {analysisResult && (
                         <div className="pt-4 space-y-4">
                             <h3 className="text-lg font-semibold">Executive Summary</h3>

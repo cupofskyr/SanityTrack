@@ -1,8 +1,7 @@
 import { z } from 'zod';
 
 export const GenerateBusinessReportInputSchema = z.object({
-  location: z.string().describe('The location being analyzed.'),
-  dateRange: z.string().describe('The date range for the report, e.g., "Q3 2024".'),
+  reportTitle: z.string().describe('A descriptive title for the report, e.g., "Q3 2024 Report for Downtown" or "Q3 2024 Report for All Locations".'),
   documentSummaries: z.string().describe('A string containing summaries of all relevant logs and documents for the period.'),
 });
 export type GenerateBusinessReportInput = z.infer<typeof GenerateBusinessReportInputSchema>;
