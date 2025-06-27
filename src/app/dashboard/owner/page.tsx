@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -13,7 +14,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Rss, BarChart2, Briefcase, Check, X, Send, Package, ShoppingCart, PlusCircle, Building, User, Phone, Megaphone, Activity, Bot } from 'lucide-react';
+import { Loader2, Sparkles, Rss, BarChart2, Briefcase, Check, X, Send, Package, ShoppingCart, PlusCircle, Building, User, Phone, Megaphone, Activity, Bot, ShieldCheck } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -37,8 +38,9 @@ import { Input } from '@/components/ui/input';
 import type { GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
 import OnboardingInterview from '@/components/onboarding/onboarding-interview';
 import type { MasterAgentOutput } from '@/ai/schemas/agent-schemas';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import VirtualSecurityCameraManager from '@/components/virtual-security-camera-manager';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type Location = {
   id: number;
@@ -62,10 +64,18 @@ type AgentActivityLog = MasterAgentOutput & {
   timestamp: Date;
 };
 
+type QaAuditLog = {
+    id: number;
+    location: string;
+    item: string;
+    score: number;
+    timestamp: string;
+};
+
 export default function OwnerDashboard() {
   const { toast } = useToast();
 
-  const [isNewUser, setIsNewUser] = useState(false); // Default to false, check on mount
+  const [isNewUser, setIsNewUser] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
   
   const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(undefined);
@@ -92,9 +102,9 @@ export default function OwnerDashboard() {
   const [agentActivity, setAgentActivity] = useState<AgentActivityLog[]>([]);
   const [isAgentRunning, setIsAgentRunning] = useState(false);
 
+  const [qaAuditLog, setQaAuditLog] = useState<QaAuditLog[]>([]);
+
   useEffect(() => {
-    // In a real app, you'd fetch locations from Firestore.
-    // We check if it's a new user by seeing if they have any locations.
     const storedLocations = JSON.parse(localStorage.getItem('sanity-track-locations') || '[]');
     setLocations(storedLocations);
     if (storedLocations.length === 0) {
@@ -112,31 +122,34 @@ export default function OwnerDashboard() {
   }, [locations, selectedLocation]);
 
   useEffect(() => {
-    // This effect runs when the selected location changes
     if (selectedLocation) {
         handleFetchToastData(selectedLocation.name);
         setReviewSummary(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLocation]);
   
   useEffect(() => {
     const storedRequests = localStorage.getItem('hiringRequests');
-    if (storedRequests) {
-        setHiringRequests(JSON.parse(storedRequests));
-    }
+    if (storedRequests) setHiringRequests(JSON.parse(storedRequests));
+
     const fetchBriefing = async () => {
         const { data } = await generateDailyBriefingAction();
         if (data) setDailyBriefing(data);
     };
     fetchBriefing();
+
+    // Poll for QA log updates
+    const qaLogInterval = setInterval(() => {
+      const storedQaLog = JSON.parse(localStorage.getItem('qa-audit-log') || '[]');
+      setQaAuditLog(storedQaLog);
+    }, 2000);
+
+    return () => clearInterval(qaLogInterval);
   }, []);
   
   const handleOnboardingComplete = () => {
         setIsNewUser(false);
-        // In a real app, you would now fetch the newly created data (locations, tasks, etc.)
-        // from Firestore to populate the dashboard. For now, we prompt to add a location.
-        localStorage.setItem('sanity-track-locations', JSON.stringify([])); // Mark onboarding as "done"
+        localStorage.setItem('sanity-track-locations', JSON.stringify([])); 
         toast({ title: "Setup Complete!", description: "Welcome to your new dashboard. Please add a location to begin." });
   };
     
@@ -159,7 +172,8 @@ export default function OwnerDashboard() {
           id: newId,
           name: newLocationData.name,
           manager: newLocationData.managerName,
-          inspectionCode: `${newLocationData.name.substring(0, 2).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+          // Use a fixed code for the demo to make KDS pairing easier
+          inspectionCode: newLocationData.name.toLowerCase().includes('down') ? 'DT-1A2B' : 'UP-3C4D'
       };
       const updatedLocations = [...locations, newLoc];
       setLocations(updatedLocations);
@@ -172,11 +186,8 @@ export default function OwnerDashboard() {
   const handleFetchToastData = async (locationName: string) => {
       setIsFetchingToast(true);
       const result = await fetchToastDataAction({ location: locationName });
-      if (result.data) {
-          setToastData(result.data);
-      } else {
-          toast({ variant: 'destructive', title: 'Sales Data Error', description: result.error });
-      }
+      if (result.data) setToastData(result.data);
+      else toast({ variant: 'destructive', title: 'Sales Data Error', description: result.error });
       setIsFetchingToast(false);
   };
   
@@ -199,38 +210,23 @@ export default function OwnerDashboard() {
     setStockLevel(null);
     const cupStockImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAYAAADw5sJwAAAA60lEQVR4nO3UAQ0AMAjAsKM78OgA/x9I0AElzR2b8/MFAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAN2OFY/gH/9E3AAAAAElFTkSuQmCC";
     const result = await estimateStockLevelAction({ currentStockImageUri: cupStockImage });
-    if (result.data) {
-      setStockLevel(result.data);
-      toast({title: "Stock Level Assessed"});
-    } else {
-      toast({ variant: 'destructive', title: 'Stock Check Error', description: result.error });
-    }
+    if (result.data) setStockLevel(result.data);
+    else toast({ variant: 'destructive', title: 'Stock Check Error', description: result.error });
     setIsCheckingStock(false);
   }
 
   const handleApproveRequest = async (request: HiringRequest) => {
     toast({ title: 'Posting Job...', description: `Submitting request for a ${request.role}.` });
     
-    const result = await postJobAction({
-        role: request.role,
-        location: request.location,
-        shiftType: request.shiftType,
-    });
+    const result = await postJobAction({ role: request.role, location: request.location, shiftType: request.shiftType });
 
     if (result.data) {
-        toast({
-            title: 'Job Posted Successfully!',
-            description: `Confirmation ID: ${result.data.confirmationId}`,
-        });
+        toast({ title: 'Job Posted Successfully!', description: `Confirmation ID: ${result.data.confirmationId}` });
         const updatedRequests = hiringRequests.filter(r => r.id !== request.id);
         setHiringRequests(updatedRequests);
         localStorage.setItem('hiringRequests', JSON.stringify(updatedRequests));
     } else {
-        toast({
-            variant: 'destructive',
-            title: 'Job Posting Failed',
-            description: result.error,
-        });
+        toast({ variant: 'destructive', title: 'Job Posting Failed', description: result.error });
     }
   };
 
@@ -261,45 +257,29 @@ export default function OwnerDashboard() {
 
   const handleRunAgent = async () => {
     setIsAgentRunning(true);
-    // This simulates the data the agent would gather
     const simulatedState = {
         cameraObservations: ["Spill detected on floor near counter."],
         stockLevels: [{ item: 'Coffee Cups', level: 'Critical' as const }],
         openTasks: [],
     };
-    
-    // In a real app, you'd fetch the configured rules from Firestore.
-    // For this demo, we'll use a simplified version.
     const simulatedRules = [
         { id: 'auto-spill-cleaner', name: 'Auto-Tasker for Spills', description: '...', isEnabled: true },
         { id: 'auto-restock-alerter', name: 'Proactive Restock Alerter', description: '...', isEnabled: true },
     ];
 
-    const result = await runMasterAgentCycleAction({
-        rules: simulatedRules,
-        currentState: simulatedState
-    });
+    const result = await runMasterAgentCycleAction({ rules: simulatedRules, currentState: simulatedState });
 
     if (result.data) {
         setAgentActivity(prev => [{ ...result.data!, timestamp: new Date() }, ...prev]);
-        toast({
-            title: "Agent Cycle Complete",
-            description: result.data.actionTaken,
-        });
+        toast({ title: "Agent Cycle Complete", description: result.data.actionTaken });
     } else {
-        toast({
-            variant: 'destructive',
-            title: 'Agent Cycle Failed',
-            description: result.error,
-        });
+        toast({ variant: 'destructive', title: 'Agent Cycle Failed', description: result.error });
     }
     setIsAgentRunning(false);
   };
 
     if (isNewUser) {
-        return (
-            <OnboardingInterview onOnboardingComplete={handleOnboardingComplete} />
-        );
+        return <OnboardingInterview onOnboardingComplete={handleOnboardingComplete} />;
     }
 
     if (locations.length === 0) {
@@ -312,29 +292,14 @@ export default function OwnerDashboard() {
                     </CardHeader>
                     <CardContent>
                         <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Your First Location</Button>
-                            </DialogTrigger>
+                            <DialogTrigger asChild><Button><PlusCircle className="mr-2 h-4 w-4" /> Add Your First Location</Button></DialogTrigger>
                              <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle className="font-headline">Add New Location</DialogTitle>
-                                </DialogHeader>
+                                <DialogHeader><DialogTitle className="font-headline">Add New Location</DialogTitle></DialogHeader>
                                 <form onSubmit={handleAddLocation} className="space-y-4 py-4">
-                                     <div className="grid gap-2">
-                                        <Label htmlFor="new-loc-name">Location Name</Label>
-                                        <Input id="new-loc-name" placeholder="e.g., Uptown Bistro" value={newLocationData.name} onChange={(e) => setNewLocationData(prev => ({...prev, name: e.target.value}))} required />
-                                     </div>
-                                     <div className="grid gap-2">
-                                        <Label htmlFor="new-loc-manager">Manager Name</Label>
-                                        <Input id="new-loc-manager" placeholder="e.g., Casey Lee" value={newLocationData.managerName} onChange={(e) => setNewLocationData(prev => ({...prev, managerName: e.target.value}))} required />
-                                     </div>
-                                      <div className="grid gap-2">
-                                        <Label htmlFor="new-loc-email">Manager Email</Label>
-                                        <Input id="new-loc-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={(e) => setNewLocationData(prev => ({...prev, managerEmail: e.target.value}))} required />
-                                     </div>
-                                     <DialogFooter>
-                                        <Button type="submit">Save Location</Button>
-                                     </DialogFooter>
+                                     <div className="grid gap-2"><Label htmlFor="new-loc-name">Location Name</Label><Input id="new-loc-name" placeholder="e.g., Uptown Bistro" value={newLocationData.name} onChange={(e) => setNewLocationData(prev => ({...prev, name: e.target.value}))} required /></div>
+                                     <div className="grid gap-2"><Label htmlFor="new-loc-manager">Manager Name</Label><Input id="new-loc-manager" placeholder="e.g., Casey Lee" value={newLocationData.managerName} onChange={(e) => setNewLocationData(prev => ({...prev, managerName: e.target.value}))} required /></div>
+                                      <div className="grid gap-2"><Label htmlFor="new-loc-email">Manager Email</Label><Input id="new-loc-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={(e) => setNewLocationData(prev => ({...prev, managerEmail: e.target.value}))} required /></div>
+                                     <DialogFooter><Button type="submit">Save Location</Button></DialogFooter>
                                 </form>
                             </DialogContent>
                         </Dialog>
@@ -353,41 +318,22 @@ export default function OwnerDashboard() {
                     <CardDescription>Select a location to view its live sales and customer feedback.</CardDescription>
                 </div>
                 <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Location</Button>
-                    </DialogTrigger>
+                    <DialogTrigger asChild><Button variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Location</Button></DialogTrigger>
                      <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle className="font-headline">Add New Location</DialogTitle>
-                        </DialogHeader>
+                        <DialogHeader><DialogTitle className="font-headline">Add New Location</DialogTitle></DialogHeader>
                         <form onSubmit={handleAddLocation} className="space-y-4 py-4">
-                             <div className="grid gap-2">
-                                <Label htmlFor="new-loc-name">Location Name</Label>
-                                <Input id="new-loc-name" placeholder="e.g., Uptown Bistro" value={newLocationData.name} onChange={(e) => setNewLocationData(prev => ({...prev, name: e.target.value}))} required />
-                             </div>
-                             <div className="grid gap-2">
-                                <Label htmlFor="new-loc-manager">Manager Name</Label>
-                                <Input id="new-loc-manager" placeholder="e.g., Casey Lee" value={newLocationData.managerName} onChange={(e) => setNewLocationData(prev => ({...prev, managerName: e.target.value}))} required />
-                             </div>
-                              <div className="grid gap-2">
-                                <Label htmlFor="new-loc-email">Manager Email</Label>
-                                <Input id="new-loc-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={(e) => setNewLocationData(prev => ({...prev, managerEmail: e.target.value}))} required />
-                             </div>
-                             <DialogFooter>
-                                <Button type="submit">Save Location</Button>
-                             </DialogFooter>
+                             <div className="grid gap-2"><Label htmlFor="new-loc-name">Location Name</Label><Input id="new-loc-name" placeholder="e.g., Uptown Bistro" value={newLocationData.name} onChange={(e) => setNewLocationData(prev => ({...prev, name: e.target.value}))} required /></div>
+                             <div className="grid gap-2"><Label htmlFor="new-loc-manager">Manager Name</Label><Input id="new-loc-manager" placeholder="e.g., Casey Lee" value={newLocationData.managerName} onChange={(e) => setNewLocationData(prev => ({...prev, managerName: e.target.value}))} required /></div>
+                              <div className="grid gap-2"><Label htmlFor="new-loc-email">Manager Email</Label><Input id="new-loc-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={(e) => setNewLocationData(prev => ({...prev, managerEmail: e.target.value}))} required /></div>
+                             <DialogFooter><Button type="submit">Save Location</Button></DialogFooter>
                         </form>
                     </DialogContent>
                 </Dialog>
             </CardHeader>
             <CardContent>
                  <Select value={selectedLocation?.name} onValueChange={(name) => setSelectedLocation(locations.find(l => l.name === name))}>
-                    <SelectTrigger className="w-full md:w-1/3">
-                        <SelectValue placeholder="Select location..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {locations.map(loc => <SelectItem key={loc.id} value={loc.name}>{loc.name}</SelectItem>)}
-                    </SelectContent>
+                    <SelectTrigger className="w-full md:w-1/3"><SelectValue placeholder="Select location..." /></SelectTrigger>
+                    <SelectContent>{locations.map(loc => <SelectItem key={loc.id} value={loc.name}>{loc.name}</SelectItem>)}</SelectContent>
                 </Select>
                  {selectedLocation && (
                     <div className="mt-4 p-4 border rounded-lg bg-muted/50 text-sm">
@@ -401,11 +347,7 @@ export default function OwnerDashboard() {
             </CardContent>
              <CardFooter>
                  <Dialog open={isBriefingDialogOpen} onOpenChange={setIsBriefingDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">
-                            <Megaphone className="mr-2 h-4 w-4"/> Post Daily Briefing
-                        </Button>
-                    </DialogTrigger>
+                    <DialogTrigger asChild><Button variant="outline"><Megaphone className="mr-2 h-4 w-4"/> Post Daily Briefing</Button></DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle className="font-headline">Post Daily Briefing</DialogTitle>
@@ -418,9 +360,7 @@ export default function OwnerDashboard() {
                                 <p className="text-sm text-muted-foreground">{dailyBriefing.message}</p>
                             </div>
                         ) : <Loader2 className="animate-spin" />}
-                         <DialogFooter>
-                             <Button onClick={handlePostBriefing}>Post Message</Button>
-                        </DialogFooter>
+                         <DialogFooter><Button onClick={handlePostBriefing}>Post Message</Button></DialogFooter>
                     </DialogContent>
                 </Dialog>
             </CardFooter>
@@ -465,6 +405,32 @@ export default function OwnerDashboard() {
                 )}
             </CardContent>
         </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><ShieldCheck /> QA Sentinel Audit Log</CardTitle>
+                <CardDescription>A log of all automated Quality Assurance alerts triggered by the AI.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow><TableHead>Location</TableHead><TableHead>Item</TableHead><TableHead>Score</TableHead><TableHead>Timestamp</TableHead></TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {qaAuditLog.length > 0 ? qaAuditLog.map(log => (
+                            <TableRow key={log.id}>
+                                <TableCell>{log.location}</TableCell>
+                                <TableCell>{log.item}</TableCell>
+                                <TableCell><Badge variant={log.score < 7 ? "destructive" : "secondary"}>{log.score}/10</Badge></TableCell>
+                                <TableCell>{formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}</TableCell>
+                            </TableRow>
+                        )) : (
+                            <TableRow><TableCell colSpan={4} className="h-24 text-center">No QA alerts have been triggered yet.</TableCell></TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
 
         <div className="grid gap-6 md:grid-cols-2">
             <Card>
@@ -475,27 +441,17 @@ export default function OwnerDashboard() {
                 <CardContent>
                     {isFetchingToast ? <Loader2 className="h-6 w-6 animate-spin" /> : toastData ? (
                         <div className="grid grid-cols-2 gap-4 text-center">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Today's Sales</p>
-                                <p className="text-3xl font-bold">${toastData.liveSalesToday.toLocaleString()}</p>
-                            </div>
-                             <div>
-                                <p className="text-sm text-muted-foreground">Month-to-Date Sales</p>
-                                <p className="text-3xl font-bold">${toastData.salesThisMonth.toLocaleString()}</p>
-                            </div>
+                            <div><p className="text-sm text-muted-foreground">Today's Sales</p><p className="text-3xl font-bold">${toastData.liveSalesToday.toLocaleString()}</p></div>
+                             <div><p className="text-sm text-muted-foreground">Month-to-Date Sales</p><p className="text-3xl font-bold">${toastData.salesThisMonth.toLocaleString()}</p></div>
                         </div>
-                    ) : (
-                        <p className="text-muted-foreground">Could not load sales data.</p>
-                    )}
+                    ) : ( <p className="text-muted-foreground">Could not load sales data.</p> )}
                 </CardContent>
             </Card>
 
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><Package /> Predictive Stock Monitoring</CardTitle>
-                    <CardDescription>
-                        Use AI to estimate stock levels from a camera feed of the coffee cups.
-                    </CardDescription>
+                    <CardDescription>Use AI to estimate stock levels from a camera feed of the coffee cups.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center gap-4">
                      <div className="relative w-48 h-48 rounded-lg overflow-hidden border">
@@ -505,23 +461,16 @@ export default function OwnerDashboard() {
                         {isCheckingStock ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4" />}
                         Check Stock Level
                     </Button>
-
                     {stockLevel && (
                         <Alert className="w-full">
                            <AlertTitle className="flex justify-between">
                                 <span>Level: <Badge variant={stockLevel.level === 'Critical' ? 'destructive' : 'secondary'}>{stockLevel.level}</Badge></span>
                                 <span>~{stockLevel.estimatedPercentage}% Full</span>
                             </AlertTitle>
-                            <AlertDescription className="mt-2">
-                                <strong>Recommendation:</strong> {stockLevel.recommendation}
-                            </AlertDescription>
+                            <AlertDescription className="mt-2"><strong>Recommendation:</strong> {stockLevel.recommendation}</AlertDescription>
                         </Alert>
                     )}
-                    {stockLevel?.level === 'Critical' && (
-                        <Button variant="destructive" className="w-full">
-                            <ShoppingCart className="mr-2 h-4 w-4" /> Add to Emergency Order
-                        </Button>
-                    )}
+                    {stockLevel?.level === 'Critical' && ( <Button variant="destructive" className="w-full"><ShoppingCart className="mr-2 h-4 w-4" /> Add to Emergency Order</Button> )}
                 </CardContent>
             </Card>
         </div>
@@ -533,21 +482,12 @@ export default function OwnerDashboard() {
             </CardHeader>
             <CardContent>
                  <div className="flex gap-4 mb-6">
-                    <Button onClick={() => handleFetchReviews('Google')} disabled={isFetchingReviews}>
-                        {isFetchingReviews && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Fetch Google Reviews
-                    </Button>
-                    <Button onClick={() => handleFetchReviews('Yelp')} disabled={isFetchingReviews} variant="outline">
-                         {isFetchingReviews && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Fetch Yelp Reviews
-                    </Button>
+                    <Button onClick={() => handleFetchReviews('Google')} disabled={isFetchingReviews}>{isFetchingReviews && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Fetch Google Reviews</Button>
+                    <Button onClick={() => handleFetchReviews('Yelp')} disabled={isFetchingReviews} variant="outline">{isFetchingReviews && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Fetch Yelp Reviews</Button>
                 </div>
                  {reviewSummary && (
                      <div>
-                        <Alert className="mb-4">
-                            <AlertTitle className="font-semibold">AI Summary</AlertTitle>
-                            <AlertDescription>{reviewSummary.summary}</AlertDescription>
-                        </Alert>
+                        <Alert className="mb-4"><AlertTitle className="font-semibold">AI Summary</AlertTitle><AlertDescription>{reviewSummary.summary}</AlertDescription></Alert>
                         <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
                             {reviewSummary.reviews.map((review, index) => (
                                 <div key={index} className="p-3 border rounded-lg bg-muted/50">
@@ -555,9 +495,7 @@ export default function OwnerDashboard() {
                                         <p className="font-semibold">{review.author}</p>
                                         <div className="flex items-center gap-1">
                                             <Badge variant="outline" className="mr-2">{review.source}</Badge>
-                                            {Array.from({ length: 5 }).map((_, i) => (
-                                                <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'text-accent' : 'text-muted-foreground/30'}`} fill="currentColor"/>
-                                            ))}
+                                            {Array.from({ length: 5 }).map((_, i) => (<Star key={i} className={`h-4 w-4 ${i < review.rating ? 'text-accent' : 'text-muted-foreground/30'}`} fill="currentColor"/>))}
                                         </div>
                                     </div>
                                     <blockquote className="text-sm italic border-l-2 pl-3 mt-1">"{review.comment}"</blockquote>
@@ -579,28 +517,19 @@ export default function OwnerDashboard() {
                 <div className="space-y-4">
                     {hiringRequests.map(req => (
                         <Card key={req.id} className="bg-muted/30">
-                            <CardHeader>
-                                <CardTitle className="text-lg">Request: {req.role} at {req.location}</CardTitle>
-                                <CardDescription>Submitted by {req.manager}</CardDescription>
-                            </CardHeader>
+                            <CardHeader><CardTitle className="text-lg">Request: {req.role} at {req.location}</CardTitle><CardDescription>Submitted by {req.manager}</CardDescription></CardHeader>
                             <CardContent>
                                 <p className="text-sm"><strong>Shift:</strong> {req.shiftType} | <strong>Urgency:</strong> {req.urgency}</p>
                                 <blockquote className="mt-2 border-l-2 pl-4 text-sm italic">"{req.justification}"</blockquote>
                             </CardContent>
                             <CardFooter className="gap-2">
-                                <Button onClick={() => handleApproveRequest(req)}>
-                                    <Check className="mr-2 h-4 w-4"/> Approve & Post Job
-                                </Button>
-                                <Button variant="destructive" onClick={() => openRejectDialog(req)}>
-                                    <X className="mr-2 h-4 w-4"/> Reject
-                                </Button>
+                                <Button onClick={() => handleApproveRequest(req)}><Check className="mr-2 h-4 w-4"/> Approve & Post Job</Button>
+                                <Button variant="destructive" onClick={() => openRejectDialog(req)}><X className="mr-2 h-4 w-4"/> Reject</Button>
                             </CardFooter>
                         </Card>
                     ))}
                 </div>
-            ) : (
-                <p className="text-muted-foreground text-center py-4">No pending hiring requests.</p>
-            )}
+            ) : (<p className="text-muted-foreground text-center py-4">No pending hiring requests.</p>)}
         </CardContent>
       </Card>
 
@@ -608,24 +537,10 @@ export default function OwnerDashboard() {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Reject Hiring Request</DialogTitle>
-                    <DialogDescription>
-                        Provide a brief reason for rejecting the request for a {requestToReject?.role}. This will be sent to the manager.
-                    </DialogDescription>
+                    <DialogDescription>Provide a brief reason for rejecting the request for a {requestToReject?.role}. This will be sent to the manager.</DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
-                    <Textarea
-                        placeholder="e.g., We don't have the budget for a new hire at this time. Let's revisit in Q4."
-                        value={rejectionReason}
-                        onChange={(e) => setRejectionReason(e.target.value)}
-                    />
-                </div>
-                <DialogFooter>
-                    <Button variant="ghost" onClick={() => setIsRejectDialogOpen(false)}>Cancel</Button>
-                    <Button variant="destructive" onClick={handleRejectRequest}>
-                        <Send className="mr-2 h-4 w-4"/>
-                        Send Rejection
-                    </Button>
-                </DialogFooter>
+                <div className="py-4"><Textarea placeholder="e.g., We don't have the budget for a new hire at this time. Let's revisit in Q4." value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)}/></div>
+                <DialogFooter><Button variant="ghost" onClick={() => setIsRejectDialogOpen(false)}>Cancel</Button><Button variant="destructive" onClick={handleRejectRequest}><Send className="mr-2 h-4 w-4"/>Send Rejection</Button></DialogFooter>
             </DialogContent>
         </Dialog>
     </div>
