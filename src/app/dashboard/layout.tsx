@@ -99,9 +99,9 @@ export default function DashboardLayout({
     { href: "/dashboard/manager/shifts", icon: CalendarClock, label: "Shifts", roles: ["Manager", "Owner"]},
     { href: "/dashboard/taskboard", icon: ClipboardList, label: "Taskboard", roles: ["Employee", "Manager"] },
     { href: "/dashboard/manager/quality-control", icon: ChefHat, label: "Quality Control", roles: ["Manager", "Owner"] },
-    { href: "/dashboard/brain", icon: BrainCircuit, label: "Company Brain", roles: ["Employee", "Manager", "Owner", "Health Department"] },
+    { href: "/dashboard/brain", icon: BrainCircuit, label: "Company Brain", roles: ["Employee", "Manager", "Owner"] },
     { href: "/dashboard/manager/knowledge", icon: Database, label: "Knowledge Mgt.", roles: ["Manager", "Owner"] },
-    { href: "/dashboard/training", icon: BookOpen, label: "Training", roles: ["Employee", "Manager", "Owner", "Health Department"] },
+    { href: "/dashboard/training", icon: BookOpen, label: "Training", roles: ["Employee", "Manager", "Owner"] },
     { href: "/dashboard/training/setup", icon: GraduationCap, label: "Training Setup", roles: ["Manager", "Owner"] },
   ];
 
