@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -39,6 +38,7 @@ import type { GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-sc
 import OnboardingInterview from '@/components/onboarding/onboarding-interview';
 import type { MasterAgentOutput } from '@/ai/schemas/agent-schemas';
 import { formatDistanceToNow } from 'date-fns';
+import VirtualSecurityCameraManager from '@/components/virtual-security-camera-manager';
 
 type Location = {
   id: number;
@@ -428,6 +428,8 @@ export default function OwnerDashboard() {
 
         {selectedLocation && <OwnerServiceAlertWidget locationId={selectedLocation.name} />}
         
+        <VirtualSecurityCameraManager />
+
         <Card>
             <CardHeader className="flex-row items-center justify-between">
                 <div>
