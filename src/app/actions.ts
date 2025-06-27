@@ -29,6 +29,7 @@ import { queryKnowledgeBase, type QueryKnowledgeBaseInput, type QueryKnowledgeBa
 import { runMasterAgentDecision, type MasterAgentInput, type MasterAgentOutput } from '@/ai/flows/master-agent-decision-flow';
 import type { OnboardingInterviewInput, OnboardingInterviewOutput, OnboardingParserInput, OnboardingParserOutput } from '@/ai/schemas/onboarding-schemas';
 import { scanInvoice, type ScanInvoiceInput, type ScanInvoiceOutput } from '@/ai/flows/scan-invoice-flow';
+import { generatePermitChecklist, type GeneratePermitChecklistInput, type GeneratePermitChecklistOutput } from '@/ai/flows/generate-permit-checklist-flow';
 
 
 // This wrapper function centralizes error handling for all AI flows.
@@ -123,18 +124,15 @@ export async function explainTaskImportanceAction(input: ExplainTaskImportanceIn
     return safeRun(explainTaskImportance, input, 'explainTaskImportance');
 }
 
-// New action for wait time analysis
 export async function analyzeWaitTimeAction(input: AnalyzeWaitTimeInput) {
     return safeRun(analyzeWaitTime, input, 'analyzeWaitTime');
 }
 
-// New action for scanning invoices
 export async function scanInvoiceAction(input: ScanInvoiceInput): Promise<{ data: ScanInvoiceOutput | null; error: string | null; }> {
     return safeRun(scanInvoice, input, 'scanInvoice');
 }
 
 
-// New actions for AI Onboarding
 export async function continueOnboardingInterviewAction(input: OnboardingInterviewInput): Promise<{ data: OnboardingInterviewOutput | null; error: string | null; }> {
     return safeRun(continueOnboardingInterview, input, 'continueOnboardingInterview');
 }
@@ -146,7 +144,6 @@ export async function masterOnboardingParserAction(input: OnboardingParserInput)
     return safeRun(masterOnboardingParser, input, 'masterOnboardingParser');
 }
 
-// Refactored to use the safeRun wrapper for consistency and robust error handling.
 export async function queryKnowledgeBaseAction(input: { question: string }): Promise<{ data: { answer: string; source: string } | null; error: string | null; }> {
     
     const ragFlow = async (ragInput: { question: string }): Promise<{ answer: string; source: string; }> => {
@@ -181,9 +178,12 @@ export async function queryKnowledgeBaseAction(input: { question: string }): Pro
     return safeRun(ragFlow, input, 'queryKnowledgeBase');
 }
 
-// New action for Sentinel Agent
 export async function runMasterAgentCycleAction(input: MasterAgentInput): Promise<{ data: MasterAgentOutput | null; error: string | null; }> {
     return safeRun(runMasterAgentDecision, input, 'runMasterAgentDecision');
+}
+
+export async function generatePermitChecklistAction(input: GeneratePermitChecklistInput): Promise<{ data: GeneratePermitChecklistOutput | null; error: string | null; }> {
+    return safeRun(generatePermitChecklist, input, 'generatePermitChecklist');
 }
 
 

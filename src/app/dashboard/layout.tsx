@@ -38,7 +38,8 @@ import {
   BrainCircuit,
   ChefHat,
   Database,
-  Bot
+  Bot,
+  FileText as FileTextIcon
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -107,6 +108,7 @@ const ownerNav = [
         category: "Strategic Oversight",
         icon: Eye,
         links: [
+            { name: "New Permit Applications", href: "/dashboard/owner/permits" },
             { name: "High-Priority Approvals", href: "/dashboard/owner#high-priority-approvals" },
             { name: "Agent Activity Log", href: "/dashboard/owner#agent-activity-log" },
             { name: "Security Cameras", href: "/dashboard/owner#security-cameras" },
