@@ -194,7 +194,7 @@ export default function VirtualSecurityCameraManager() {
                                             id={`prompt-${camera.id}`}
                                             value={analysisPrompts[camera.id] || ''}
                                             onChange={e => setAnalysisPrompts({...analysisPrompts, [camera.id]: e.target.value})}
-                                            placeholder="e.g., How many people are in line?"
+                                            placeholder="e.g., Check for idle staff or count handwashing events."
                                         />
                                     </div>
                                      {analysisResult && analysisResult.cameraId === camera.id && (

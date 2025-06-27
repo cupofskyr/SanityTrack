@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText } from 'lucide-react';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -25,6 +25,7 @@ import { formatDistanceToNow } from 'date-fns';
 import VirtualSecurityCameraManager from '@/components/virtual-security-camera-manager';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 type Location = {
   id: number;
@@ -44,6 +45,14 @@ type HiringRequest = {
     justification: string;
 };
 
+type DelegatedTask = {
+    id: number;
+    description: string;
+    source: string;
+    status: 'Pending' | 'PendingOwnerApproval';
+    attachmentUrl?: string;
+};
+
 type AgentActivityLog = MasterAgentOutput & {
   timestamp: Date;
 };
@@ -55,6 +64,12 @@ type PurchaseOrder = {
     subject: string;
     list: string;
 };
+
+// Mock data for inspector tasks, mirroring what's on the manager's dashboard
+const initialDelegatedTasks: DelegatedTask[] = [
+    { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: 'Pending' },
+    { id: 3, description: "Clear blockage from back storage area hand-washing sink.", source: "Health Inspector Report (2024-07-01)", status: 'Pending' },
+];
 
 export default function OwnerDashboard() {
   const { toast } = useToast();
@@ -78,6 +93,7 @@ export default function OwnerDashboard() {
   const [isAgentRunning, setIsAgentRunning] = useState(false);
   
   const [pendingPOs, setPendingPOs] = useState<PurchaseOrder[]>([]);
+  const [inspectorTasks] = useState<DelegatedTask[]>(initialDelegatedTasks);
 
   useEffect(() => {
     const storedLocations = JSON.parse(localStorage.getItem('sanity-track-locations') || '[]');
@@ -194,14 +210,17 @@ export default function OwnerDashboard() {
 
   const handleRunAgent = async () => {
     setIsAgentRunning(true);
+    // Add "Employee idle" to the list of simulated camera observations
     const simulatedState = {
-        cameraObservations: ["Spill detected on floor near counter."],
+        cameraObservations: ["Spill detected on floor near counter.", "Employee idle for 5 minutes at front counter."],
         stockLevels: [{ item: 'Coffee Cups', level: 'Critical' as const }],
         openTasks: [],
     };
     const simulatedRules = [
         { id: 'auto-spill-cleaner', name: 'Auto-Tasker for Spills', description: '...', isEnabled: true },
         { id: 'auto-restock-alerter', name: 'Proactive Restock Alerter', description: '...', isEnabled: true },
+        // Add a new rule for the agent to use
+        { id: 'auto-idle-tasker', name: 'Proactive Idle Tasker', description: 'IF a camera detects an employee is idle, THEN create a low-priority task to restock napkins.', isEnabled: true },
     ];
 
     const result = await runMasterAgentCycleAction({ rules: simulatedRules, currentState: simulatedState });
@@ -273,38 +292,47 @@ export default function OwnerDashboard() {
                 </div>
            </CardHeader>
            <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Today's Sales</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader>
                         <CardContent>{isFetchingToast ? <Loader2 className="h-6 w-6 animate-spin" /> : toastData ? <div className="text-2xl font-bold">${toastData.liveSalesToday.toLocaleString()}</div> : <p className="text-xs text-muted-foreground">No data</p>}</CardContent>
                     </Card>
                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Compliance Score</CardTitle><ShieldCheck className="h-4 w-4 text-muted-foreground" /></CardHeader>
-                        <CardContent><div className="text-2xl font-bold">92.5%</div><p className="text-xs text-muted-foreground">+2.1% from last month</p></CardContent>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Compliance</CardTitle><ShieldCheck className="h-4 w-4 text-muted-foreground" /></CardHeader>
+                        <CardContent><div className="text-2xl font-bold">92.5%</div></CardContent>
                     </Card>
                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Customer Sat.</CardTitle><Smile className="h-4 w-4 text-muted-foreground" /></CardHeader>
-                        <CardContent><div className="text-2xl font-bold">4.8/5</div><p className="text-xs text-muted-foreground">Based on 24 reviews</p></CardContent>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Cust. Sat.</CardTitle><Smile className="h-4 w-4 text-muted-foreground" /></CardHeader>
+                        <CardContent><div className="text-2xl font-bold">4.8/5</div></CardContent>
                     </Card>
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Labor vs Revenue</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader>
-                        <CardContent><div className="text-2xl font-bold">28%</div><p className="text-xs text-muted-foreground">Target: &lt;30%</p></CardContent>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Labor %</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader>
+                        <CardContent><div className="text-2xl font-bold">28%</div></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Handwash/Hr</CardTitle><Handshake className="h-4 w-4 text-muted-foreground" /></CardHeader>
+                        <CardContent><div className="text-2xl font-bold">12</div></CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Prep Time</CardTitle><Watch className="h-4 w-4 text-muted-foreground" /></CardHeader>
+                        <CardContent><div className="text-2xl font-bold">55s</div></CardContent>
                     </Card>
                 </div>
            </CardContent>
        </Card>
 
        {/* Tier 2: Action & Approval Queue */}
-       <Card id="approvals-queue">
+       <Card id="high-priority-approvals">
            <CardHeader>
                 <CardTitle className="font-headline">Action & Approval Queue</CardTitle>
                 <CardDescription>Your personal inbox for items requiring your immediate attention.</CardDescription>
            </CardHeader>
            <CardContent>
                 <Tabs defaultValue="approvals">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="approvals">High-Priority Approvals</TabsTrigger>
                         <TabsTrigger value="alerts">Crucial Alerts</TabsTrigger>
+                        <TabsTrigger value="mandates">Inspector Mandates</TabsTrigger>
                     </TabsList>
                     <TabsContent value="approvals" className="mt-4">
                         <div className="space-y-4">
@@ -357,6 +385,44 @@ export default function OwnerDashboard() {
                     </TabsContent>
                     <TabsContent value="alerts" className="mt-4">
                         <OwnerServiceAlertWidget locationId={selectedLocation?.name || ''} />
+                    </TabsContent>
+                     <TabsContent value="mandates" className="mt-4">
+                        <Card className="bg-muted/30">
+                            <CardHeader>
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <ShieldCheck/> Inspector Mandated Tasks
+                                </CardTitle>
+                                <CardDescription>Tasks assigned by the Health Department that are pending completion by your managers.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {inspectorTasks.length > 0 ? (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Task</TableHead>
+                                                <TableHead>Source</TableHead>
+                                                <TableHead>Status</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                        {inspectorTasks.map(task => (
+                                            <TableRow key={task.id}>
+                                                <TableCell className="font-medium">{task.description}</TableCell>
+                                                <TableCell className="text-sm text-muted-foreground">{task.source}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant={task.status === 'Pending' ? 'destructive' : 'default'}>
+                                                        {task.status === 'Pending' ? 'Action Required' : 'Pending Approval'}
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                        </TableBody>
+                                    </Table>
+                                ) : (
+                                    <p className="text-muted-foreground text-center py-4">No outstanding mandates from the Health Department.</p>
+                                )}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                 </Tabs>
            </CardContent>

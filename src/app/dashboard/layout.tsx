@@ -31,11 +31,14 @@ import {
   Calendar,
   Users,
   Wrench,
-  BarChart2,
+  BarChart3,
   Eye,
   Settings,
   CalendarDays,
   BrainCircuit,
+  ChefHat,
+  Database,
+  Bot
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -95,7 +98,7 @@ const managerNav = [
 const ownerNav = [
     {
         category: "Executive Dashboard",
-        icon: BarChart2,
+        icon: BarChart3,
         links: [
             { name: "KPI Overview", href: "/dashboard/owner", exact: true },
         ]
@@ -104,9 +107,19 @@ const ownerNav = [
         category: "Strategic Oversight",
         icon: Eye,
         links: [
-            { name: "Approvals Queue", href: "/dashboard/owner#approvals-queue" },
+            { name: "High-Priority Approvals", href: "/dashboard/owner#high-priority-approvals" },
             { name: "Agent Activity Log", href: "/dashboard/owner#agent-activity-log" },
             { name: "Security Cameras", href: "/dashboard/owner#security-cameras" },
+        ]
+    },
+    {
+        category: "Operational Oversight",
+        icon: Wrench,
+        links: [
+            { name: "Shift Planner", href: "/dashboard/manager/shifts" },
+            { name: "Inventory & Orders", href: "/dashboard/manager/inventory" },
+            { name: "Quality Control", href: "/dashboard/manager/quality-control" },
+            { name: "Master Task List", href: "/dashboard/manager/equipment" },
         ]
     },
     {
@@ -218,8 +231,12 @@ export default function DashboardLayout({
             category.links.some((link: any) => pathname.startsWith(link.href.split('#')[0]))
         );
 
-        const isLinkActive = (href: string) => {
-            return pathname === href.split('#')[0];
+        const isLinkActive = (href: string, exact: boolean = false) => {
+            const cleanPath = href.split('#')[0];
+            if (exact) {
+              return pathname === cleanPath;
+            }
+            return pathname.startsWith(cleanPath);
         };
 
         return (
@@ -236,7 +253,7 @@ export default function DashboardLayout({
                             <SidebarMenu className="pl-4 border-l ml-4">
                                 {category.links.map((link: any) => (
                                     <SidebarMenuItem key={link.href}>
-                                        <SidebarMenuButton asChild isActive={isLinkActive(link.href)} size="sm">
+                                        <SidebarMenuButton asChild isActive={isLinkActive(link.href, link.exact)} size="sm">
                                             <Link href={link.href}>{link.name}</Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
