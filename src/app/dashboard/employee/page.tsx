@@ -48,12 +48,6 @@ const initialIssues = [
   { id: 2, description: "Dining area light flickering", status: "Maintenance Notified" },
 ];
 
-const initialInventory = [
-    { id: 1, name: 'Coffee Cups (sleeves)', par: 100, currentCount: 75 },
-    { id: 2, name: 'Milk (gallons)', par: 10, currentCount: 4 },
-    { id: 3, name: 'Napkins (packs)', par: 20, currentCount: 18 },
-];
-
 const initialBriefing = {
     title: "Let's Make it a Great Tuesday!",
     message: "Great work yesterday everyone! Let's keep the energy high today. Our focus is on guest experience, so let's make sure every customer leaves with a smile.",
@@ -70,7 +64,6 @@ export default function EmployeeDashboard() {
   const [qaTasks, setQaTasks] = useState<QaTask[]>(initialQaTasks);
   const [completedTasks, setCompletedTasks] = useState(initialCompletedTasks);
   const [issues, setIssues] = useState(initialIssues);
-  const [inventory, setInventory] = useState(initialInventory);
   
   const [newIssueDescription, setNewIssueDescription] = useState("");
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
@@ -188,15 +181,6 @@ export default function EmployeeDashboard() {
       }
     };
     
-  const handleCountChange = (id: number, value: string) => {
-    const count = parseInt(value, 10);
-    setInventory(
-        inventory.map(item =>
-            item.id === id ? { ...item, currentCount: isNaN(count) ? 0 : count } : item
-        )
-    );
-  };
-
   const handleTranslateBriefing = async () => {
     if (translatedBriefing) {
         setTranslatedBriefing(null);
@@ -407,26 +391,31 @@ export default function EmployeeDashboard() {
                                     <Table><TableHeader><TableRow><TableHead>Description</TableHead><TableHead className="text-right">Status</TableHead></TableRow></TableHeader><TableBody>{issues.length > 0 ? issues.map((issue) => (<TableRow key={issue.id}><TableCell className="font-medium">{issue.description}</TableCell><TableCell className="text-right"><Badge variant="outline">{issue.status}</Badge></TableCell></TableRow>)) : (<TableRow><TableCell colSpan={2} className="h-24 text-center text-muted-foreground">No issues reported. Great job!</TableCell></TableRow>)}</TableBody></Table>
                                 </CardContent>
                             </Card>
-                             <Card>
+                            <Card>
                                 <CardHeader>
-                                    <CardTitle className="font-headline text-lg">Inventory Count</CardTitle>
-                                    <CardDescription>Update the current stock levels for key items.</CardDescription>
+                                    <CardTitle className="font-headline text-lg">Completed Tasks Log</CardTitle>
+                                    <CardDescription>A record of your completed tasks for this shift.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <Table>
-                                        <TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Status</TableHead><TableHead className="w-[120px]">Current Count</TableHead></TableRow></TableHeader>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Task</TableHead>
+                                                <TableHead className="text-right">Completed At</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
                                         <TableBody>
-                                            {inventory.map(item => (
-                                                <TableRow key={item.id}>
-                                                    <TableCell className="font-medium">{item.name}</TableCell>
-                                                    <TableCell><Badge variant={item.currentCount < item.par ? 'destructive' : 'outline'}>{item.currentCount < item.par ? 'Low' : 'OK'}</Badge></TableCell>
-                                                    <TableCell><Input type="number" value={item.currentCount} onChange={e => handleCountChange(item.id, e.target.value)} className="h-8"/></TableCell>
+                                            {completedTasks.length > 0 ? completedTasks.map((task) => (
+                                                <TableRow key={task.id}>
+                                                    <TableCell className="font-medium">{task.type === 'qa' ? task.description : task.name}</TableCell>
+                                                    <TableCell className="text-right text-xs text-muted-foreground">{task.completedAt}</TableCell>
                                                 </TableRow>
-                                            ))}
+                                            )) : (
+                                                <TableRow><TableCell colSpan={2} className="h-24 text-center text-muted-foreground">No tasks completed yet.</TableCell></TableRow>
+                                            )}
                                         </TableBody>
                                     </Table>
                                 </CardContent>
-                                <CardFooter><Button onClick={() => toast({ title: 'Counts Submitted', description: 'Inventory levels have been updated by manager.' })}>Submit Counts</Button></CardFooter>
                             </Card>
                         </div>
                     </TabsContent>
@@ -461,3 +450,4 @@ export default function EmployeeDashboard() {
     </TooltipProvider>
   );
 }
+
