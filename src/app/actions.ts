@@ -30,6 +30,8 @@ import { runMasterAgentDecision, type MasterAgentInput, type MasterAgentOutput }
 import type { OnboardingInterviewInput, OnboardingInterviewOutput, OnboardingParserInput, OnboardingParserOutput } from '@/ai/schemas/onboarding-schemas';
 import { scanInvoice, type ScanInvoiceInput, type ScanInvoiceOutput } from '@/ai/flows/scan-invoice-flow';
 import { generatePermitChecklist, type GeneratePermitChecklistInput, type GeneratePermitChecklistOutput } from '@/ai/flows/generate-permit-checklist-flow';
+import { optimizeOrder } from '@/ai/flows/optimizeOrderFlow';
+import type { ShoppingListItem, OptimizeOrderOutput } from '@/ai/schemas/ordering-schemas';
 
 
 // This wrapper function centralizes error handling for all AI flows.
@@ -130,6 +132,10 @@ export async function analyzeWaitTimeAction(input: AnalyzeWaitTimeInput) {
 
 export async function scanInvoiceAction(input: ScanInvoiceInput): Promise<{ data: ScanInvoiceOutput | null; error: string | null; }> {
     return safeRun(scanInvoice, input, 'scanInvoice');
+}
+
+export async function optimizeOrderAction(input: { shoppingList: ShoppingListItem[] }): Promise<{ data: OptimizeOrderOutput | null; error: string | null; }> {
+    return safeRun(optimizeOrder, input, 'optimizeOrder');
 }
 
 

@@ -39,7 +39,8 @@ import {
   ChefHat,
   Database,
   Bot,
-  FileText as FileTextIcon
+  FileText as FileTextIcon,
+  ShoppingCart
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,8 @@ const managerNav = [
     icon: Calendar,
     links: [
       { name: "Shift Planner", href: "/dashboard/manager/shifts" },
-      { name: "Inventory & Ordering", href: "/dashboard/manager/inventory" },
+      { name: "Inventory", href: "/dashboard/manager/inventory" },
+      { name: "Ordering", href: "/dashboard/manager/ordering" },
       { name: "Hiring Requests", href: "/dashboard/manager#hiring-request" },
     ]
   },
@@ -119,7 +121,8 @@ const ownerNav = [
         icon: Wrench,
         links: [
             { name: "Shift Planner", href: "/dashboard/manager/shifts" },
-            { name: "Inventory & Orders", href: "/dashboard/manager/inventory" },
+            { name: "Inventory", href: "/dashboard/manager/inventory" },
+            { name: "Ordering", href: "/dashboard/manager/ordering" },
             { name: "Quality Control", href: "/dashboard/manager/quality-control" },
             { name: "Master Task List", href: "/dashboard/manager/equipment" },
         ]
