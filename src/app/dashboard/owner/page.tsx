@@ -5,19 +5,15 @@ import { useState, useEffect, FormEvent } from 'react';
 import Link from 'next/link';
 import {
   fetchToastDataAction,
-  summarizeReviewsAction,
   postJobAction,
   runMasterAgentCycleAction,
 } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Rss, BarChart2, Briefcase, Check, X, Send, Package, ShoppingCart, PlusCircle, Building, User, Phone, Megaphone, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Star } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import type { ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
@@ -25,12 +21,10 @@ import OwnerServiceAlertWidget from '@/components/owner-service-alert-widget';
 import { Input } from '@/components/ui/input';
 import OnboardingInterview from '@/components/onboarding/onboarding-interview';
 import type { MasterAgentOutput } from '@/ai/schemas/agent-schemas';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import VirtualSecurityCameraManager from '@/components/virtual-security-camera-manager';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 
 type Location = {
   id: number;
@@ -52,14 +46,6 @@ type HiringRequest = {
 
 type AgentActivityLog = MasterAgentOutput & {
   timestamp: Date;
-};
-
-type QaAuditLog = {
-    id: number;
-    location: string;
-    item: string;
-    score: number;
-    timestamp: string;
 };
 
 type PurchaseOrder = {
@@ -90,8 +76,6 @@ export default function OwnerDashboard() {
   
   const [agentActivity, setAgentActivity] = useState<AgentActivityLog[]>([]);
   const [isAgentRunning, setIsAgentRunning] = useState(false);
-
-  const [qaAuditLog, setQaAuditLog] = useState<QaAuditLog[]>([]);
   
   const [pendingPOs, setPendingPOs] = useState<PurchaseOrder[]>([]);
 
@@ -104,7 +88,6 @@ export default function OwnerDashboard() {
         setIsNewUser(false);
     }
   }, []);
-
 
   useEffect(() => {
     if (locations.length > 0 && !selectedLocation) {
@@ -122,9 +105,6 @@ export default function OwnerDashboard() {
     const checkStorage = () => {
         const storedRequests = localStorage.getItem('hiringRequests');
         if (storedRequests) setHiringRequests(JSON.parse(storedRequests));
-        
-        const storedQaLog = JSON.parse(localStorage.getItem('qa-audit-log') || '[]');
-        setQaAuditLog(storedQaLog);
         
         const storedPOs = JSON.parse(localStorage.getItem('pendingPurchaseOrders') || '[]');
         setPendingPOs(storedPOs);
@@ -281,14 +261,18 @@ export default function OwnerDashboard() {
        {/* Tier 1: Vitals */}
        <Card>
            <CardHeader>
-                <CardTitle className="font-headline">Executive Vitals</CardTitle>
-                <CardDescription>A high-level overview of your enterprise's health.</CardDescription>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle className="font-headline">Executive Vitals</CardTitle>
+                        <CardDescription>A high-level overview of your enterprise's health.</CardDescription>
+                    </div>
+                     <Select value={selectedLocation?.name} onValueChange={(name) => setSelectedLocation(locations.find(l => l.name === name))}>
+                        <SelectTrigger className="w-full md:w-1/4"><SelectValue placeholder="Select location..." /></SelectTrigger>
+                        <SelectContent>{locations.map(loc => <SelectItem key={loc.id} value={loc.name}>{loc.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                </div>
            </CardHeader>
            <CardContent className="space-y-4">
-               <Select value={selectedLocation?.name} onValueChange={(name) => setSelectedLocation(locations.find(l => l.name === name))}>
-                    <SelectTrigger className="w-full md:w-1/3"><SelectValue placeholder="Select location..." /></SelectTrigger>
-                    <SelectContent>{locations.map(loc => <SelectItem key={loc.id} value={loc.name}>{loc.name}</SelectItem>)}</SelectContent>
-                </Select>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Today's Sales</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader>
@@ -429,20 +413,23 @@ export default function OwnerDashboard() {
                    </AccordionItem>
                    <AccordionItem value="item-2">
                        <AccordionTrigger><div className="flex items-center gap-2"><Building className="h-5 w-5"/> Team & Locations</div></AccordionTrigger>
-                       <AccordionContent className="p-4 space-y-4">
-                           <Button asChild variant="outline"><Link href="/dashboard/owner/team"><Users className="mr-2"/> Manage Team & Permissions</Link></Button>
-                            <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
-                                <DialogTrigger asChild><Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Add or Manage Locations</Button></DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader><DialogTitle className="font-headline">Manage Locations</DialogTitle></DialogHeader>
-                                    <form onSubmit={handleAddLocation} className="space-y-4 py-4">
-                                        <div className="grid gap-2"><Label htmlFor="new-loc-name">Location Name</Label><Input id="new-loc-name" placeholder="e.g., Uptown Bistro" value={newLocationData.name} onChange={(e) => setNewLocationData(prev => ({...prev, name: e.target.value}))} required /></div>
-                                        <div className="grid gap-2"><Label htmlFor="new-loc-manager">Manager Name</Label><Input id="new-loc-manager" placeholder="e.g., Casey Lee" value={newLocationData.managerName} onChange={(e) => setNewLocationData(prev => ({...prev, managerName: e.target.value}))} required /></div>
-                                        <div className="grid gap-2"><Label htmlFor="new-loc-email">Manager Email</Label><Input id="new-loc-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={(e) => setNewLocationData(prev => ({...prev, managerEmail: e.target.value}))} required /></div>
-                                        <DialogFooter><Button type="submit">Save Location</Button></DialogFooter>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
+                       <AccordionContent className="p-4 space-y-2">
+                           <p className="text-sm text-muted-foreground">Manage your organization's users, roles, and business locations.</p>
+                            <div className="flex flex-wrap gap-2 pt-2">
+                               <Button asChild variant="outline"><Link href="/dashboard/owner/team"><Users className="mr-2"/> Manage Team & Permissions</Link></Button>
+                                <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
+                                    <DialogTrigger asChild><Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Add or Manage Locations</Button></DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader><DialogTitle className="font-headline">Manage Locations</DialogTitle></DialogHeader>
+                                        <form onSubmit={handleAddLocation} className="space-y-4 py-4">
+                                            <div className="grid gap-2"><Label htmlFor="new-loc-name">Location Name</Label><Input id="new-loc-name" placeholder="e.g., Uptown Bistro" value={newLocationData.name} onChange={(e) => setNewLocationData(prev => ({...prev, name: e.target.value}))} required /></div>
+                                            <div className="grid gap-2"><Label htmlFor="new-loc-manager">Manager Name</Label><Input id="new-loc-manager" placeholder="e.g., Casey Lee" value={newLocationData.managerName} onChange={(e) => setNewLocationData(prev => ({...prev, managerName: e.target.value}))} required /></div>
+                                            <div className="grid gap-2"><Label htmlFor="new-loc-email">Manager Email</Label><Input id="new-loc-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={(e) => setNewLocationData(prev => ({...prev, managerEmail: e.target.value}))} required /></div>
+                                            <DialogFooter><Button type="submit">Save Location</Button></DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
                        </AccordionContent>
                    </AccordionItem>
                    <AccordionItem value="item-3">

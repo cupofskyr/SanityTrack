@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Star, Timer, Megaphone, Sparkles, Loader2, User, Phone, Mail, UtensilsCrossed, Languages, ArrowRightLeft, ShieldCheck, BookOpen, FileText } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Timer, Megaphone, Sparkles, Loader2, Languages, ArrowRightLeft, ShieldCheck, BookOpen, Link as LinkIcon, Edit, FileText } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,7 +31,7 @@ const initialTasks = [
   { id: 4, name: "Mandatory Team Meeting: Q3 Planning", area: "Main Office", priority: "High", status: "Pending", type: 'regular' }
 ];
 
-const initialQaTasks = [
+const initialQaTasks: QaTask[] = [
     // This will be populated by localStorage now
 ];
 
@@ -62,12 +62,7 @@ const initialBriefing = {
 
 type Shift = { id: string; date: string; startTime: string; endTime: string; assignedTo?: string; status?: 'scheduled' | 'offered'; };
 
-// Simulation data for this employee
 const employeeName = "John Doe";
-const employeeLocation = "Downtown";
-const employeeShift = { start: "09:00", end: "17:00" };
-
-// Mock for QA Sentinel
 const goldenStandards = [{ name: "Classic Burger", imageUrl: "https://storage.googleapis.com/gen-ai-recipes/golden-burger.jpg" }];
 
 export default function EmployeeDashboard() {
@@ -109,11 +104,9 @@ export default function EmployeeDashboard() {
   const allCurrentTasks = [...qaTasks, ...tasks];
 
   useEffect(() => {
-    // This effect simulates fetching the schedule from a shared source (localStorage)
     const publishedScheduleJSON = localStorage.getItem('published-schedule');
     if (publishedScheduleJSON) setAllShifts(JSON.parse(publishedScheduleJSON));
 
-    // Poll for new QA tasks
     const qaTaskInterval = setInterval(() => {
       const storedQaTask = localStorage.getItem('qa-employee-task');
       if (storedQaTask) {
@@ -150,19 +143,11 @@ export default function EmployeeDashboard() {
   const handleClockIn = () => {
     setIsClockedIn(true);
     setLastClockIn(new Date());
-    const newLog = { id: Date.now(), employeeName, location: employeeLocation, type: 'in' as const, timestamp: new Date().toISOString(), shiftStart: employeeShift.start };
-    const logs = JSON.parse(localStorage.getItem('timeClockLogs') || '[]');
-    logs.push(newLog);
-    localStorage.setItem('timeClockLogs', JSON.stringify(logs));
     toast({ title: "Clocked In", description: `You clocked in at ${new Date().toLocaleTimeString()}. Welcome!` });
   };
 
   const handleClockOut = () => {
     setIsClockedIn(false);
-     const newLog = { id: Date.now(), employeeName, location: employeeLocation, type: 'out' as const, timestamp: new Date().toISOString(), shiftEnd: employeeShift.end };
-    const logs = JSON.parse(localStorage.getItem('timeClockLogs') || '[]');
-    logs.push(newLog);
-    localStorage.setItem('timeClockLogs', JSON.stringify(logs));
     toast({ title: "Clocked Out", description: `You clocked out at ${new Date().toLocaleTimeString()}. Have a great day!` });
   };
   
@@ -269,7 +254,6 @@ export default function EmployeeDashboard() {
             setIsQaTaskDialogOpen(false);
         } else {
              toast({ variant: "destructive", title: "QA Check Failed", description: `Score: ${data?.score}/10. A manager has been notified.` });
-             // In a real app, this would trigger the alert flow. Here we just update the task.
              setQaTasks(prev => prev.map(t => t.id === currentQaTask.id ? {...t, description: `[FAILED] ${t.description}`} : t));
              setIsQaTaskDialogOpen(false);
         }
@@ -298,22 +282,25 @@ export default function EmployeeDashboard() {
        <EmployeeServiceAlertWidget />
       
        {/* Tier 1: Immediate Action */}
-       <Card className="lg:col-span-3">
+       <Card>
         <CardHeader><CardTitle className="font-headline flex items-center gap-2"><ListTodo /> My Mission for Today</CardTitle><CardDescription>Tasks assigned to you for your current shift. Complete these to maintain our standards.</CardDescription></CardHeader>
         <CardContent><Table><TableHeader><TableRow><TableHead>Task</TableHead><TableHead>Area / Source</TableHead><TableHead>Priority</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
         <TableBody>
             {allCurrentTasks.length > 0 ? allCurrentTasks.map((task) => (
-            <TableRow key={task.id}>
-                <TableCell className="font-medium">{task.type === 'qa' ? task.description : task.name}</TableCell>
+            <TableRow key={task.id} className={task.type === 'qa' ? 'bg-destructive/5' : ''}>
+                <TableCell className="font-medium flex items-center gap-2">
+                  {task.type === 'qa' && <ShieldCheck className="h-4 w-4 text-destructive" />}
+                  {task.type === 'qa' ? task.description : task.name}
+                </TableCell>
                 <TableCell>{task.type === 'qa' ? task.source : task.area}</TableCell>
                 <TableCell><Badge variant={task.type === 'qa' || task.priority === "High" ? "destructive" : "secondary"}>{task.type === 'qa' ? 'High' : task.priority}</Badge></TableCell>
                 <TableCell className="text-right">
                     {task.type === 'qa' ? (
-                        <Button size="sm" variant="destructive" onClick={() => handleOpenQaDialog(task)}>Perform Check</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleOpenQaDialog(task as QaTask)}>Perform Check</Button>
                     ) : (
                         <Dialog open={isTaskDialogsOpen[task.id] || false} onOpenChange={(isOpen) => setIsTaskDialogsOpen(prev => ({...prev, [task.id]: isOpen}))}>
-                            <DialogTrigger asChild><Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">Complete Task</Button></DialogTrigger>
-                            <DialogContent><DialogHeader><DialogTitle className="font-headline">Complete: {task.name}</DialogTitle><DialogDescription>Upload a photo as proof of completion. This helps us track our quality standards.</DialogDescription></DialogHeader><PhotoUploader /><DialogFooter><Button type="button" className="bg-primary hover:bg-primary/90" onClick={() => handleCompleteTask(task)}>Submit Completion</Button></DialogFooter></DialogContent>
+                            <DialogTrigger asChild><Button size="sm">Complete Task</Button></DialogTrigger>
+                            <DialogContent><DialogHeader><DialogTitle className="font-headline">Complete: {task.name}</DialogTitle><DialogDescription>Upload a photo as proof of completion. This helps us track our quality standards.</DialogDescription></DialogHeader><PhotoUploader /><DialogFooter><Button type="button" onClick={() => handleCompleteTask(task as Task)}>Submit Completion</Button></DialogFooter></DialogContent>
                         </Dialog>
                     )}
                 </TableCell>
@@ -359,15 +346,15 @@ export default function EmployeeDashboard() {
         {/* Tier 3: Personal & Team Hub */}
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline">Personal & Team Hub</CardTitle>
-                <CardDescription>View your schedule, log issues, and access training materials.</CardDescription>
+                <CardTitle className="font-headline">Tools & Resources</CardTitle>
+                <CardDescription>View your schedule, log issues, and access other resources.</CardDescription>
             </CardHeader>
             <CardContent>
                  <Tabs defaultValue="schedule">
                     <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="schedule">My Schedule</TabsTrigger>
-                        <TabsTrigger value="reporting">Reporting & Logs</TabsTrigger>
-                        <TabsTrigger value="team">Team & Culture</TabsTrigger>
+                        <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                        <TabsTrigger value="reporting">Reporting</TabsTrigger>
+                        <TabsTrigger value="resources">Resources</TabsTrigger>
                     </TabsList>
                     <TabsContent value="schedule" className="mt-6">
                         <div className="grid md:grid-cols-2 gap-6">
@@ -443,17 +430,27 @@ export default function EmployeeDashboard() {
                             </Card>
                         </div>
                     </TabsContent>
-                    <TabsContent value="team" className="mt-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="font-headline text-lg">Training Center</CardTitle>
-                                <CardDescription>Access training games, materials, and challenges.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground mb-4">Keep your skills sharp! The training center is where you can learn more about menu items and compete in challenges.</p>
-                                <Button asChild><Link href="/dashboard/training"><BookOpen className="mr-2 h-4 w-4"/> Go to Training Center</Link></Button>
-                            </CardContent>
-                        </Card>
+                    <TabsContent value="resources" className="mt-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="font-headline text-lg">Training Center</CardTitle>
+                                    <CardDescription>Access training games, materials, and challenges to keep your skills sharp.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Button asChild><Link href="/dashboard/training"><BookOpen className="mr-2 h-4 w-4"/> Go to Training Center</Link></Button>
+                                </CardContent>
+                            </Card>
+                             <Card>
+                                <CardHeader>
+                                    <CardTitle className="font-headline text-lg">Ask the Brain</CardTitle>
+                                    <CardDescription>Have a question about a recipe or company policy? Get an instant answer from the AI.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Button asChild><Link href="/dashboard/brain"><Edit className="mr-2 h-4 w-4"/> Ask the Company Brain</Link></Button>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </TabsContent>
                 </Tabs>
             </CardContent>

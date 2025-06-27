@@ -219,7 +219,7 @@ export default function DashboardLayout({
             <Accordion type="multiple" defaultValue={[`item-${defaultActive}`]} className="w-full">
                 {(navItems as any[]).map((category, index) => (
                     <AccordionItem value={`item-${index}`} key={index} className="border-b-0">
-                        <AccordionTrigger className="py-2 px-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md hover:no-underline [&[data-state=open]]:bg-sidebar-accent [&[data-state=open]]:text-sidebar-accent-foreground">
+                        <AccordionTrigger className="py-2 px-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground rounded-md hover:no-underline [&[data-state=open]]:bg-accent [&[data-state=open]]:text-accent-foreground">
                            <div className="flex items-center gap-2">
                              <category.icon className="h-4 w-4" />
                              <span className="group-data-[collapsible=icon]:hidden">{category.category}</span>
@@ -250,7 +250,7 @@ export default function DashboardLayout({
                 <SidebarMenuButton
                 asChild
                 isActive={pathname === item.href}
-                tooltip={item.name}
+                tooltip={item.label}
                 >
                 <Link href={item.href}>
                     <item.icon />
