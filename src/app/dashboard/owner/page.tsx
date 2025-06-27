@@ -101,7 +101,7 @@ export default function OwnerDashboard() {
   const [copiedUrlId, setCopiedUrlId] = useState<number | null>(null);
 
   const [shopperEmail, setShopperEmail] = useState('');
-  const [shopperOffer, setShopperOffer] = useState('$25 Gift Card');
+  const [shopperOffer, setShopperOffer] = useState('$10 Gift Card for your next visit');
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
   const [inviteContent, setInviteContent] = useState<{ subject: string; body: string; } | null>(null);
@@ -606,10 +606,25 @@ export default function OwnerDashboard() {
                                                <Label htmlFor="shopper-email">Shopper's Email</Label>
                                                <Input id="shopper-email" type="email" placeholder="shopper@email.com" value={shopperEmail} onChange={(e) => setShopperEmail(e.target.value)} required />
                                            </div>
-                                           <div className="grid gap-2">
-                                               <Label htmlFor="shopper-offer">Reward Offer</Label>
-                                               <Input id="shopper-offer" placeholder="$25 Gift Card" value={shopperOffer} onChange={(e) => setShopperOffer(e.target.value)} required />
-                                           </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="shopper-offer">Reward Offer</Label>
+                                                <Select value={shopperOffer} onValueChange={(value) => setShopperOffer(value)} required>
+                                                    <SelectTrigger id="shopper-offer">
+                                                        <SelectValue placeholder="Select a reward..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="$10 Gift Card for your next visit">
+                                                            $10 Gift Card (Service Recovery Standard)
+                                                        </SelectItem>
+                                                        <SelectItem value="$25 Gift Card">
+                                                            $25 Gift Card
+                                                        </SelectItem>
+                                                        <SelectItem value="Free Menu Item of your choice">
+                                                            Free Menu Item
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
                                        </div>
                                        <Button type="submit" disabled={!shopperEmail || !shopperOffer || !selectedLocation}>
                                            <Sparkles className="mr-2 h-4 w-4" /> Generate Invitation
