@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,14 +9,20 @@ import { Logo } from "@/components/icons";
 import PhotoUploader from "@/components/photo-uploader";
 import { ArrowLeft } from "lucide-react";
 
-export default function GuestReportPage() {
+export default function GuestReportPage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  const locationName = searchParams?.location as string || "our establishment";
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl">
         <Button asChild variant="ghost" className="mb-4">
-            <Link href="/login">
+            <Link href="/">
                 <ArrowLeft className="mr-2 h-4 w-4"/>
-                Back to Login
+                Back to Main
             </Link>
         </Button>
         <Card className="shadow-2xl">
@@ -25,19 +32,22 @@ export default function GuestReportPage() {
             </div>
             <CardTitle className="font-headline text-3xl text-primary">Submit a Report</CardTitle>
             <CardDescription className="pt-2">
+              You are submitting a report for <span className="font-bold">{decodeURIComponent(locationName)}</span>.
+              <br />
               Help us maintain our standards. If you see something, say something.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <form className="space-y-4">
+              <input type="hidden" name="location" value={locationName} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                  <div className="space-y-2">
                   <Label htmlFor="name">Your Name (Optional)</Label>
                   <Input id="name" placeholder="John Doe" />
                 </div>
                  <div className="space-y-2">
-                  <Label htmlFor="location">Location of Issue</Label>
-                  <Input id="location" placeholder="e.g., Men's Restroom, Table 12" required />
+                  <Label htmlFor="issue-location">Specific Location of Issue</Label>
+                  <Input id="issue-location" placeholder="e.g., Men's Restroom, Table 12" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email (Optional)</Label>

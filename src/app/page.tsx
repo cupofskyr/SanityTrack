@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Logo } from '@/components/icons';
@@ -64,25 +65,6 @@ export default function AppFrontDoorPage() {
             </div>
             
             <AuthForm />
-            
-            <Card className="bg-card/70 backdrop-blur-sm">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <Megaphone className="h-5 w-5"/>
-                        Visiting a location?
-                    </CardTitle>
-                    <CardDescription>
-                       See an issue or have some feedback? Help us improve.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <Button asChild variant="secondary" className="w-full">
-                        <Link href="/guest/report">
-                            Submit a Guest Report
-                        </Link>
-                    </Button>
-                </CardContent>
-            </Card>
 
             <Alert>
                 <AlertCircle className="h-4 w-4" />

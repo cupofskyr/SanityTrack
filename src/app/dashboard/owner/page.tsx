@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch } from 'lucide-react';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -27,6 +27,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Separator } from '@/components/ui/separator';
 
 type Location = {
   id: number;
@@ -95,6 +96,8 @@ export default function OwnerDashboard() {
   
   const [pendingPOs, setPendingPOs] = useState<PurchaseOrder[]>([]);
   const [inspectorTasks] = useState<DelegatedTask[]>(initialDelegatedTasks);
+
+  const [copiedUrlId, setCopiedUrlId] = useState<number | null>(null);
 
   useEffect(() => {
     const storedLocations = JSON.parse(localStorage.getItem('sanity-track-locations') || '[]');
@@ -244,6 +247,14 @@ export default function OwnerDashboard() {
         description: `The manager has been notified.`
     });
   };
+
+  const handleCopyUrl = (url: string, id: number) => {
+    navigator.clipboard.writeText(url);
+    setCopiedUrlId(id);
+    toast({ title: "URL Copied!", description: "You can now use this link to create a QR code." });
+    setTimeout(() => setCopiedUrlId(null), 2000);
+  };
+
 
     if (isNewUser) {
         return <OnboardingInterview onOnboardingComplete={handleOnboardingComplete} />;
@@ -486,14 +497,42 @@ export default function OwnerDashboard() {
                                <Button asChild variant="outline"><Link href="/dashboard/owner/team"><Users className="mr-2"/> Manage Team & Permissions</Link></Button>
                                 <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
                                     <DialogTrigger asChild><Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Add or Manage Locations</Button></DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader><DialogTitle className="font-headline">Manage Locations</DialogTitle></DialogHeader>
-                                        <form onSubmit={handleAddLocation} className="space-y-4 py-4">
-                                            <div className="grid gap-2"><Label htmlFor="new-loc-name">Location Name</Label><Input id="new-loc-name" placeholder="e.g., Uptown Bistro" value={newLocationData.name} onChange={(e) => setNewLocationData(prev => ({...prev, name: e.target.value}))} required /></div>
-                                            <div className="grid gap-2"><Label htmlFor="new-loc-manager">Manager Name</Label><Input id="new-loc-manager" placeholder="e.g., Casey Lee" value={newLocationData.managerName} onChange={(e) => setNewLocationData(prev => ({...prev, managerName: e.target.value}))} required /></div>
-                                            <div className="grid gap-2"><Label htmlFor="new-loc-email">Manager Email</Label><Input id="new-loc-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={(e) => setNewLocationData(prev => ({...prev, managerEmail: e.target.value}))} required /></div>
-                                            <DialogFooter><Button type="submit">Save Location</Button></DialogFooter>
-                                        </form>
+                                    <DialogContent className="max-w-2xl">
+                                        <DialogHeader><DialogTitle className="font-headline">Manage Locations</DialogTitle><DialogDescription>Add new locations or get QR code links for guest reporting.</DialogDescription></DialogHeader>
+                                        <div className='py-4 space-y-6'>
+                                            {locations.length > 0 && (
+                                                <div className='space-y-4'>
+                                                    <Label>Existing Locations</Label>
+                                                    <div className="space-y-3 rounded-md border p-3">
+                                                        {locations.map(loc => {
+                                                            const guestUrl = typeof window !== 'undefined' ? `${window.location.origin}/guest/report?location=${encodeURIComponent(loc.name)}` : '';
+                                                            return (
+                                                            <div key={loc.id} className="flex items-center justify-between">
+                                                                <p className="font-medium">{loc.name}</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Input readOnly value={guestUrl} className="text-xs h-8" />
+                                                                    <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleCopyUrl(guestUrl, loc.id)}>
+                                                                        {copiedUrlId === loc.id ? <Check className="h-4 w-4"/> : <ClipboardCopy className="h-4 w-4" />}
+                                                                        <span className="sr-only">Copy URL</span>
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <Separator />
+                                            <div>
+                                                <Label className="font-semibold">Add a New Location</Label>
+                                                <form onSubmit={handleAddLocation} className="space-y-4 pt-2">
+                                                    <div className="grid gap-2"><Label htmlFor="new-loc-name">Location Name</Label><Input id="new-loc-name" placeholder="e.g., Uptown Bistro" value={newLocationData.name} onChange={(e) => setNewLocationData(prev => ({...prev, name: e.target.value}))} required /></div>
+                                                    <div className="grid gap-2"><Label htmlFor="new-loc-manager">Manager Name</Label><Input id="new-loc-manager" placeholder="e.g., Casey Lee" value={newLocationData.managerName} onChange={(e) => setNewLocationData(prev => ({...prev, managerName: e.target.value}))} required /></div>
+                                                    <div className="grid gap-2"><Label htmlFor="new-loc-email">Manager Email</Label><Input id="new-loc-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={(e) => setNewLocationData(prev => ({...prev, managerEmail: e.target.value}))} required /></div>
+                                                    <DialogFooter><Button type="submit">Save New Location</Button></DialogFooter>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </DialogContent>
                                 </Dialog>
                             </div>
