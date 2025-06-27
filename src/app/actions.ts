@@ -32,6 +32,7 @@ import { scanInvoice, type ScanInvoiceInput, type ScanInvoiceOutput } from '@/ai
 import { generatePermitChecklist, type GeneratePermitChecklistInput, type GeneratePermitChecklistOutput } from '@/ai/flows/generate-permit-checklist-flow';
 import { optimizeOrder } from '@/ai/flows/optimizeOrderFlow';
 import type { ShoppingListItem, OptimizeOrderOutput } from '@/ai/schemas/ordering-schemas';
+import { generateGhostShopperInvite, type GenerateGhostShopperInviteInput, type GenerateGhostShopperInviteOutput } from '@/ai/flows/generate-ghost-shopper-invite-flow';
 
 
 // This wrapper function centralizes error handling for all AI flows.
@@ -190,6 +191,10 @@ export async function runMasterAgentCycleAction(input: MasterAgentInput): Promis
 
 export async function generatePermitChecklistAction(input: GeneratePermitChecklistInput): Promise<{ data: GeneratePermitChecklistOutput | null; error: string | null; }> {
     return safeRun(generatePermitChecklist, input, 'generatePermitChecklist');
+}
+
+export async function generateGhostShopperInviteAction(input: GenerateGhostShopperInviteInput): Promise<{ data: GenerateGhostShopperInviteOutput | null; error: string | null; }> {
+    return safeRun(generateGhostShopperInvite, input, 'generateGhostShopperInvite');
 }
 
 

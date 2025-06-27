@@ -7,11 +7,12 @@ import {
   fetchToastDataAction,
   postJobAction,
   runMasterAgentCycleAction,
+  generateGhostShopperInviteAction,
 } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy } from 'lucide-react';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -98,6 +99,12 @@ export default function OwnerDashboard() {
   const [inspectorTasks] = useState<DelegatedTask[]>(initialDelegatedTasks);
 
   const [copiedUrlId, setCopiedUrlId] = useState<number | null>(null);
+
+  const [shopperEmail, setShopperEmail] = useState('');
+  const [shopperOffer, setShopperOffer] = useState('$25 Gift Card');
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
+  const [inviteContent, setInviteContent] = useState<{ subject: string; body: string; } | null>(null);
 
   useEffect(() => {
     const storedLocations = JSON.parse(localStorage.getItem('sanity-track-locations') || '[]');
@@ -255,6 +262,39 @@ export default function OwnerDashboard() {
     setTimeout(() => setCopiedUrlId(null), 2000);
   };
 
+  const handleInviteGhostShopper = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!shopperEmail || !shopperOffer || !selectedLocation) {
+        toast({ variant: 'destructive', title: 'Missing Information' });
+        return;
+    }
+
+    setIsGeneratingInvite(true);
+    setInviteContent(null);
+    setIsInviteDialogOpen(true);
+
+    try {
+        const result = await generateGhostShopperInviteAction({
+            shopperEmail,
+            offerDetails: shopperOffer,
+            locationName: selectedLocation.name,
+        });
+
+        if (result.error || !result.data) throw new Error(result.error || 'Failed to generate invite');
+        setInviteContent(result.data);
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'AI Error', description: error.message });
+        setIsInviteDialogOpen(false); // Close dialog on error
+    } finally {
+        setIsGeneratingInvite(false);
+    }
+  };
+
+  const handleSendInvite = () => {
+    toast({ title: "Invite Sent!", description: `The ghost shopper invitation has been sent to ${shopperEmail}.` });
+    setIsInviteDialogOpen(false);
+    setShopperEmail('');
+  };
 
     if (isNewUser) {
         return <OnboardingInterview onOnboardingComplete={handleOnboardingComplete} />;
@@ -549,6 +589,36 @@ export default function OwnerDashboard() {
                            </div>
                        </AccordionContent>
                    </AccordionItem>
+                   <AccordionItem value="item-4">
+                       <AccordionTrigger><div className="flex items-center gap-2"><UserSearch className="h-5 w-5"/> Ghost Shopper Program</div></AccordionTrigger>
+                       <AccordionContent className="p-1 pt-4">
+                           <Card>
+                               <CardHeader>
+                                   <CardTitle>Invite a Ghost Shopper</CardTitle>
+                                   <CardDescription>
+                                       Invite a customer to act as a "secret shopper" in exchange for a reward. The AI will draft a professional invitation email for you to send.
+                                   </CardDescription>
+                               </CardHeader>
+                               <CardContent>
+                                   <form onSubmit={handleInviteGhostShopper} className="space-y-4">
+                                       <div className="grid md:grid-cols-2 gap-4">
+                                           <div className="grid gap-2">
+                                               <Label htmlFor="shopper-email">Shopper's Email</Label>
+                                               <Input id="shopper-email" type="email" placeholder="shopper@email.com" value={shopperEmail} onChange={(e) => setShopperEmail(e.target.value)} required />
+                                           </div>
+                                           <div className="grid gap-2">
+                                               <Label htmlFor="shopper-offer">Reward Offer</Label>
+                                               <Input id="shopper-offer" placeholder="$25 Gift Card" value={shopperOffer} onChange={(e) => setShopperOffer(e.target.value)} required />
+                                           </div>
+                                       </div>
+                                       <Button type="submit" disabled={!shopperEmail || !shopperOffer || !selectedLocation}>
+                                           <Sparkles className="mr-2 h-4 w-4" /> Generate Invitation
+                                       </Button>
+                                   </form>
+                               </CardContent>
+                           </Card>
+                       </AccordionContent>
+                   </AccordionItem>
                </Accordion>
            </CardContent>
        </Card>
@@ -563,6 +633,42 @@ export default function OwnerDashboard() {
                 <DialogFooter><Button variant="ghost" onClick={() => setIsRejectDialogOpen(false)}>Cancel</Button><Button variant="destructive" onClick={handleRejectRequest}> Send Rejection</Button></DialogFooter>
             </DialogContent>
         </Dialog>
+
+       <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+          <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                  <DialogTitle className="font-headline">Review Invitation Email</DialogTitle>
+                  <DialogDescription>
+                      The AI has drafted the following invitation. Review it, then send it to {shopperEmail}.
+                  </DialogDescription>
+              </DialogHeader>
+              {isGeneratingInvite ? (
+                  <div className="flex items-center justify-center p-8 space-x-2">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <p className="text-muted-foreground">AI is drafting the email...</p>
+                  </div>
+              ) : inviteContent ? (
+                  <div className="py-4 space-y-4">
+                      <div className="grid gap-2">
+                          <Label>Subject</Label>
+                          <Input readOnly value={inviteContent.subject} />
+                      </div>
+                      <div className="grid gap-2">
+                          <Label>Body</Label>
+                          <Textarea readOnly defaultValue={inviteContent.body} rows={12} />
+                      </div>
+                  </div>
+              ) : (
+                  <div className="py-4 text-center text-destructive">Failed to generate invite.</div>
+              )}
+              <DialogFooter>
+                  <Button variant="secondary" onClick={() => setIsInviteDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleSendInvite} disabled={isGeneratingInvite || !inviteContent}>
+                      <Send className="mr-2 h-4 w-4" /> Send Email (Simulated)
+                  </Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }
