@@ -16,6 +16,7 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from "@/components/ui/accordion";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -31,7 +32,15 @@ import {
   CalendarClock,
   Database,
   BrainCircuit,
-  Bot
+  Bot,
+  Activity,
+  Calendar,
+  Users,
+  Wrench,
+  BarChart,
+  Eye,
+  Settings,
+  CalendarDays,
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -50,6 +59,84 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+
+const managerNav = [
+  { 
+    category: "Live Operations",
+    icon: Activity,
+    links: [
+      { name: "Dashboard", href: "/dashboard/manager", exact: true },
+      { name: "Live Time Clock", href: "/dashboard/manager" },
+      { name: "QA & Service Alerts", href: "/dashboard/manager/quality-control" },
+    ]
+  },
+  { 
+    category: "Planning & Prep",
+    icon: Calendar,
+    links: [
+      { name: "Shift Planner", href: "/dashboard/manager/shifts" },
+      { name: "Inventory & Ordering", href: "/dashboard/manager/inventory" },
+      { name: "Hiring Requests", href: "/dashboard/manager" },
+    ]
+  },
+   { 
+    category: "Team & Quality",
+    icon: Users,
+    links: [
+      { name: "Training Center", href: "/dashboard/training" },
+      { name: "Quality Control", href: "/dashboard/manager/quality-control" },
+    ]
+  },
+  {
+    category: "Store Setup",
+    icon: Wrench,
+    links: [
+        { name: "Master Task List", href: "/dashboard/manager/equipment" },
+        { name: "Service Contacts", href: "/dashboard/manager" },
+    ]
+  },
+];
+
+const ownerNav = [
+    {
+        category: "Executive Dashboard",
+        icon: BarChart,
+        links: [
+            { name: "KPI Overview", href: "/dashboard/owner", exact: true },
+        ]
+    },
+    {
+        category: "Strategic Oversight",
+        icon: Eye,
+        links: [
+            { name: "Approvals Queue", href: "/dashboard/owner" },
+            { name: "Agent Activity Log", href: "/dashboard/owner" },
+            { name: "Security Cameras", href: "/dashboard/owner" },
+        ]
+    },
+    {
+        category: "System Administration",
+        icon: Settings,
+        links: [
+            { name: "Team & Permissions", href: "/dashboard/owner/team" },
+            { name: "Branding", href: "/dashboard/owner/branding" },
+            { name: "AI Agent Rules", href: "/dashboard/owner/agent-rules" },
+            { name: "Billing", href: "/dashboard/owner/billing" },
+        ]
+    }
+];
+
+const employeeNav = [
+    { name: "Dashboard", href: "/dashboard/employee", icon: LayoutDashboard },
+    { name: "My Schedule", href: "/dashboard/employee", icon: CalendarDays },
+    { name: "Training", href: "/dashboard/training", icon: BookOpen },
+    { name: "Ask the Brain", href: "/dashboard/brain", icon: BrainCircuit },
+];
+
+const inspectorNav = [
+    { name: "Dashboard", href: "/dashboard/health-department", icon: LayoutDashboard },
+    { name: "Reports", href: "/dashboard/health-department", icon: ClipboardList },
+];
 
 export default function DashboardLayout({
   children,
@@ -87,21 +174,11 @@ export default function DashboardLayout({
     else if (pathname.includes("/employee")) detectedRole = "Employee";
     else if (pathname.includes("/health-department")) detectedRole = "Health Department";
     
-    // If a role page is detected, update the role and save it to session storage
     if (detectedRole) {
         sessionStorage.setItem('userRole', detectedRole);
         setRole(detectedRole);
     }
   }, [pathname]);
-
-  const getDashboardLink = () => {
-    if (role === "Owner") return "/dashboard/owner";
-    if (role === "Employee") return "/dashboard/employee";
-    if (role === "Manager") return "/dashboard/manager";
-    if (role === "Health Department") return "/dashboard/health-department";
-    // Fallback to a default dashboard if role is not set
-    return "/dashboard/employee";
-  };
   
   const handleLogout = async () => {
       await logout();
@@ -114,21 +191,6 @@ export default function DashboardLayout({
     }
   };
 
-  const dashboardLink = getDashboardLink();
-  const navItems = [
-    { href: dashboardLink, icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/dashboard/owner/agent-rules", icon: Bot, label: "Agent Rules", roles: ["Owner"]},
-    { href: "/dashboard/manager/shifts", icon: CalendarClock, label: "Shifts", roles: ["Manager", "Owner"]},
-    { href: "/dashboard/taskboard", icon: ClipboardList, label: "Taskboard", roles: ["Employee", "Manager"] },
-    { href: "/dashboard/manager/quality-control", icon: ChefHat, label: "Quality Control", roles: ["Manager", "Owner"] },
-    { href: "/dashboard/brain", icon: BrainCircuit, label: "Company Brain", roles: ["Employee", "Manager", "Owner"] },
-    { href: "/dashboard/manager/knowledge", icon: Database, label: "Knowledge Base", roles: ["Manager", "Owner"] },
-    { href: "/dashboard/training", icon: BookOpen, label: "Training", roles: ["Employee", "Manager", "Owner"] },
-    { href: "/dashboard/training/setup", icon: GraduationCap, label: "Training Setup", roles: ["Manager", "Owner"] },
-  ];
-
-  const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(role));
-
   const getInitials = (name?: string | null) => {
     if (!name) return 'U';
     const names = name.split(' ');
@@ -136,7 +198,75 @@ export default function DashboardLayout({
         return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     }
     return name[0].toUpperCase();
-  }
+  };
+
+  const renderNav = () => {
+    let navItems;
+    switch(role) {
+      case "Owner":
+        navItems = ownerNav;
+        break;
+      case "Manager":
+        navItems = managerNav;
+        break;
+      case "Health Department":
+        navItems = inspectorNav;
+        break;
+      case "Employee":
+      default:
+        navItems = employeeNav;
+    }
+
+    // For roles with collapsible sections
+    if (role === 'Manager' || role === 'Owner') {
+        const defaultActive = navItems.findIndex(category => category.links.some(link => pathname === link.href || pathname.startsWith(link.href + '/')));
+        return (
+            <Accordion type="multiple" defaultValue={[`item-${defaultActive}`]} className="w-full">
+                {(navItems as any[]).map((category, index) => (
+                    <AccordionItem value={`item-${index}`} key={index} className="border-b-0">
+                        <AccordionTrigger className="py-2 px-2 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md hover:no-underline [&[data-state=open]]:bg-sidebar-accent [&[data-state=open]]:text-sidebar-accent-foreground">
+                           <div className="flex items-center gap-2">
+                             <category.icon className="h-4 w-4" />
+                             <span className="group-data-[collapsible=icon]:hidden">{category.category}</span>
+                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-1 pb-0">
+                            <SidebarMenu className="pl-4 border-l ml-4">
+                                {category.links.map((link: any) => (
+                                    <SidebarMenuItem key={link.href}>
+                                        <SidebarMenuButton asChild isActive={link.exact ? pathname === link.href : pathname.startsWith(link.href)} size="sm">
+                                            <Link href={link.href}>{link.name}</Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+                            </SidebarMenu>
+                        </AccordionContent>
+                    </AccordionItem>
+                ))}
+            </Accordion>
+        );
+    }
+
+    // For roles with flat navigation
+    return (
+        <SidebarMenu>
+            {(navItems as any[]).map((item) => (
+            <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={item.name}
+                >
+                <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.name}</span>
+                </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            ))}
+      </SidebarMenu>
+    );
+  };
 
   return (
     <SidebarProvider>
@@ -144,28 +274,13 @@ export default function DashboardLayout({
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <Logo className="h-7 w-7 text-primary" />
-            <span className="text-lg font-semibold text-primary font-headline">
+            <span className="text-lg font-semibold text-primary font-headline group-data-[collapsible=icon]:hidden">
               SanityTrack
             </span>
           </div>
         </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {filteredNavItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === item.href}
-                  tooltip={item.label}
-                >
-                  <Link href={item.href}>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
+        <SidebarContent className="p-2">
+            {renderNav()}
         </SidebarContent>
         <SidebarFooter>
           <GlobalAICamera />
