@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -217,10 +218,10 @@ export default function OwnerDashboard() {
         openTasks: [],
     };
     const simulatedRules = [
-        { id: 'auto-spill-cleaner', name: 'Auto-Tasker for Spills', description: '...', isEnabled: true },
-        { id: 'auto-restock-alerter', name: 'Proactive Restock Alerter', description: '...', isEnabled: true },
+        { id: 'auto-spill-cleaner', name: 'Auto-Tasker for Spills', description: 'IF a camera detects a spill, THEN automatically create a high-priority cleaning task.', isEnabled: true, config: {} },
+        { id: 'auto-restock-alerter', name: 'Proactive Restock Alerter', description: 'IF inventory of a critical item is low, THEN automatically email the manager.', isEnabled: true, config: {} },
         // Add a new rule for the agent to use
-        { id: 'auto-idle-tasker', name: 'Proactive Idle Tasker', description: 'IF a camera detects an employee is idle, THEN create a low-priority task to restock napkins.', isEnabled: true },
+        { id: 'auto-idle-tasker', name: 'Proactive Idle Tasker', description: 'IF a camera detects an employee is idle, THEN create a low-priority task to restock napkins.', isEnabled: true, config: {} },
     ];
 
     const result = await runMasterAgentCycleAction({ rules: simulatedRules, currentState: simulatedState });
