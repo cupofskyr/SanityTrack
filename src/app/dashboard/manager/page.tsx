@@ -31,6 +31,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { analyzeIssueAction, generateDailyBriefingAction, translateTextAction, generateWarningLetterAction, explainTaskImportanceAction } from '@/app/actions';
 import type { GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
 import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
+import type { AnalyzeIssueOutput } from '@/ai/schemas/issue-analysis-schemas';
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },
@@ -45,7 +46,7 @@ const initialContacts = [
 
 type Contact = { id: number; name: string; type: string; phone: string; };
 type ManagedTask = { id: number; description: string; frequency: string; assignee: string; };
-type HighPriorityIssue = { id: number; description: string; reportedBy: string; category: string; contactType: string; resolutionNotes?: string; };
+type LoggedIssue = { id: number; description: string; reportedBy: string; } & AnalyzeIssueOutput;
 type DelegatedTask = {
     id: number;
     description: string;
@@ -114,9 +115,9 @@ export default function ManagerDashboard() {
     const [taskFrequency, setTaskFrequency] = useState('');
     const [taskAssignee, setTaskAssignee] = useState('');
 
-    const [highPriorityIssues, setHighPriorityIssues] = useState<HighPriorityIssue[]>([
-        { id: 1, description: "Major leak in the kitchen storage area.", reportedBy: "Jane Smith", category: "Plumbing", contactType: "Plumber" },
-        { id: 2, description: "Freezer unit temperature is above safety limits.", reportedBy: "System Alert", category: "Electrical", contactType: "Electrician" },
+    const [highPriorityIssues, setHighPriorityIssues] = useState<LoggedIssue[]>([]);
+    const [standardPriorityIssues, setStandardPriorityIssues] = useState<LoggedIssue[]>([
+        { id: 3, description: "Lightbulb flickering in the dry storage room.", reportedBy: 'AI Analyzer', category: 'Electrical', isEmergency: false, suggestedContact: 'Electrician', urgency: 'Low', suggestedAction: 'Schedule a maintenance check for the flickering lightbulb.' }
     ]);
     
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -128,7 +129,7 @@ export default function ManagerDashboard() {
     const [delegatedTasks, setDelegatedTasks] = useState<DelegatedTask[]>(initialDelegatedTasks);
 
     const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
-    const [currentIssueForNotes, setCurrentIssueForNotes] = useState<HighPriorityIssue | null>(null);
+    const [currentIssueForNotes, setCurrentIssueForNotes] = useState<LoggedIssue | null>(null);
     const [resolutionNotes, setResolutionNotes] = useState("");
 
     const [isBriefingDialogOpen, setIsBriefingDialogOpen] = useState(false);
@@ -252,22 +253,29 @@ export default function ManagerDashboard() {
 
             toast({
                 title: "AI Analysis Complete",
-                description: `Category: ${data.category}, Emergency: ${data.isEmergency ? 'Yes' : 'No'}`
+                description: `Category: ${data.category}, Urgency: ${data.urgency}`
             });
+            
+            const newIssue: LoggedIssue = {
+                id: Date.now(),
+                description: values.description,
+                reportedBy: 'AI Analyzer',
+                ...data,
+            };
+
             if (data.isEmergency) {
-                const newIssue: HighPriorityIssue = {
-                    id: Date.now(),
-                    description: values.description,
-                    reportedBy: 'AI Analyzer',
-                    category: data.category,
-                    contactType: data.suggestedContact
-                };
                 setHighPriorityIssues(prev => [newIssue, ...prev]);
                  toast({
                     variant: "destructive",
                     title: "🚨 Emergency Detected!",
                     description: "A new high-priority issue has been added to your list.",
                 })
+            } else {
+                setStandardPriorityIssues(prev => [newIssue, ...prev]);
+                toast({
+                    title: "Issue Logged",
+                    description: "A new standard-priority issue has been added to your log.",
+                });
             }
             issueForm.reset();
         } catch (error) {
@@ -277,7 +285,6 @@ export default function ManagerDashboard() {
             setIsAnalyzing(false);
         }
     }
-
 
     const findContact = (type: string) => contacts.find(c => c.type === type);
 
@@ -328,7 +335,7 @@ export default function ManagerDashboard() {
         })
     };
 
-    const handleOpenNotesDialog = (issue: HighPriorityIssue) => {
+    const handleOpenNotesDialog = (issue: LoggedIssue) => {
         setCurrentIssueForNotes(issue);
         setResolutionNotes(issue.resolutionNotes || "");
         setIsNotesDialogOpen(true);
@@ -336,11 +343,16 @@ export default function ManagerDashboard() {
 
     const handleSaveNotes = () => {
         if (!currentIssueForNotes) return;
-        setHighPriorityIssues(prev => prev.map(issue => 
+        
+        const updateList = (list: LoggedIssue[]) => list.map(issue => 
             issue.id === currentIssueForNotes.id 
             ? { ...issue, resolutionNotes } 
             : issue
-        ));
+        );
+
+        setHighPriorityIssues(updateList);
+        setStandardPriorityIssues(updateList);
+        
         toast({
             title: "Resolution Notes Saved",
             description: "The notes have been saved and are visible to the Health Department.",
@@ -671,7 +683,6 @@ export default function ManagerDashboard() {
                 </TooltipTrigger>
                  <TooltipContent><p>Learn about how real-time inventory tracking works with a connected POS.</p></TooltipContent>
             </Tooltip>
-
 
             <Tooltip>
                 <TooltipTrigger asChild>
@@ -1054,10 +1065,10 @@ export default function ManagerDashboard() {
             <StaffMealManager />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Card className="lg:col-span-3 border-primary bg-primary/5" id="ai-issue-analyzer-card">
+                    <Card className="lg:col-span-2 border-primary bg-primary/5" id="ai-issue-analyzer-card">
                          <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2"><Zap className="text-primary"/> AI Issue Analyzer</CardTitle>
-                            <CardDescription>Enter a reported issue to have the AI categorize it. Emergencies will be added to the High-Priority list below.</CardDescription>
+                            <CardDescription>Enter a reported issue to have the AI categorize it. The issue will be added to the appropriate log below.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Form {...issueForm}>
@@ -1085,58 +1096,6 @@ export default function ManagerDashboard() {
                     </Card>
                 </TooltipTrigger>
                 <TooltipContent><p>Use AI to categorize issues and identify emergencies.</p></TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Card className="lg:col-span-3">
-                        <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle className="text-accent"/> High-Priority Issues</CardTitle>
-                            <CardDescription>Critical issues identified by the AI that require immediate attention.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            {highPriorityIssues.length > 0 ? (
-                                highPriorityIssues.map(issue => {
-                                    const contact = findContact(issue.contactType);
-                                    return (
-                                        <Alert key={issue.id} variant="destructive" className="bg-accent/10 border-accent text-accent [&>svg]:text-accent">
-                                            <Flag className="h-4 w-4" />
-                                            <AlertTitle className="font-bold">{issue.description}</AlertTitle>
-                                            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                                               <div>
-                                                    <p>Reported by: {issue.reportedBy}</p>
-                                                    <div className="font-semibold">AI Category: <Badge variant="outline" className="text-accent border-accent">{issue.category}</Badge></div>
-                                               </div>
-                                               <div className="mt-2 sm:mt-0 flex gap-2">
-                                                    {contact ? (
-                                                         <Button size="sm" asChild>
-                                                            <a href={`tel:${contact.phone}`}>
-                                                                <Phone className="mr-2 h-4 w-4" /> Call {contact.name}
-                                                            </a>
-                                                         </Button>
-                                                    ) : (
-                                                        <Button size="sm" asChild>
-                                                            <Link href={`https://www.thumbtack.com/s/${issue.contactType.toLowerCase().replace(' ', '-')}/near-me/`} target="_blank">
-                                                                <ExternalLink className="mr-2 h-4 w-4" /> Find
-                                                            </Link>
-                                                        </Button>
-                                                    )}
-                                                     <Button size="sm" variant="secondary" onClick={() => handleOpenNotesDialog(issue)}>
-                                                        <MessageSquare className="mr-2 h-4 w-4" />
-                                                        {issue.resolutionNotes ? 'Edit Notes' : 'Add Notes'}
-                                                    </Button>
-                                               </div>
-                                            </AlertDescription>
-                                        </Alert>
-                                    )
-                                })
-                            ) : (
-                                <div className="text-center text-sm text-muted-foreground p-4">No high-priority issues detected. Use the analyzer above.</div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TooltipTrigger>
-                <TooltipContent><p>A list of critical issues that require immediate action.</p></TooltipContent>
             </Tooltip>
             
             <Tooltip>
@@ -1211,6 +1170,81 @@ export default function ManagerDashboard() {
                 </TooltipTrigger>
                 <TooltipContent><p>Your list of trusted plumbers, electricians, and other professionals.</p></TooltipContent>
             </Tooltip>
+            
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><ListTodo /> Issue Log</CardTitle>
+                    <CardDescription>A complete log of all issues reported and analyzed by the AI.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-6 md:grid-cols-2">
+                    <div>
+                        <h3 className="font-semibold mb-2 flex items-center gap-2"><AlertTriangle className="text-accent"/> High-Priority Issues</h3>
+                        <div className="space-y-3">
+                            {highPriorityIssues.length > 0 ? (
+                                highPriorityIssues.map(issue => {
+                                    const contact = findContact(issue.suggestedContact);
+                                    return (
+                                        <Alert key={issue.id} variant="destructive" className="bg-accent/10 border-accent text-accent [&>svg]:text-accent">
+                                            <Flag className="h-4 w-4" />
+                                            <AlertTitle className="font-bold">{issue.description}</AlertTitle>
+                                            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                               <div>
+                                                    <p>Reported by: {issue.reportedBy}</p>
+                                                    <div className="font-semibold">AI Category: <Badge variant="outline" className="text-accent border-accent">{issue.category}</Badge></div>
+                                               </div>
+                                               <div className="mt-2 sm:mt-0 flex gap-2">
+                                                    {contact ? (
+                                                         <Button size="sm" asChild>
+                                                            <a href={`tel:${contact.phone}`}>
+                                                                <Phone className="mr-2 h-4 w-4" /> Call {contact.name}
+                                                            </a>
+                                                         </Button>
+                                                    ) : (
+                                                        <Button size="sm" asChild>
+                                                            <Link href={`https://www.thumbtack.com/s/${issue.suggestedContact.toLowerCase().replace(' ', '-')}/near-me/`} target="_blank">
+                                                                <ExternalLink className="mr-2 h-4 w-4" /> Find
+                                                            </Link>
+                                                        </Button>
+                                                    )}
+                                                     <Button size="sm" variant="secondary" onClick={() => handleOpenNotesDialog(issue)}>
+                                                        <MessageSquare className="mr-2 h-4 w-4" />
+                                                        {issue.resolutionNotes ? 'Edit Notes' : 'Add Notes'}
+                                                    </Button>
+                                               </div>
+                                            </AlertDescription>
+                                        </Alert>
+                                    )
+                                })
+                            ) : (
+                                <div className="text-center text-sm text-muted-foreground p-4 border-dashed border-2 rounded-md">No high-priority issues detected.</div>
+                            )}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-2">Standard Priority Issues</h3>
+                         <div className="space-y-3">
+                            {standardPriorityIssues.length > 0 ? (
+                                standardPriorityIssues.map(issue => (
+                                    <Card key={issue.id}>
+                                        <CardContent className="p-4">
+                                            <p className="font-medium text-sm">{issue.description}</p>
+                                            <div className="text-xs text-muted-foreground mt-2 flex justify-between items-center">
+                                                <span>AI Category: <Badge variant="secondary">{issue.category}</Badge></span>
+                                                <Button size="sm" variant="outline" onClick={() => handleOpenNotesDialog(issue)}>
+                                                    <MessageSquare className="mr-2 h-3 w-3" />
+                                                    {issue.resolutionNotes ? 'Edit Notes' : 'Add Notes'}
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))
+                            ) : (
+                                <div className="text-center text-sm text-muted-foreground p-4 border-dashed border-2 rounded-md">No standard-priority issues logged.</div>
+                            )}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
                 <DialogContent>
@@ -1345,5 +1379,3 @@ export default function ManagerDashboard() {
         </TooltipProvider>
     );
 }
-
-    
