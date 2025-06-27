@@ -340,17 +340,21 @@ export default function HealthDeptDashboard() {
 
   return (
     <TooltipProvider>
-    <div className="space-y-6">
-      {/* Tier 1: Triage Queue */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline">Immediate Triage Queue</CardTitle>
-          <CardDescription>Items requiring your direct action or approval.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-muted-foreground">Escalated Guest Reports</h3>
-            <div className="border rounded-lg">
+      <Tabs defaultValue="triage" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="triage">Triage Queue</TabsTrigger>
+          <TabsTrigger value="ai_tools">AI Tools</TabsTrigger>
+          <TabsTrigger value="compliance_rules">Compliance Rules</TabsTrigger>
+          <TabsTrigger value="establishments">My Establishments</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="triage" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Escalated Guest Reports</CardTitle>
+              <CardDescription>Guest-submitted reports requiring investigation and action.</CardDescription>
+            </CardHeader>
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -388,11 +392,14 @@ export default function HealthDeptDashboard() {
                   )}
                 </TableBody>
               </Table>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-muted-foreground">Pending Compliance Submissions</h3>
-             <div className="border rounded-lg">
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Compliance Submissions</CardTitle>
+              <CardDescription>Mandatory tasks completed by establishments, awaiting your review.</CardDescription>
+            </CardHeader>
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -421,19 +428,12 @@ export default function HealthDeptDashboard() {
                   )}
                 </TableBody>
               </Table>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Tier 2: AI Tools */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline">AI-Powered Investigation & Analysis Tools</CardTitle>
-          <CardDescription>Use AI to accelerate your core workflows.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Card className="border-primary bg-primary/5">
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="ai_tools">
+           <Card className="border-primary bg-primary/5">
                 <CardHeader>
                   <CardTitle className="font-headline text-primary flex items-center gap-2"><Wand2 /> AI Inspection Report Processor</CardTitle>
                   <CardDescription>Paste your inspection notes below. The AI will extract actionable tasks to send to the business owner.</CardDescription>
@@ -467,78 +467,62 @@ export default function HealthDeptDashboard() {
                     )}
                 </CardContent>
             </Card>
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="compliance_rules">
+           <Card>
+                <CardHeader className="flex flex-row items-start justify-between">
+                    <div>
+                        <CardTitle className="flex items-center gap-2"><FileCheck /> Defined Compliance Tasks</CardTitle>
+                        <CardDescription>This is the master list of all recurring compliance tasks for your jurisdictions.</CardDescription>
+                    </div>
+                    <Button onClick={() => handleOpenDialog(null)}><PlusCircle className="mr-2 h-4 w-4" /> Add New Task</Button>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader><TableRow><TableHead className="w-[35%]">Description</TableHead><TableHead>Location</TableHead><TableHead>Frequency</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {complianceTasks.length > 0 ? (
+                        complianceTasks.map((task) => (
+                          <TableRow key={task.id} className={task.status === 'Pending Approval' ? 'bg-primary/5' : ''}>
+                            <TableCell className="font-medium">{task.description}</TableCell>
+                            <TableCell>{task.location}</TableCell>
+                            <TableCell>{task.frequency}</TableCell>
+                            <TableCell><Badge variant={task.status === 'Approved' ? 'default' : 'secondary'}>{task.status}</Badge></TableCell>
+                            <TableCell className="text-right">{task.status === 'Approved' ? (<><Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}><Pencil className="h-4 w-4" /><span className="sr-only">Edit Task</span></Button><Button variant="ghost" size="icon" onClick={() => handleDeleteClick(task)}><Trash2 className="h-4 w-4" /><span className="sr-only">Remove Task</span></Button></>) : (<div className="flex justify-end gap-2"><Button size="sm" onClick={() => handleApproveTask(task.id)}><Check className="mr-2 h-4 w-4" /> Approve</Button><Button size="sm" variant="destructive" onClick={() => handleRejectTask(task.id)}><X className="mr-2 h-4 w-4" /> Reject</Button></div>)}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground h-24">No compliance tasks defined yet. Click "Add New Task" to begin.</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+            </Card>
+        </TabsContent>
+
+        <TabsContent value="establishments">
+           <Card>
+                <CardHeader>
+                    <CardTitle>Linked Establishments</CardTitle>
+                    <CardDescription>Enter a code from a business owner to link their location to your file.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <form onSubmit={handleLinkEstablishment} className="flex flex-col sm:flex-row gap-2">
+                        <Input placeholder="Enter Establishment Code" value={newEstablishmentCode} onChange={(e) => setNewEstablishmentCode(e.target.value)} required/>
+                        <Button type="submit" className="w-full sm:w-auto">Link Location</Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </TabsContent>
+      </Tabs>
       
-      {/* Tier 3: Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline">Jurisdiction & Rule Management</CardTitle>
-          <CardDescription>Manage your establishments and the master list of compliance rules.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Tabs defaultValue="rules">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="establishments">My Establishments</TabsTrigger>
-                    <TabsTrigger value="rules">Master Compliance Rules</TabsTrigger>
-                </TabsList>
-                <TabsContent value="establishments" className="mt-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Linked Establishments</CardTitle>
-                            <CardDescription>Enter a code from a business owner to link their location to your file.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <form onSubmit={handleLinkEstablishment} className="flex flex-col sm:flex-row gap-2">
-                                <Input placeholder="Enter Establishment Code" value={newEstablishmentCode} onChange={(e) => setNewEstablishmentCode(e.target.value)} required/>
-                                <Button type="submit" className="w-full sm:w-auto">Link Location</Button>
-                            </form>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                 <TabsContent value="rules" className="mt-6">
-                    <Card>
-                        <CardHeader className="flex flex-row items-start justify-between">
-                            <div>
-                                <CardTitle className="flex items-center gap-2"><FileCheck /> Defined Compliance Tasks</CardTitle>
-                                <CardDescription>This is the master list of all recurring compliance tasks for your jurisdictions.</CardDescription>
-                            </div>
-                            <Button onClick={() => handleOpenDialog(null)}><PlusCircle className="mr-2 h-4 w-4" /> Add New Task</Button>
-                        </CardHeader>
-                        <CardContent>
-                          <Table>
-                            <TableHeader><TableRow><TableHead className="w-[35%]">Description</TableHead><TableHead>Location</TableHead><TableHead>Frequency</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-                            <TableBody>
-                              {complianceTasks.length > 0 ? (
-                                complianceTasks.map((task) => (
-                                  <TableRow key={task.id} className={task.status === 'Pending Approval' ? 'bg-primary/5' : ''}>
-                                    <TableCell className="font-medium">{task.description}</TableCell>
-                                    <TableCell>{task.location}</TableCell>
-                                    <TableCell>{task.frequency}</TableCell>
-                                    <TableCell><Badge variant={task.status === 'Approved' ? 'default' : 'secondary'}>{task.status}</Badge></TableCell>
-                                    <TableCell className="text-right">{task.status === 'Approved' ? (<><Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}><Pencil className="h-4 w-4" /><span className="sr-only">Edit Task</span></Button><Button variant="ghost" size="icon" onClick={() => handleDeleteClick(task)}><Trash2 className="h-4 w-4" /><span className="sr-only">Remove Task</span></Button></>) : (<div className="flex justify-end gap-2"><Button size="sm" onClick={() => handleApproveTask(task.id)}><Check className="mr-2 h-4 w-4" /> Approve</Button><Button size="sm" variant="destructive" onClick={() => handleRejectTask(task.id)}><X className="mr-2 h-4 w-4" /> Reject</Button></div>)}</TableCell>
-                                  </TableRow>
-                                ))
-                              ) : (
-                                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground h-24">No compliance tasks defined yet. Click "Add New Task" to begin.</TableCell></TableRow>
-                              )}
-                            </TableBody>
-                          </Table>
-                        </CardContent>
-                    </Card>
-                 </TabsContent>
-            </Tabs>
-        </CardContent>
-      </Card>
-
-
       {/* Dialogs */}
       <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}><DialogContent><DialogHeader><DialogTitle className="font-headline">{currentTask.id ? 'Edit Compliance Task' : 'Add New Compliance Task'}</DialogTitle><DialogDescription>{currentTask.id ? 'Modify the details of this task.' : 'Define new weekly or monthly tasks for establishments to follow.'}</DialogDescription></DialogHeader><div className="grid gap-6 py-4"><div className="grid gap-2"><Label htmlFor="task-description">Task Description</Label><Input id="task-description" placeholder="e.g., Verify all fire extinguishers are certified" value={currentTask.description} onChange={(e) => setCurrentTask({ ...currentTask, description: e.target.value })} required /></div><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div className="grid gap-2"><Label htmlFor="frequency">Frequency</Label><Select value={currentTask.frequency} onValueChange={(val) => setCurrentTask({ ...currentTask, frequency: val })} required><SelectTrigger id="frequency"><SelectValue placeholder="Select frequency" /></SelectTrigger><SelectContent><SelectItem value="Daily">Daily</SelectItem><SelectItem value="Weekly">Weekly</SelectItem><SelectItem value="Monthly">Monthly</SelectItem></SelectContent></Select></div><div className="grid gap-2"><Label htmlFor="task-location">For Location</Label><Select value={currentTask.location} onValueChange={(val) => setCurrentTask({ ...currentTask, location: val || 'All' })} required><SelectTrigger id="task-location"><SelectValue placeholder="Select location" /></SelectTrigger><SelectContent><SelectItem value="All">All Jurisdictions</SelectItem>{linkedJurisdictions.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}</SelectContent></Select></div></div><div className="grid gap-2"><Label>Type</Label><RadioGroup value={currentTask.type} onValueChange={(val) => setCurrentTask({ ...currentTask, type: val as ComplianceTask['type'] })} className="flex items-center gap-4 pt-2"><div className="flex items-center space-x-2"><RadioGroupItem value="Mandatory" id="mandatory" /><Label htmlFor="mandatory" className="font-normal">Mandatory</Label></div><div className="flex items-center space-x-2"><RadioGroupItem value="Optional" id="optional" /><Label htmlFor="optional" className="font-normal">Optional</Label></div></RadioGroup></div></div><DialogFooter><Button variant="outline" onClick={() => setIsTaskDialogOpen(false)}>Cancel</Button><Button onClick={handleSaveTask}>Save Task</Button></DialogFooter></DialogContent></Dialog>
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete the compliance task: <span className="font-semibold">"{taskToDelete?.description}"</span>.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <Dialog open={isContactOwnerDialogOpen} onOpenChange={setContactOwnerDialogOpen}><DialogContent><DialogHeader><DialogTitle className='font-headline'>Contact Location Owner</DialogTitle><DialogDescription>The AI will generate a professional message regarding the issue: "{selectedReportForContact?.issue}". You can edit it before sending.</DialogDescription></DialogHeader><div className="py-4 space-y-4">{isGeneratingMessage ? (<div className="flex items-center justify-center p-8 space-x-2"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="text-muted-foreground">AI is drafting the message...</p></div>) : aiMessage ? (<div className="space-y-4"><div className="grid gap-2"><Label htmlFor="ai-subject">Email Subject</Label><Input id="ai-subject" value={aiMessage.subject} readOnly/></div><div className="grid gap-2"><Label htmlFor="ai-message">Message Body</Label><Textarea id="ai-message" defaultValue={aiMessage.messageBody} rows={8}/></div></div>) : (<p className="text-destructive text-center">Failed to generate a message.</p>)}</div><DialogFooter><Button variant="secondary" onClick={() => setContactOwnerDialogOpen(false)}>Cancel</Button><Button onClick={handleSendMessageAndCreateTask} disabled={isGeneratingMessage || !aiMessage}>Send Message & Create Task</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={isInvestigateDialogOpen} onOpenChange={setIsInvestigateDialogOpen}><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle className="font-headline">Investigate Guest Report</DialogTitle><DialogDescription>Review the details of the report from {selectedReportForInvestigation?.location}.</DialogDescription></DialogHeader>{selectedReportForInvestigation && (<div className="py-4 space-y-4"><div className="grid grid-cols-3 items-center gap-4"><Label className="text-right text-muted-foreground">Location</Label><p className="col-span-2 font-semibold">{selectedReportForInvestigation.location}</p></div><div className="grid grid-cols-3 items-center gap-4"><Label className="text-right text-muted-foreground">Reported Date</Label><p className="col-span-2">{selectedReportForInvestigation.date}</p></div><div className="grid gap-2"><Label>Reported Issue</Label><div className="border rounded-md p-3 bg-muted/50"><p className="text-sm font-semibold">{selectedReportForInvestigation.issue}</p></div></div><Separator/><div className="space-y-2"><Label className="flex items-center gap-2 text-muted-foreground"><Wand2 className="h-4 w-4" /> AI Analysis</Label>{isAnalyzing ? (<div className="flex items-center justify-center p-4"><Loader2 className="h-5 w-5 animate-spin" /></div>) : selectedReportForInvestigation.aiAnalysis ? (<Alert><AlertTitle>Urgency: {selectedReportForInvestigation.aiAnalysis.urgency}</AlertTitle><AlertDescription><p><strong>Category:</strong> {selectedReportForInvestigation.aiAnalysis.category}</p><p><strong>Suggested Action:</strong> {selectedReportForInvestigation.aiAnalysis.suggestedAction}</p></AlertDescription></Alert>) : (<p className="text-sm text-muted-foreground italic p-4 text-center">No AI analysis available.</p>)}</div><div className="space-y-2"><Label className="flex items-center gap-2 text-muted-foreground"><MessageSquare className="h-4 w-4" /> Manager's Resolution Notes</Label><div className="border rounded-md p-3 bg-muted/50 text-sm min-h-[60px]">{selectedReportForInvestigation.resolutionNotes ? (<p>{selectedReportForInvestigation.resolutionNotes}</p>) : (<p className="italic text-muted-foreground">No resolution notes have been submitted by the manager yet.</p>)}</div></div><div className="grid grid-cols-3 items-center gap-4"><Label htmlFor='status-select' className="text-right text-muted-foreground">Update Status</Label><div className="col-span-2"><Select value={selectedReportForInvestigation.status} onValueChange={(newStatus) => handleStatusChange(selectedReportForInvestigation.id, newStatus)}><SelectTrigger id="status-select"><SelectValue placeholder="Change status..." /></SelectTrigger><SelectContent><SelectItem value="Reported">Reported</SelectItem><SelectItem value="Under Investigation">Under Investigation</SelectItem><SelectItem value="Action Taken">Action Taken</SelectItem><SelectItem value="Resolved">Resolved</SelectItem><SelectItem value="No Action Needed">No Action Needed</SelectItem></SelectContent></Select></div></div></div>)}<DialogFooter><Button variant="outline" onClick={() => setIsInvestigateDialogOpen(false)}>Close</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={isReviewTaskDialogOpen} onOpenChange={setIsReviewTaskDialogOpen}><DialogContent className="max-w-2xl"><DialogHeader><DialogTitle className="font-headline">Review Completed Task</DialogTitle><DialogDescription>Review the evidence for "{taskToReview?.description}" and add comments if necessary.</DialogDescription></DialogHeader>{taskToReview && (<div className="py-4 space-y-4"><div><Label className="text-sm text-muted-foreground">Photo Proof of Completion</Label><div className="mt-2"><PhotoUploader readOnly initialPreview={{ url: taskToReview.lastCompleted!.photoUrl, name: 'completion.png'}} /></div></div><div><Label htmlFor="inspector-comments">Your Comments (Optional)</Label><Textarea id="inspector-comments" placeholder="e.g., Looks good. Please ensure the area behind the equipment is also cleaned next time." value={inspectorComments} onChange={(e) => setInspectorComments(e.target.value)} rows={3}/></div></div>)}<DialogFooter><Button variant="secondary" onClick={() => setIsReviewTaskDialogOpen(false)}>Cancel</Button><Button onClick={handleSaveReview}>Save Review</Button></DialogFooter></DialogContent></Dialog>
-    </div>
     </TooltipProvider>
   );
 }
