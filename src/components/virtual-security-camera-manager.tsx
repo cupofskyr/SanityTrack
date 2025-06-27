@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, FormEvent } from 'react';
@@ -114,7 +115,7 @@ export default function VirtualSecurityCameraManager() {
 
 
     return (
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-3" id="security-cameras">
             <CardHeader className="flex-row items-start justify-between">
                 <div>
                     <CardTitle className="font-headline flex items-center gap-2"><Video /> Virtual Security Cameras</CardTitle>

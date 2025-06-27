@@ -61,7 +61,7 @@ const managerNav = [
     icon: Activity,
     links: [
       { name: "Dashboard", href: "/dashboard/manager", exact: true },
-      { name: "Live Time Clock", href: "/dashboard/manager" },
+      { name: "Live Time Clock", href: "/dashboard/manager#time-clock-feed" },
       { name: "QA & Service Alerts", href: "/dashboard/manager/quality-control" },
     ]
   },
@@ -71,7 +71,7 @@ const managerNav = [
     links: [
       { name: "Shift Planner", href: "/dashboard/manager/shifts" },
       { name: "Inventory & Ordering", href: "/dashboard/manager/inventory" },
-      { name: "Hiring Requests", href: "/dashboard/manager" },
+      { name: "Hiring Requests", href: "/dashboard/manager#hiring-request" },
     ]
   },
    { 
@@ -87,7 +87,7 @@ const managerNav = [
     icon: Wrench,
     links: [
         { name: "Master Task List", href: "/dashboard/manager/equipment" },
-        { name: "Service Contacts", href: "/dashboard/manager" },
+        { name: "Service Contacts", href: "/dashboard/manager#service-contacts" },
     ]
   },
 ];
@@ -104,9 +104,9 @@ const ownerNav = [
         category: "Strategic Oversight",
         icon: Eye,
         links: [
-            { name: "Approvals Queue", href: "/dashboard/owner" },
-            { name: "Agent Activity Log", href: "/dashboard/owner" },
-            { name: "Security Cameras", href: "/dashboard/owner" },
+            { name: "Approvals Queue", href: "/dashboard/owner#approvals-queue" },
+            { name: "Agent Activity Log", href: "/dashboard/owner#agent-activity-log" },
+            { name: "Security Cameras", href: "/dashboard/owner#security-cameras" },
         ]
     },
     {
@@ -214,7 +214,14 @@ export default function DashboardLayout({
 
     // For roles with collapsible sections
     if (role === 'Manager' || role === 'Owner') {
-        const defaultActive = (navItems as any[]).findIndex(category => category.links.some((link: any) => pathname === link.href || pathname.startsWith(link.href + '/')));
+        const defaultActive = (navItems as any[]).findIndex(category => 
+            category.links.some((link: any) => pathname.startsWith(link.href.split('#')[0]))
+        );
+
+        const isLinkActive = (href: string) => {
+            return pathname === href.split('#')[0];
+        };
+
         return (
             <Accordion type="multiple" defaultValue={[`item-${defaultActive}`]} className="w-full">
                 {(navItems as any[]).map((category, index) => (
@@ -229,7 +236,7 @@ export default function DashboardLayout({
                             <SidebarMenu className="pl-4 border-l ml-4">
                                 {category.links.map((link: any) => (
                                     <SidebarMenuItem key={link.href}>
-                                        <SidebarMenuButton asChild isActive={link.exact ? pathname === link.href : pathname.startsWith(link.href)} size="sm">
+                                        <SidebarMenuButton asChild isActive={isLinkActive(link.href)} size="sm">
                                             <Link href={link.href}>{link.name}</Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>

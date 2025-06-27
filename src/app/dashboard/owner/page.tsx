@@ -295,7 +295,7 @@ export default function OwnerDashboard() {
        </Card>
 
        {/* Tier 2: Action & Approval Queue */}
-       <Card>
+       <Card id="approvals-queue">
            <CardHeader>
                 <CardTitle className="font-headline">Action & Approval Queue</CardTitle>
                 <CardDescription>Your personal inbox for items requiring your immediate attention.</CardDescription>
@@ -374,7 +374,7 @@ export default function OwnerDashboard() {
                        <AccordionTrigger><div className="flex items-center gap-2"><Eye className="h-5 w-5"/> AI Sentinel & Security</div></AccordionTrigger>
                        <AccordionContent className="p-1 pt-4">
                            <VirtualSecurityCameraManager />
-                           <Card className="mt-6">
+                           <Card className="mt-6" id="agent-activity-log">
                                <CardHeader className="flex-row items-center justify-between">
                                    <div>
                                        <CardTitle className="font-headline flex items-center gap-2"><Bot /> Sentinel Agent Activity Log</CardTitle>

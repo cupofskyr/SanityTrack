@@ -698,7 +698,7 @@ export default function ManagerDashboard() {
 
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Card className="lg:col-span-3">
+                    <Card className="lg:col-span-3" id="time-clock-feed">
                         <CardHeader>
                              <CardTitle className="font-headline flex items-center gap-2"><Clock /> Live Time Clock Feed</CardTitle>
                             <CardDescription>Recent clock-in and clock-out events from your team. Deviations are highlighted.</CardDescription>
@@ -756,7 +756,7 @@ export default function ManagerDashboard() {
 
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Card className="lg:col-span-3">
+                    <Card className="lg:col-span-3" id="hiring-request">
                         <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2"><UserPlus /> Request New Hire</CardTitle>
                             <CardDescription>Submit a request to the owner to post a job application for a new team member.</CardDescription>
@@ -1141,7 +1141,7 @@ export default function ManagerDashboard() {
             
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Card className="lg:col-span-1">
+                    <Card className="lg:col-span-1" id="service-contacts">
                         <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2"><Wrench /> Service Contacts</CardTitle>
                             <CardDescription>Your list of trusted service professionals.</CardDescription>
