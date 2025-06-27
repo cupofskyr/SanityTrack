@@ -297,7 +297,7 @@ export default function OwnerDashboard() {
   };
 
     if (isNewUser) {
-        return <OnboardingInterview onOnboardingComplete={handleOnboardingComplete} />;
+        return <OnboardingInterview onOnboardingComplete={onOnboardingComplete} />;
     }
 
     if (locations.length === 0) {
@@ -687,3 +687,5 @@ export default function OwnerDashboard() {
     </div>
   );
 }
+
+    
