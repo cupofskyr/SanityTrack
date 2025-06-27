@@ -92,7 +92,7 @@ def generate_permit_checklist(request: Request):
 
         # 4. Save the new checklist to Firestore
         checklist_ref = db.collection("projects").document(project_id).collection("checklists").document(new_checklist.id)
-        # Use .model_dump() to get a dictionary representation of the Pydantic model
+        # Use .model_dump(by_alias=True) to get a dictionary representation of the Pydantic model
         checklist_ref.set(new_checklist.model_dump(by_alias=True))
 
         # 5. Return a success response
