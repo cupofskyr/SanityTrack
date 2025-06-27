@@ -1,18 +1,20 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import Image from 'next/image';
 import {
   fetchToastDataAction,
   summarizeReviewsAction,
   postJobAction,
-  estimateStockLevelAction
+  estimateStockLevelAction,
+  generateDailyBriefingAction,
+  generateWarningLetterAction,
 } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Rss, BarChart2, Briefcase, Check, X, Send, Package, ShoppingCart, PlusCircle, Building, User, Phone } from 'lucide-react';
+import { Loader2, Sparkles, Rss, BarChart2, Briefcase, Check, X, Send, Package, ShoppingCart, PlusCircle, Building, User, Phone, Megaphone } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,6 +27,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import type { ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
@@ -32,6 +35,17 @@ import type { SummarizeReviewsOutput } from '@/ai/schemas/review-summary-schemas
 import type { EstimateStockLevelOutput } from '@/ai/schemas/stock-level-schemas';
 import OwnerServiceAlertWidget from '@/components/owner-service-alert-widget';
 import { Input } from '@/components/ui/input';
+import type { GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
+import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
+import OnboardingInterview from '@/components/onboarding/onboarding-interview';
+
+type Location = {
+  id: number;
+  name: string;
+  manager: string;
+  inspectionCode: string;
+  toastApiKey?: string;
+};
 
 type HiringRequest = {
     id: number;
@@ -43,14 +57,13 @@ type HiringRequest = {
     justification: string;
 };
 
-const locations = ["Downtown", "Uptown", "Suburb"];
-
-const cupStockImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAYAAADw5sJwAAAA60lEQVR4nO3UAQ0AMAjAsKM78OgA/x9I0AElzR2b8/MFAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAN2OFY/gH/9E3AAAAAElFTkSuQmCC";
-
 export default function OwnerDashboard() {
   const { toast } = useToast();
 
-  const [selectedLocation, setSelectedLocation] = useState(locations[0]);
+  const [isNewUser, setIsNewUser] = useState(true); // This would be determined by checking your database
+  const [locations, setLocations] = useState<Location[]>([]);
+  
+  const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(undefined);
   const [toastData, setToastData] = useState<ToastPOSData | null>(null);
   const [isFetchingToast, setIsFetchingToast] = useState(false);
 
@@ -65,54 +78,76 @@ export default function OwnerDashboard() {
   const [stockLevel, setStockLevel] = useState<EstimateStockLevelOutput | null>(null);
   const [isCheckingStock, setIsCheckingStock] = useState(false);
   
-  // State for Onboarding Wizard
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(1);
-  const [onboardingData, setOnboardingData] = useState({
-      locationName: '',
-      locationAddress: '',
-      managerName: '',
-      managerEmail: '',
-      contactName: '',
-      contactPhone: '',
-  });
+  const [isAddLocationDialogOpen, setIsAddLocationDialogOpen] = useState(false);
+  const [newLocationData, setNewLocationData] = useState({ name: '', managerName: '', managerEmail: ''});
+
+  const [dailyBriefing, setDailyBriefing] = useState<GenerateDailyBriefingOutput | null>(null);
+  const [isBriefingDialogOpen, setIsBriefingDialogOpen] = useState(false);
 
   useEffect(() => {
-    // Show onboarding for new users
-    const isNew = sessionStorage.getItem('isNewUser');
-    if (isNew === 'true') {
-        setShowOnboarding(true);
+    if (locations.length > 0 && !selectedLocation) {
+        setSelectedLocation(locations[0]);
     }
+  }, [locations, selectedLocation]);
+
+  useEffect(() => {
+    // This effect runs when the selected location changes
+    if (selectedLocation) {
+        handleFetchToastData(selectedLocation.name);
+        setReviewSummary(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLocation]);
   
-    // Load hiring requests from localStorage on mount
+  useEffect(() => {
     const storedRequests = localStorage.getItem('hiringRequests');
     if (storedRequests) {
         setHiringRequests(JSON.parse(storedRequests));
     }
+    const fetchBriefing = async () => {
+        const { data } = await generateDailyBriefingAction();
+        if (data) setDailyBriefing(data);
+    };
+    fetchBriefing();
   }, []);
-
-  useEffect(() => {
-    handleFetchToastData();
-    setReviewSummary(null); 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLocation]);
   
-  const handleOnboardingNext = () => setOnboardingStep(prev => prev + 1);
-  const handleOnboardingBack = () => setOnboardingStep(prev => prev - 1);
+  const handleOnboardingComplete = () => {
+        setIsNewUser(false); // Onboarding is done!
+        // In a real app, you would now fetch the newly created data (locations, tasks, etc.)
+        // from Firestore to populate the dashboard.
+        toast({ title: "Setup Complete!", description: "Welcome to your new dashboard. Please add a location to begin." });
+  };
+    
+  const handlePostBriefing = () => {
+      toast({
+          title: "Briefing Posted!",
+          description: "Your daily message is now visible to all employees."
+      });
+      setIsBriefingDialogOpen(false);
+  };
   
-  const handleCompleteOnboarding = (e: React.FormEvent) => {
+  const handleAddLocation = (e: FormEvent) => {
       e.preventDefault();
-      // In a real app, you would save this data to Firestore
-      console.log("Onboarding data submitted:", onboardingData);
-      sessionStorage.removeItem('isNewUser');
-      setShowOnboarding(false);
-      toast({ title: 'Setup Complete!', description: 'Welcome to your SanityTrack dashboard.' });
+      if (!newLocationData.name || !newLocationData.managerName || !newLocationData.managerEmail) {
+          toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out all required fields.' });
+          return;
+      }
+      const newId = locations.length > 0 ? Math.max(...locations.map(l => l.id)) + 1 : 1;
+      const newLoc: Location = {
+          id: newId,
+          name: newLocationData.name,
+          manager: newLocationData.managerName,
+          inspectionCode: `${newLocationData.name.substring(0, 2).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+      };
+      setLocations(prev => [...prev, newLoc]);
+      toast({ title: 'Location Added', description: `${newLocationData.name} has been added.` });
+      setNewLocationData({ name: '', managerName: '', managerEmail: '' });
+      setIsAddLocationDialogOpen(false);
   };
 
-
-  const handleFetchToastData = async () => {
+  const handleFetchToastData = async (locationName: string) => {
       setIsFetchingToast(true);
-      const result = await fetchToastDataAction({ location: selectedLocation });
+      const result = await fetchToastDataAction({ location: locationName });
       if (result.data) {
           setToastData(result.data);
       } else {
@@ -122,9 +157,10 @@ export default function OwnerDashboard() {
   };
   
   const handleFetchReviews = async (source: 'Google' | 'Yelp') => {
+      if (!selectedLocation) return;
       setIsFetchingReviews(true);
       setReviewSummary(null);
-      const result = await summarizeReviewsAction({ source, location: selectedLocation });
+      const result = await summarizeReviewsAction({ source, location: selectedLocation.name });
       if (result.data) {
           setReviewSummary(result.data);
           toast({ title: `${source} Reviews Loaded` });
@@ -137,6 +173,7 @@ export default function OwnerDashboard() {
   const handleCheckStock = async () => {
     setIsCheckingStock(true);
     setStockLevel(null);
+    const cupStockImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAYAAADw5sJwAAAA60lEQVR4nO3UAQ0AMAjAsKM78OgA/x9I0AElzR2b8/MFAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAN2OFY/gH/9E3AAAAAElFTkSuQmCC";
     const result = await estimateStockLevelAction({ currentStockImageUri: cupStockImage });
     if (result.data) {
       setStockLevel(result.data);
@@ -198,113 +235,143 @@ export default function OwnerDashboard() {
       setRequestToReject(null);
   };
 
-  const renderOnboardingStep = () => {
-      switch (onboardingStep) {
-          case 1:
-              return (
-                  <div>
-                      <DialogHeader>
-                          <DialogTitle className="font-headline text-2xl">Step 1: Create Your First Location</DialogTitle>
-                          <DialogDescription>Let's get your main business location set up.</DialogDescription>
-                      </DialogHeader>
-                      <div className="py-4 space-y-4">
-                          <div className="grid gap-2">
-                              <Label htmlFor="location-name">Location Name</Label>
-                              <Input id="location-name" placeholder="e.g., Downtown Cafe" value={onboardingData.locationName} onChange={e => setOnboardingData({...onboardingData, locationName: e.target.value})} />
-                          </div>
-                          <div className="grid gap-2">
-                              <Label htmlFor="location-address">Address</Label>
-                              <Input id="location-address" placeholder="e.g., 123 Main St, Anytown, USA" value={onboardingData.locationAddress} onChange={e => setOnboardingData({...onboardingData, locationAddress: e.target.value})} />
-                          </div>
-                      </div>
-                      <DialogFooter>
-                          <Button onClick={handleOnboardingNext} disabled={!onboardingData.locationName || !onboardingData.locationAddress}>Next</Button>
-                      </DialogFooter>
-                  </div>
-              );
-          case 2:
-              return (
-                  <div>
-                      <DialogHeader>
-                          <DialogTitle className="font-headline text-2xl">Step 2: Invite Your Manager</DialogTitle>
-                          <DialogDescription>Who will be managing the day-to-day operations? (This will simulate sending an invite).</DialogDescription>
-                      </DialogHeader>
-                      <div className="py-4 space-y-4">
-                          <div className="grid gap-2">
-                              <Label htmlFor="manager-name">Manager's Full Name</Label>
-                              <Input id="manager-name" placeholder="e.g., Jane Smith" value={onboardingData.managerName} onChange={e => setOnboardingData({...onboardingData, managerName: e.target.value})} />
-                          </div>
-                          <div className="grid gap-2">
-                              <Label htmlFor="manager-email">Manager's Email</Label>
-                              <Input id="manager-email" type="email" placeholder="e.g., jane@example.com" value={onboardingData.managerEmail} onChange={e => setOnboardingData({...onboardingData, managerEmail: e.target.value})} />
-                          </div>
-                      </div>
-                      <DialogFooter className="justify-between">
-                          <Button variant="outline" onClick={handleOnboardingBack}>Back</Button>
-                          <Button onClick={handleOnboardingNext} disabled={!onboardingData.managerName || !onboardingData.managerEmail}>Next</Button>
-                      </DialogFooter>
-                  </div>
-              );
-          case 3:
-              return (
-                  <form onSubmit={handleCompleteOnboarding}>
-                      <DialogHeader>
-                          <DialogTitle className="font-headline text-2xl">Step 3: Add a Service Contact</DialogTitle>
-                          <DialogDescription>Add a critical contact like a plumber or electrician. You'll thank yourself later!</DialogDescription>
-                      </DialogHeader>
-                      <div className="py-4 space-y-4">
-                          <div className="grid gap-2">
-                              <Label htmlFor="contact-name">Contact Name</Label>
-                              <Input id="contact-name" placeholder="e.g., Joe's Plumbing" value={onboardingData.contactName} onChange={e => setOnboardingData({...onboardingData, contactName: e.target.value})} />
-                          </div>
-                          <div className="grid gap-2">
-                              <Label htmlFor="contact-phone">Phone Number</Label>
-                              <Input id="contact-phone" type="tel" placeholder="e.g., 555-123-4567" value={onboardingData.contactPhone} onChange={e => setOnboardingData({...onboardingData, contactPhone: e.target.value})} />
-                          </div>
-                      </div>
-                      <DialogFooter className="justify-between">
-                          <Button variant="outline" type="button" onClick={handleOnboardingBack}>Back</Button>
-                          <Button type="submit" disabled={!onboardingData.contactName || !onboardingData.contactPhone}>Complete Setup</Button>
-                      </DialogFooter>
-                  </form>
-              );
-          default:
-              return null;
-      }
-  };
+    if (isNewUser) {
+        return (
+            <OnboardingInterview onOnboardingComplete={handleOnboardingComplete} />
+        );
+    }
+
+    if (locations.length === 0) {
+        return (
+             <div className="flex items-center justify-center p-4 md:p-8">
+                <Card className="w-full max-w-lg text-center">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl">Welcome, Owner!</CardTitle>
+                        <CardDescription>You haven't added any locations yet. Add your first business location to get started.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Your First Location</Button>
+                            </DialogTrigger>
+                             <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle className="font-headline">Add New Location</DialogTitle>
+                                </DialogHeader>
+                                <form onSubmit={handleAddLocation} className="space-y-4 py-4">
+                                     <div className="grid gap-2">
+                                        <Label htmlFor="new-loc-name">Location Name</Label>
+                                        <Input id="new-loc-name" placeholder="e.g., Uptown Bistro" value={newLocationData.name} onChange={(e) => setNewLocationData(prev => ({...prev, name: e.target.value}))} required />
+                                     </div>
+                                     <div className="grid gap-2">
+                                        <Label htmlFor="new-loc-manager">Manager Name</Label>
+                                        <Input id="new-loc-manager" placeholder="e.g., Casey Lee" value={newLocationData.managerName} onChange={(e) => setNewLocationData(prev => ({...prev, managerName: e.target.value}))} required />
+                                     </div>
+                                      <div className="grid gap-2">
+                                        <Label htmlFor="new-loc-email">Manager Email</Label>
+                                        <Input id="new-loc-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={(e) => setNewLocationData(prev => ({...prev, managerEmail: e.target.value}))} required />
+                                     </div>
+                                     <DialogFooter>
+                                        <Button type="submit">Save Location</Button>
+                                     </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
 
   return (
     <div className="space-y-6">
-        <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
-            <DialogContent onInteractOutside={(e) => e.preventDefault()} showCloseButton={false}>
-                {renderOnboardingStep()}
-            </DialogContent>
-        </Dialog>
-
        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Location Overview</CardTitle>
-                <CardDescription>Select a location to view its live sales and customer feedback.</CardDescription>
+            <CardHeader className="flex-row items-start justify-between">
+                <div>
+                    <CardTitle className="font-headline">Location Overview</CardTitle>
+                    <CardDescription>Select a location to view its live sales and customer feedback.</CardDescription>
+                </div>
+                <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Location</Button>
+                    </DialogTrigger>
+                     <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className="font-headline">Add New Location</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleAddLocation} className="space-y-4 py-4">
+                             <div className="grid gap-2">
+                                <Label htmlFor="new-loc-name">Location Name</Label>
+                                <Input id="new-loc-name" placeholder="e.g., Uptown Bistro" value={newLocationData.name} onChange={(e) => setNewLocationData(prev => ({...prev, name: e.target.value}))} required />
+                             </div>
+                             <div className="grid gap-2">
+                                <Label htmlFor="new-loc-manager">Manager Name</Label>
+                                <Input id="new-loc-manager" placeholder="e.g., Casey Lee" value={newLocationData.managerName} onChange={(e) => setNewLocationData(prev => ({...prev, managerName: e.target.value}))} required />
+                             </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="new-loc-email">Manager Email</Label>
+                                <Input id="new-loc-email" type="email" placeholder="casey@example.com" value={newLocationData.managerEmail} onChange={(e) => setNewLocationData(prev => ({...prev, managerEmail: e.target.value}))} required />
+                             </div>
+                             <DialogFooter>
+                                <Button type="submit">Save Location</Button>
+                             </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </CardHeader>
             <CardContent>
-                 <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                 <Select value={selectedLocation?.name} onValueChange={(name) => setSelectedLocation(locations.find(l => l.name === name))}>
                     <SelectTrigger className="w-full md:w-1/3">
                         <SelectValue placeholder="Select location..." />
                     </SelectTrigger>
                     <SelectContent>
-                        {locations.map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
+                        {locations.map(loc => <SelectItem key={loc.id} value={loc.name}>{loc.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
+                 {selectedLocation && (
+                    <div className="mt-4 p-4 border rounded-lg bg-muted/50 text-sm">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="font-semibold flex items-center gap-2"><Building className="h-4 w-4 text-muted-foreground" /> Name:</div><div>{selectedLocation.name}</div>
+                            <div className="font-semibold flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /> Manager:</div><div>{selectedLocation.manager}</div>
+                            <div className="font-semibold flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /> Health Dept Code:</div><div className="font-mono text-xs p-1 bg-background rounded-md">{selectedLocation.inspectionCode}</div>
+                        </div>
+                    </div>
+                 )}
             </CardContent>
+             <CardFooter>
+                 <Dialog open={isBriefingDialogOpen} onOpenChange={setIsBriefingDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">
+                            <Megaphone className="mr-2 h-4 w-4"/> Post Daily Briefing
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className="font-headline">Post Daily Briefing</DialogTitle>
+                            <DialogDescription>This message will appear on the dashboard for all employees.</DialogDescription>
+                        </DialogHeader>
+                        {dailyBriefing ? (
+                            <div className="py-4 space-y-2">
+                                <Label>AI Suggested Message:</Label>
+                                <p className="font-semibold">{dailyBriefing.title}</p>
+                                <p className="text-sm text-muted-foreground">{dailyBriefing.message}</p>
+                            </div>
+                        ) : <Loader2 className="animate-spin" />}
+                         <DialogFooter>
+                             <Button onClick={handlePostBriefing}>Post Message</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </CardFooter>
         </Card>
 
-        <OwnerServiceAlertWidget locationId={selectedLocation} />
+        {selectedLocation && <OwnerServiceAlertWidget locationId={selectedLocation.name} />}
         
         <div className="grid gap-6 md:grid-cols-2">
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><BarChart2 /> Live Sales Data (Simulated)</CardTitle>
-                    <CardDescription>Real-time sales figures for {selectedLocation} powered by Toast POS integration.</CardDescription>
+                    <CardDescription>Real-time sales figures for {selectedLocation?.name} powered by Toast POS integration.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {isFetchingToast ? <Loader2 className="h-6 w-6 animate-spin" /> : toastData ? (
@@ -333,7 +400,7 @@ export default function OwnerDashboard() {
                 </CardHeader>
                 <CardContent className="flex flex-col items-center gap-4">
                      <div className="relative w-48 h-48 rounded-lg overflow-hidden border">
-                        <Image src={cupStockImage} alt="Coffee cup stock" layout="fill" objectFit="contain" data-ai-hint="coffee cups stack" />
+                        <Image src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAYAAADw5sJwAAAA60lEQVR4nO3UAQ0AMAjAsKM78OgA/x9I0AElzR2b8/MFAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAN2OFY/gH/9E3AAAAAElFTkSuQmCC" alt="Coffee cup stock" layout="fill" objectFit="contain" data-ai-hint="coffee cups stack" />
                     </div>
                     <Button onClick={handleCheckStock} disabled={isCheckingStock} className="w-full">
                         {isCheckingStock ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4" />}
@@ -362,7 +429,7 @@ export default function OwnerDashboard() {
         
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><Rss /> Customer Feedback for {selectedLocation}</CardTitle>
+                <CardTitle className="font-headline flex items-center gap-2"><Rss /> Customer Feedback for {selectedLocation?.name}</CardTitle>
                 <CardDescription>Fetch and summarize recent reviews from Google or Yelp.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -465,5 +532,3 @@ export default function OwnerDashboard() {
     </div>
   );
 }
-
-    

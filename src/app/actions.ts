@@ -23,6 +23,8 @@ import { estimateStockLevel, type EstimateStockLevelInput, type EstimateStockLev
 import { explainTaskImportance, type ExplainTaskImportanceInput, type ExplainTaskImportanceOutput } from '@/ai/flows/explain-task-importance-flow';
 import { analyzeWaitTime, type AnalyzeWaitTimeInput } from '@/ai/flows/analyze-wait-time-flow';
 import type { ServiceAlert } from '@/ai/schemas/service-alert-schemas';
+import { continueOnboardingInterview, type OnboardingInterviewInput, type OnboardingInterviewOutput } from '@/ai/flows/onboarding-interview-flow';
+import { masterOnboardingParser, type OnboardingParserInput, type OnboardingParserOutput } from '@/ai/flows/master-onboarding-parser-flow';
 
 
 // This wrapper function centralizes error handling for all AI flows.
@@ -148,4 +150,17 @@ export async function resolveServiceAlertAction(input: { alertId: string }): Pro
     console.log(`Resolving service alert ${input.alertId}`);
     // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({ status: 'resolved', resolvedAt: new Date() });
     return { success: true };
+}
+
+
+// New actions for AI Onboarding
+export async function continueOnboardingInterviewAction(input: OnboardingInterviewInput): Promise<{ data: OnboardingInterviewOutput | null; error: string | null; }> {
+    return safeRun(continueOnboardingInterview, input, 'continueOnboardingInterview');
+}
+
+export async function masterOnboardingParserAction(input: OnboardingParserInput): Promise<{ data: OnboardingParserOutput | null; error: string | null; }> {
+    // In a real app, the parsed data would be written to Firestore here.
+    // For this simulation, we just log it and return it to the client.
+    console.log("AI Parsed Onboarding Data:", JSON.stringify(input, null, 2));
+    return safeRun(masterOnboardingParser, input, 'masterOnboardingParser');
 }
