@@ -16,7 +16,7 @@ import { generateInquiry, type GenerateInquiryInput, type GenerateInquiryOutput 
 import { processInspectionReport, type ProcessInspectionReportInput, type ProcessInspectionReportOutput } from '@/ai/flows/process-inspection-report-flow';
 import { generateWarningLetter, type GenerateWarningLetterInput, type GenerateWarningLetterOutput } from '@/ai/flows/generate-warning-letter-flow';
 import { fetchToastData, type FetchToastDataInput, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
-import { summarizeReviews, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/ai/schemas/review-summary-schemas';
+import { summarizeReviews, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/ai/flows/fetch-reviews-flow';
 import { postJob, type JobPostingInput, type JobPostingOutput } from '@/ai/flows/post-job-flow';
 import { compareFoodQuality, type CompareFoodQualityInput, type CompareFoodQualityOutput } from '@/ai/flows/compare-food-quality-flow';
 import { estimateStockLevel, type EstimateStockLevelInput, type EstimateStockLevelOutput } from '@/ai/flows/estimate-stock-level-flow';

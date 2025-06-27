@@ -14,7 +14,7 @@ import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
 import { generateShoppingListAction, scanInvoiceAction } from '@/app/actions';
 import type { GenerateShoppingListOutput } from '@/ai/schemas/shopping-list-schemas';
-import type { ScanInvoiceOutput } from '@/ai/schemas/invoice-scan-schemas';
+import type { ScannedItem as ScannedItemType } from '@/ai/schemas/invoice-scan-schemas';
 import { Textarea } from './ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { add, format, formatDistanceToNow } from 'date-fns';
@@ -37,7 +37,7 @@ type InventoryItem = {
 };
 
 type ScannedItem = {
-    name: string;
+    itemName: string;
     quantity: number;
     matched: boolean;
 };
@@ -152,11 +152,24 @@ export default function InventoryManager() {
         }
     };
     
-    const handleSendEmail = () => {
+    const handleSubmitPurchaseOrder = () => {
+        if (!shoppingListResult) return;
+        const newPO = {
+            id: `po-${Date.now()}`,
+            locationName: "Downtown", // In real app, get from context
+            submittedBy: "Demo Manager", // In real app, get from context
+            subject: shoppingListResult.subject,
+            list: shoppingListResult.shoppingList
+        };
+
+        const existingPOs = JSON.parse(localStorage.getItem('pendingPurchaseOrders') || '[]');
+        localStorage.setItem('pendingPurchaseOrders', JSON.stringify([newPO, ...existingPOs]));
+        
         toast({
-            title: 'Order Email Sent (Simulation)',
-            description: 'In a real application, this would send an email to your supplier.',
+            title: 'Purchase Order Submitted!',
+            description: 'The owner has been notified and will review your request.',
         });
+        setShoppingListResult(null);
     };
     
     const handleScanInvoice = async () => {
@@ -188,7 +201,11 @@ export default function InventoryManager() {
         const updatedItems = [...inventoryItems];
 
         scannedItems.forEach(scannedItem => {
-            const itemIndex = updatedItems.findIndex(invItem => invItem.name.toLowerCase() === scannedItem.name.toLowerCase());
+            const itemIndex = updatedItems.findIndex(invItem => 
+                invItem.name.toLowerCase().includes(scannedItem.itemName.toLowerCase()) || 
+                scannedItem.itemName.toLowerCase().includes(invItem.name.toLowerCase())
+            );
+
             if (itemIndex > -1) {
                 const newBatch: Batch = {
                     id: `${updatedItems[itemIndex].id}-${Date.now()}`,
@@ -243,7 +260,7 @@ export default function InventoryManager() {
                                             <TableBody>
                                                 {scannedItems.map((item, i) => (
                                                     <TableRow key={i}>
-                                                        <TableCell>{item.name}</TableCell>
+                                                        <TableCell>{item.itemName}</TableCell>
                                                         <TableCell>{item.quantity}</TableCell>
                                                         <TableCell>
                                                             <Badge variant={item.matched ? 'default' : 'destructive'}>{item.matched ? 'Matched' : 'Unmatched'}</Badge>
@@ -325,8 +342,8 @@ export default function InventoryManager() {
                 </CardContent>
                  {shoppingListResult && (
                     <CardFooter>
-                         <Button onClick={handleSendEmail} className='bg-accent hover:bg-accent/90 text-accent-foreground'>
-                            <Send className="mr-2 h-4 w-4" /> Send Order Email (Simulated)
+                         <Button onClick={handleSubmitPurchaseOrder} className='bg-accent hover:bg-accent/90 text-accent-foreground'>
+                            <Send className="mr-2 h-4 w-4" /> Submit Purchase Order for Approval
                         </Button>
                     </CardFooter>
                  )}

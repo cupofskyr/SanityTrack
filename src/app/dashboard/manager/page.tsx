@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle, AlertCircle, MailWarning, HelpCircle, Utensils } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle, AlertCircle, MailWarning, HelpCircle, Utensils, Sigma } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -650,6 +650,28 @@ export default function ManagerDashboard() {
                     <p>AI-powered alerts to minimize food spoilage and waste.</p>
                 </TooltipContent>
             </Tooltip>
+
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><Sigma/> Live Depletion Mode</CardTitle>
+                            <CardDescription>This feature is active when your POS is connected, enabling real-time inventory tracking.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Alert variant="default" className="bg-primary/5 border-primary/20 text-primary [&>svg]:text-primary">
+                                <Sparkles className="h-4 w-4" />
+                                <AlertTitle className="font-semibold">How Live Depletion Works</AlertTitle>
+                                <AlertDescription>
+                                    When your POS is connected, every sale automatically decrements the oldest batches of the corresponding ingredients from your inventory (FIFO). This provides a real-time view of your stock levels without manual counting, enabling more accurate and predictive ordering.
+                                </AlertDescription>
+                            </Alert>
+                        </CardContent>
+                    </Card>
+                </TooltipTrigger>
+                 <TooltipContent><p>Learn about how real-time inventory tracking works with a connected POS.</p></TooltipContent>
+            </Tooltip>
+
 
             <Tooltip>
                 <TooltipTrigger asChild>

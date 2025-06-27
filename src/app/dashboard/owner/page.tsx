@@ -7,8 +7,6 @@ import {
   fetchToastDataAction,
   summarizeReviewsAction,
   postJobAction,
-  estimateStockLevelAction,
-  generateDailyBriefingAction,
   runMasterAgentCycleAction,
 } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -32,7 +30,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
 import type { SummarizeReviewsOutput } from '@/ai/schemas/review-summary-schemas';
-import type { EstimateStockLevelOutput } from '@/ai/schemas/stock-level-schemas';
 import OwnerServiceAlertWidget from '@/components/owner-service-alert-widget';
 import { Input } from '@/components/ui/input';
 import type { GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
@@ -72,6 +69,14 @@ type QaAuditLog = {
     timestamp: string;
 };
 
+type PurchaseOrder = {
+    id: string;
+    locationName: string;
+    submittedBy: string;
+    subject: string;
+    list: string;
+};
+
 export default function OwnerDashboard() {
   const { toast } = useToast();
 
@@ -89,9 +94,6 @@ export default function OwnerDashboard() {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [requestToReject, setRequestToReject] = useState<HiringRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
-
-  const [stockLevel, setStockLevel] = useState<EstimateStockLevelOutput | null>(null);
-  const [isCheckingStock, setIsCheckingStock] = useState(false);
   
   const [isAddLocationDialogOpen, setIsAddLocationDialogOpen] = useState(false);
   const [newLocationData, setNewLocationData] = useState({ name: '', managerName: '', managerEmail: ''});
@@ -103,6 +105,8 @@ export default function OwnerDashboard() {
   const [isAgentRunning, setIsAgentRunning] = useState(false);
 
   const [qaAuditLog, setQaAuditLog] = useState<QaAuditLog[]>([]);
+  
+  const [pendingPOs, setPendingPOs] = useState<PurchaseOrder[]>([]);
 
   useEffect(() => {
     const storedLocations = JSON.parse(localStorage.getItem('sanity-track-locations') || '[]');
@@ -129,22 +133,21 @@ export default function OwnerDashboard() {
   }, [selectedLocation]);
   
   useEffect(() => {
-    const storedRequests = localStorage.getItem('hiringRequests');
-    if (storedRequests) setHiringRequests(JSON.parse(storedRequests));
-
-    const fetchBriefing = async () => {
-        const { data } = await generateDailyBriefingAction();
-        if (data) setDailyBriefing(data);
+    const checkStorage = () => {
+        const storedRequests = localStorage.getItem('hiringRequests');
+        if (storedRequests) setHiringRequests(JSON.parse(storedRequests));
+        
+        const storedQaLog = JSON.parse(localStorage.getItem('qa-audit-log') || '[]');
+        setQaAuditLog(storedQaLog);
+        
+        const storedPOs = JSON.parse(localStorage.getItem('pendingPurchaseOrders') || '[]');
+        setPendingPOs(storedPOs);
     };
-    fetchBriefing();
 
-    // Poll for QA log updates
-    const qaLogInterval = setInterval(() => {
-      const storedQaLog = JSON.parse(localStorage.getItem('qa-audit-log') || '[]');
-      setQaAuditLog(storedQaLog);
-    }, 2000);
+    checkStorage();
+    const interval = setInterval(checkStorage, 2000); // Poll for updates
 
-    return () => clearInterval(qaLogInterval);
+    return () => clearInterval(interval);
   }, []);
   
   const handleOnboardingComplete = () => {
@@ -205,16 +208,6 @@ export default function OwnerDashboard() {
       setIsFetchingReviews(false);
   };
   
-  const handleCheckStock = async () => {
-    setIsCheckingStock(true);
-    setStockLevel(null);
-    const cupStockImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAYAAADw5sJwAAAA60lEQVR4nO3UAQ0AMAjAsKM78OgA/x9I0AElzR2b8/MFAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAN2OFY/gH/9E3AAAAAElFTkSuQmCC";
-    const result = await estimateStockLevelAction({ currentStockImageUri: cupStockImage });
-    if (result.data) setStockLevel(result.data);
-    else toast({ variant: 'destructive', title: 'Stock Check Error', description: result.error });
-    setIsCheckingStock(false);
-  }
-
   const handleApproveRequest = async (request: HiringRequest) => {
     toast({ title: 'Posting Job...', description: `Submitting request for a ${request.role}.` });
     
@@ -276,6 +269,16 @@ export default function OwnerDashboard() {
         toast({ variant: 'destructive', title: 'Agent Cycle Failed', description: result.error });
     }
     setIsAgentRunning(false);
+  };
+
+  const handlePOAction = (poId: string, action: 'approved' | 'rejected') => {
+    const updatedPOs = pendingPOs.filter(po => po.id !== poId);
+    setPendingPOs(updatedPOs);
+    localStorage.setItem('pendingPurchaseOrders', JSON.stringify(updatedPOs));
+    toast({
+        title: `Purchase Order ${action}`,
+        description: `The manager has been notified.`
+    });
   };
 
     if (isNewUser) {
@@ -450,27 +453,18 @@ export default function OwnerDashboard() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Package /> Predictive Stock Monitoring</CardTitle>
-                    <CardDescription>Use AI to estimate stock levels from a camera feed of the coffee cups.</CardDescription>
+                    <CardTitle className="font-headline flex items-center gap-2"><Package /> POS Connection</CardTitle>
+                    <CardDescription>Connect to your POS provider to unlock live inventory and sales analytics.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center gap-4">
-                     <div className="relative w-48 h-48 rounded-lg overflow-hidden border">
-                        <Image src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAYAAADw5sJwAAAA60lEQVR4nO3UAQ0AMAjAsKM78OgA/x9I0AElzR2b8/MFAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAN2OFY/gH/9E3AAAAAElFTkSuQmCC" alt="Coffee cup stock" layout="fill" objectFit="contain" data-ai-hint="coffee cups stack" />
+                     <Alert>
+                        <AlertTitle>Connect to your POS</AlertTitle>
+                        <AlertDescription>Enable live inventory tracking, real-time sales data, and predictive ordering by connecting your POS system.</AlertDescription>
+                    </Alert>
+                    <div className="flex gap-4 w-full">
+                        <Button variant="outline" className="w-full">Connect to Toast</Button>
+                        <Button variant="outline" className="w-full">Connect to Square</Button>
                     </div>
-                    <Button onClick={handleCheckStock} disabled={isCheckingStock} className="w-full">
-                        {isCheckingStock ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4" />}
-                        Check Stock Level
-                    </Button>
-                    {stockLevel && (
-                        <Alert className="w-full">
-                           <AlertTitle className="flex justify-between">
-                                <span>Level: <Badge variant={stockLevel.level === 'Critical' ? 'destructive' : 'secondary'}>{stockLevel.level}</Badge></span>
-                                <span>~{stockLevel.estimatedPercentage}% Full</span>
-                            </AlertTitle>
-                            <AlertDescription className="mt-2"><strong>Recommendation:</strong> {stockLevel.recommendation}</AlertDescription>
-                        </Alert>
-                    )}
-                    {stockLevel?.level === 'Critical' && ( <Button variant="destructive" className="w-full"><ShoppingCart className="mr-2 h-4 w-4" /> Add to Emergency Order</Button> )}
                 </CardContent>
             </Card>
         </div>
@@ -506,6 +500,32 @@ export default function OwnerDashboard() {
                 )}
             </CardContent>
         </Card>
+
+        {pendingPOs.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><ShoppingCart /> Purchase Order Approval</CardTitle>
+                    <CardDescription>Your managers have submitted the following purchase orders for your approval.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {pendingPOs.map(po => (
+                        <Card key={po.id} className="bg-muted/30">
+                            <CardHeader>
+                                <CardTitle className="text-lg">{po.subject}</CardTitle>
+                                <CardDescription>From: {po.locationName} (Manager: {po.submittedBy})</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Textarea readOnly value={po.list} rows={5} />
+                            </CardContent>
+                            <CardFooter className="gap-2">
+                                <Button onClick={() => handlePOAction(po.id, 'approved')}><Check className="mr-2 h-4 w-4"/> Approve & Send</Button>
+                                <Button variant="destructive" onClick={() => handlePOAction(po.id, 'rejected')}><X className="mr-2 h-4 w-4"/> Reject</Button>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </CardContent>
+            </Card>
+        )}
 
       <Card>
         <CardHeader>
