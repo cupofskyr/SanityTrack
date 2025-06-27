@@ -24,23 +24,18 @@ import {
   LogOut,
   ChevronDown,
   BookOpen,
-  GraduationCap,
   Languages,
   UserCog,
   Loader2,
-  ChefHat,
-  CalendarClock,
-  Database,
-  BrainCircuit,
-  Bot,
   Activity,
   Calendar,
   Users,
   Wrench,
-  BarChart,
+  BarChart2,
   Eye,
   Settings,
   CalendarDays,
+  BrainCircuit,
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -100,7 +95,7 @@ const managerNav = [
 const ownerNav = [
     {
         category: "Executive Dashboard",
-        icon: BarChart,
+        icon: BarChart2,
         links: [
             { name: "KPI Overview", href: "/dashboard/owner", exact: true },
         ]
@@ -219,7 +214,7 @@ export default function DashboardLayout({
 
     // For roles with collapsible sections
     if (role === 'Manager' || role === 'Owner') {
-        const defaultActive = navItems.findIndex(category => category.links.some(link => pathname === link.href || pathname.startsWith(link.href + '/')));
+        const defaultActive = (navItems as any[]).findIndex(category => category.links.some((link: any) => pathname === link.href || pathname.startsWith(link.href + '/')));
         return (
             <Accordion type="multiple" defaultValue={[`item-${defaultActive}`]} className="w-full">
                 {(navItems as any[]).map((category, index) => (
