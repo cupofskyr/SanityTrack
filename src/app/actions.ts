@@ -166,15 +166,17 @@ export async function masterOnboardingParserAction(input: OnboardingParserInput)
     return safeRun(masterOnboardingParser, input, 'masterOnboardingParser');
 }
 
-export async function queryKnowledgeBaseAction(input: { question: string }): Promise<{ data: QueryKnowledgeBaseOutput | null; error: string | null; }> {
+export async function queryKnowledgeBaseAction(input: { question: string }): Promise<{ data: { answer: string; source: string } | null; error: string | null; }> {
     // 1. Simulate the retrieval step of RAG
-    // In a real app, you would convert the question to an embedding and search a vector DB.
-    // Here, we'll check if the question contains a keyword and return a hardcoded context.
     let retrievedContext = "No relevant information found in the knowledge base. Try asking about the 'Valkyrie Victory Bowl' or the 'closing checklist'.";
+    let source = "Knowledge Base";
+
     if (input.question.toLowerCase().includes("valkyrie")) {
         retrievedContext = "The Valkyrie Victory Bowl is a high-protein bowl made with vanilla skyr, strawberries, blueberries, and a sprinkle of almond granola. It should be served in the standard blue bowl. - from Q3_Menu_Specials.pdf";
+        source = "Q3_Menu_Specials.pdf";
     } else if (input.question.toLowerCase().includes("closing")) {
         retrievedContext = "End-of-day closing checklist requires all counters to be wiped, floors mopped, and the back door must be photographed in a locked position. - from new_closing_checklist.jpg";
+        source = "new_closing_checklist.jpg";
     }
 
     // 2. Augment the prompt and call the AI flow
@@ -183,5 +185,16 @@ export async function queryKnowledgeBaseAction(input: { question: string }): Pro
         context: retrievedContext
     };
 
-    return safeRun(queryKnowledgeBase, flowInput, 'queryKnowledgeBase');
+    try {
+        const result = await queryKnowledgeBase(flowInput);
+        if (!result || !result.answer) {
+            console.error(`Error in queryKnowledgeBase: AI returned an empty response.`);
+            return { data: null, error: `The AI returned an empty response. Please try again.` };
+        }
+        // Augment the successful result with the source
+        return { data: { answer: result.answer, source: source }, error: null };
+    } catch (e: any) {
+        console.error(`Error in queryKnowledgeBase:`, e);
+        return { data: null, error: `An unexpected error occurred. Details: ${e.message || 'Unknown error'}` };
+    }
 }
