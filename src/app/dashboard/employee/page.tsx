@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { format } from "date-fns";
 import EmployeeServiceAlertWidget from "@/components/employee-service-alert-widget";
 import type { CompareFoodQualityOutput } from "@/ai/schemas/food-quality-schemas";
+import { cn } from "@/lib/utils";
 
 const initialTasks = [
   { id: 1, name: "Clean kitchen floor", area: "Kitchen", priority: "High", status: "Pending" },
@@ -41,13 +42,11 @@ const initialIssues = [
   { id: 2, description: "Dining area light flickering", status: "Maintenance Notified" },
 ];
 
-const initialReviews = [
-    { id: 1, rating: 5, comment: "The service was incredibly fast and friendly! The smoothie was delicious.", author: "Happy Customer" },
-    { id: 2, rating: 4, comment: "Great place, very clean. My order took a little long, but it was worth the wait.", author: "Visitor" },
-    { id: 3, rating: 5, comment: "I love coming here. The staff always remembers my order!", author: "A Regular" },
+const initialInventory = [
+    { id: 1, name: 'Coffee Cups (sleeves)', par: 100, currentCount: 75 },
+    { id: 2, name: 'Milk (gallons)', par: 10, currentCount: 4 },
+    { id: 3, name: 'Napkins (packs)', par: 20, currentCount: 18 },
 ];
-
-const mealLimit = 2;
 
 const initialBriefing = {
     title: "Let's Make it a Great Tuesday!",
@@ -70,7 +69,7 @@ export default function EmployeeDashboard() {
   const [qaTasks, setQaTasks] = useState<QaTask[]>([]);
   const [completedTasks, setCompletedTasks] = useState(initialCompletedTasks);
   const [issues, setIssues] = useState(initialIssues);
-  const [reviews, setReviews] = useState(initialReviews);
+  const [inventory, setInventory] = useState(initialInventory);
   
   const [newIssueDescription, setNewIssueDescription] = useState("");
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
@@ -87,11 +86,6 @@ export default function EmployeeDashboard() {
   const [photoForAnalysis, setPhotoForAnalysis] = useState<string | null>(null);
   const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
   
-  const [loggedMeals, setLoggedMeals] = useState<{ id: number; description: string; photoUrl: string | null; }[]>([]);
-  const [isMealLogDialogOpen, setIsMealLogDialogOpen] = useState(false);
-  const [newMealDescription, setNewMealDescription] = useState("");
-  const [newMealPhoto, setNewMealPhoto] = useState<string | null>(null);
-
   const [directMessage, setDirectMessage] = useState<{title: string, description: string} | null>(null);
 
   const [briefing, setBriefing] = useState(initialBriefing);
@@ -200,23 +194,14 @@ export default function EmployeeDashboard() {
         setIsAnalyzingPhoto(false);
       }
     };
-
-  const handleLogMeal = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMealDescription.trim() || !newMealPhoto) {
-      toast({ variant: "destructive", title: "Missing Information", description: "Please describe the meal and upload a photo." });
-      return;
-    }
-    if (loggedMeals.length >= mealLimit) {
-        toast({ variant: "destructive", title: "Limit Reached", description: `You have already logged ${mealLimit} meals for this shift.` });
-        return;
-    }
-    const newMeal = { id: Date.now(), description: newMealDescription, photoUrl: newMealPhoto };
-    setLoggedMeals([...loggedMeals, newMeal]);
-    setNewMealDescription("");
-    setNewMealPhoto(null);
-    setIsMealLogDialogOpen(false);
-    toast({ title: "Meal Logged", description: "Your meal has been successfully logged." });
+    
+  const handleCountChange = (id: number, value: string) => {
+    const count = parseInt(value, 10);
+    setInventory(
+        inventory.map(item =>
+            item.id === id ? { ...item, currentCount: isNaN(count) ? 0 : count } : item
+        )
+    );
   };
 
   const handleTranslateBriefing = async () => {
@@ -355,6 +340,84 @@ export default function EmployeeDashboard() {
         <CardContent><Table><TableHeader><TableRow><TableHead>Task</TableHead><TableHead>Area</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>{tasks.map((task) => (<TableRow key={task.id}><TableCell className="font-medium">{task.name}</TableCell><TableCell>{task.area}</TableCell><TableCell><Badge variant={task.priority === "High" ? "destructive" : "secondary"}>{task.priority}</Badge></TableCell><TableCell><Badge variant="outline">{task.status}</Badge></TableCell><TableCell className="text-right"><Dialog open={isTaskDialogsOpen[task.id] || false} onOpenChange={(isOpen) => setIsTaskDialogsOpen(prev => ({...prev, [task.id]: isOpen}))}><DialogTrigger asChild><Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">Complete Task</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle className="font-headline">Complete: {task.name}</DialogTitle><DialogDescription>Upload a photo as proof of completion. This helps us track our quality standards.</DialogDescription></DialogHeader><PhotoUploader /><DialogFooter><Button type="button" className="bg-primary hover:bg-primary/90" onClick={() => handleCompleteTask(task)}>Submit Completion</Button></DialogFooter></DialogContent></Dialog></TableCell></TableRow>))}</TableBody></Table></CardContent>
       </Card>
       
+        <Card className="lg:col-span-2">
+            <CardHeader className="flex-row items-center justify-between">
+                <div className="space-y-1">
+                    <CardTitle className="font-headline flex items-center gap-2"><AlertTriangle /> Reported Issues & Concerns</CardTitle>
+                    <CardDescription>If you see something, say something. Report issues here.</CardDescription>
+                </div>
+                <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+                    <DialogTrigger asChild><Button><PlusCircle className="mr-2 h-4 w-4" /> Report New Issue</Button></DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader><DialogTitle className="font-headline">Report a New Issue</DialogTitle><DialogDescription>Provide a description and, if possible, a photo of the issue.</DialogDescription></DialogHeader>
+                        <form onSubmit={handleReportIssue} className="py-4 space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="issue-description">Description</Label>
+                                <Textarea id="issue-description" placeholder="e.g., The freezer door is not sealing correctly." value={newIssueDescription} onChange={(e) => setNewIssueDescription(e.target.value)} required />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Photo Evidence</Label>
+                                <PhotoUploader onPhotoDataChange={setPhotoForAnalysis} />
+                            </div>
+                            {photoForAnalysis && (
+                                <Button type="button" variant="outline" className="w-full" onClick={handleAnalyzePhoto} disabled={isAnalyzingPhoto}>
+                                    {isAnalyzingPhoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                    Pre-fill with AI Analysis
+                                </Button>
+                            )}
+                            <DialogFooter><Button type="submit">Submit Report</Button></DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            </CardHeader>
+            <CardContent>
+                <Table><TableHeader><TableRow><TableHead>Description</TableHead><TableHead className="text-right">Status</TableHead></TableRow></TableHeader><TableBody>{issues.length > 0 ? issues.map((issue) => (<TableRow key={issue.id}><TableCell className="font-medium">{issue.description}</TableCell><TableCell className="text-right"><Badge variant="outline">{issue.status}</Badge></TableCell></TableRow>)) : (<TableRow><TableCell colSpan={2} className="h-24 text-center text-muted-foreground">No issues reported. Great job!</TableCell></TableRow>)}</TableBody></Table>
+            </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+            <CardHeader>
+                <CardTitle className="font-headline">Inventory Count</CardTitle>
+                <CardDescription>Update the current stock levels for key items.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="w-[120px]">Current Count</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {inventory.map(item => (
+                            <TableRow key={item.id}>
+                                <TableCell className="font-medium">{item.name}</TableCell>
+                                <TableCell>
+                                    <Badge variant={item.currentCount < item.par ? 'destructive' : 'outline'}>
+                                        {item.currentCount < item.par ? 'Low' : 'OK'}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <Input
+                                        type="number"
+                                        value={item.currentCount}
+                                        onChange={e => handleCountChange(item.id, e.target.value)}
+                                        className="h-8"
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+            <CardFooter>
+                <Button onClick={() => toast({ title: 'Counts Submitted', description: 'Inventory levels have been updated by manager.' })}>
+                    Submit Counts
+                </Button>
+            </CardFooter>
+        </Card>
+
       <Card className="lg:col-span-2">
         <CardHeader><CardTitle className="font-headline flex items-center gap-2"><CalendarDays /> My Schedule & Availability</CardTitle><CardDescription>View your upcoming shifts, offer a shift to a colleague, and set your unavailable days.</CardDescription></CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-6">
