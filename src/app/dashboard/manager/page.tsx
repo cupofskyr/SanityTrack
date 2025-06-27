@@ -59,7 +59,6 @@ type Meeting = {
     date: Date;
     time: string;
     attendee: string;
-    description: string;
     meetLink?: string;
 };
 type HiringRequest = {

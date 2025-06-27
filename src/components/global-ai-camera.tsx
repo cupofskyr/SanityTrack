@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Camera, Sparkles, Loader2, Clipboard, AlertTriangle, FilePen, Edit } from 'lucide-react';
 import PhotoUploader from './photo-uploader';
-import { analyzePhotoIssue } from '@/app/actions';
+import { analyzePhotoIssueAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle } from './ui/alert';
 
@@ -39,7 +39,7 @@ export default function GlobalAICamera() {
         setIsAnalyzing(true);
         setAnalysisResult(null);
         try {
-            const result = await analyzePhotoIssue({ photoDataUri: photoForAnalysis });
+            const result = await analyzePhotoIssueAction({ photoDataUri: photoForAnalysis });
             if (result.error) {
                 toast({ variant: 'destructive', title: 'AI Analysis Failed', description: result.error });
             } else if (result.data) {
