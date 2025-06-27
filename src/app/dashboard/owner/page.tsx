@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -22,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import OnboardingInterview from '@/components/onboarding/onboarding-interview';
 import type { MasterAgentOutput } from '@/ai/schemas/agent-schemas';
 import { formatDistanceToNow } from 'date-fns';
-import VirtualSecurityCameraManager from '@/components/virtual-security-camera-manager';
+import AIMonitoringSetup from '@/components/ai-monitoring-setup';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -283,7 +282,7 @@ export default function OwnerDashboard() {
            <CardHeader>
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="font-headline">Executive Vitals</CardTitle>
+                        <CardTitle className="font-headline">Executive Vitals (Static Demo Data)</CardTitle>
                         <CardDescription>A high-level overview of your enterprise's health.</CardDescription>
                     </div>
                      <Select value={selectedLocation?.name} onValueChange={(name) => setSelectedLocation(locations.find(l => l.name === name))}>
@@ -371,8 +370,8 @@ export default function OwnerDashboard() {
                                                     <Textarea readOnly value={po.list} rows={5} />
                                                 </CardContent>
                                                 <CardFooter className="gap-2">
-                                                    <Button size="sm" onClick={() => handlePOAction(po.id, 'approved')}><Check className="mr-2 h-4 w-4"/> Approve & Send</Button>
-                                                    <Button size="sm" variant="destructive" onClick={() => handlePOAction(po.id, 'rejected')}><X className="mr-2 h-4 w-4"/> Reject</Button>
+                                                    <Button size="sm" onClick={() => handlePOAction(po.id, 'approved')}> Approve & Send</Button>
+                                                    <Button size="sm" variant="destructive" onClick={() => handlePOAction(po.id, 'rejected')}> Reject</Button>
                                                 </CardFooter>
                                             </Card>
                                         ))}
@@ -440,7 +439,7 @@ export default function OwnerDashboard() {
                    <AccordionItem value="item-1">
                        <AccordionTrigger><div className="flex items-center gap-2"><Eye className="h-5 w-5"/> AI Sentinel & Security</div></AccordionTrigger>
                        <AccordionContent className="p-1 pt-4">
-                           <VirtualSecurityCameraManager />
+                           <AIMonitoringSetup />
                            <Card className="mt-6" id="agent-activity-log">
                                <CardHeader className="flex-row items-center justify-between">
                                    <div>
@@ -521,7 +520,7 @@ export default function OwnerDashboard() {
                     <DialogDescription>Provide a brief reason for rejecting the request for a {requestToReject?.role}. This will be sent to the manager.</DialogDescription>
                 </DialogHeader>
                 <div className="py-4"><Textarea placeholder="e.g., We don't have the budget for a new hire at this time. Let's revisit in Q4." value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)}/></div>
-                <DialogFooter><Button variant="ghost" onClick={() => setIsRejectDialogOpen(false)}>Cancel</Button><Button variant="destructive" onClick={handleRejectRequest}><Send className="mr-2 h-4 w-4"/>Send Rejection</Button></DialogFooter>
+                <DialogFooter><Button variant="ghost" onClick={() => setIsRejectDialogOpen(false)}>Cancel</Button><Button variant="destructive" onClick={handleRejectRequest}> Send Rejection</Button></DialogFooter>
             </DialogContent>
         </Dialog>
     </div>

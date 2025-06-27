@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, FormEvent } from 'react';
@@ -12,6 +11,7 @@ import { Camera, PlusCircle, Trash2, Video, Sparkles, Loader2, Link as LinkIcon,
 import { analyzeCameraImageAction } from '@/app/actions';
 import type { CameraAnalysisOutput } from '@/ai/flows/cameraAnalysisFlow';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Textarea } from './ui/textarea';
 
 type VirtualCamera = {
   id: number;
@@ -26,7 +26,7 @@ type AnalysisResult = {
     output: CameraAnalysisOutput;
 };
 
-export default function VirtualSecurityCameraManager() {
+export default function AIMonitoringSetup() {
     const { toast } = useToast();
     const [cameras, setCameras] = useState<VirtualCamera[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -115,11 +115,11 @@ export default function VirtualSecurityCameraManager() {
 
 
     return (
-        <Card className="lg:col-span-3" id="security-cameras">
+        <Card className="lg:col-span-3" id="ai-monitoring">
             <CardHeader className="flex-row items-start justify-between">
                 <div>
-                    <CardTitle className="font-headline flex items-center gap-2"><Video /> Virtual Security Cameras</CardTitle>
-                    <CardDescription>Add camera stream links and placeholder videos. Use the AI to analyze the feed for specific events.</CardDescription>
+                    <CardTitle className="font-headline flex items-center gap-2"><Video /> AI Monitoring Setup</CardTitle>
+                    <CardDescription>Configure the daily tasks for your AI camera assistant. Tell it what to look for, and it will report back its findings.</CardDescription>
                 </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
@@ -127,7 +127,7 @@ export default function VirtualSecurityCameraManager() {
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle className="font-headline">Add New Camera</DialogTitle>
+                            <DialogTitle className="font-headline">Add New Camera Feed</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleAddCamera} className="space-y-4 py-4">
                             <div className="grid gap-2">
@@ -158,7 +158,7 @@ export default function VirtualSecurityCameraManager() {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Video Analysis Simulation</AlertTitle>
                     <AlertDescription>
-                        For this prototype, AI analysis is performed on a representative static image, not the full video file. This simulates analyzing a keyframe from a live feed.
+                        For this prototype, AI analysis is performed on a representative static image, not the full video file. This simulates analyzing a keyframe from a live feed to generate insights.
                     </AlertDescription>
                 </Alert>
                 {cameras.length === 0 ? (
@@ -189,12 +189,13 @@ export default function VirtualSecurityCameraManager() {
                                         <span className="truncate">{camera.streamUrl}</span>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor={`prompt-${camera.id}`}>AI Analysis Prompt</Label>
-                                        <Input
+                                        <Label htmlFor={`prompt-${camera.id}`} className="font-semibold">Tell the AI what to analyze:</Label>
+                                        <Textarea
                                             id={`prompt-${camera.id}`}
                                             value={analysisPrompts[camera.id] || ''}
                                             onChange={e => setAnalysisPrompts({...analysisPrompts, [camera.id]: e.target.value})}
-                                            placeholder="e.g., Check for idle staff or count handwashing events."
+                                            placeholder="Be specific. For example: 'Count how many customers are in line.' or 'Alert me if a spill is not cleaned within 5 minutes.'"
+                                            rows={3}
                                         />
                                     </div>
                                      {analysisResult && analysisResult.cameraId === camera.id && (
@@ -211,7 +212,7 @@ export default function VirtualSecurityCameraManager() {
                                 <CardFooter>
                                     <Button className="w-full" onClick={() => handleAnalyzeVideo(camera)} disabled={isLoading === camera.id}>
                                         {isLoading === camera.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                        Analyze Feed
+                                        Run Daily Analysis
                                     </Button>
                                 </CardFooter>
                             </Card>
