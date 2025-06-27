@@ -9,12 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Database, UploadCloud, FileText, Trash2, Loader2, Sparkles, Send, Bot } from 'lucide-react';
-import { queryKnowledgeBaseAction } from '@/app/actions';
-import { Alert, AlertTitle } from './ui/alert';
+import { Database, UploadCloud, FileText, Trash2, Loader2, BrainCircuit } from 'lucide-react';
+import Link from 'next/link';
 
 type Document = {
     id: number;
@@ -34,10 +32,6 @@ export default function KnowledgeBaseManager() {
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [fileToUpload, setFileToUpload] = useState<File | null>(null);
     const [itemToDelete, setItemToDelete] = useState<Document | null>(null);
-
-    const [isQuerying, setIsQuerying] = useState(false);
-    const [question, setQuestion] = useState('');
-    const [answer, setAnswer] = useState<string | null>(null);
     
 
     const handleUpload = (e: React.FormEvent) => {
@@ -72,34 +66,13 @@ export default function KnowledgeBaseManager() {
         setItemToDelete(null);
     };
 
-    const handleAskQuestion = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!question.trim()) return;
-
-        setIsQuerying(true);
-        setAnswer(null);
-
-        try {
-            const result = await queryKnowledgeBaseAction({ question });
-            if (result.error || !result.data) {
-                throw new Error(result.error || 'Failed to get an answer.');
-            }
-            setAnswer(result.data.answer);
-        } catch (error: any) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'AI Query Failed', description: error.message });
-        } finally {
-            setIsQuerying(false);
-        }
-    };
-
     return (
         <div className="space-y-6">
             <Card>
                 <CardHeader className="flex-row items-start justify-between">
                     <div>
                         <CardTitle className="font-headline flex items-center gap-2"><Database /> Corporate Knowledge Base</CardTitle>
-                        <CardDescription>Upload, manage, and delete operational documents. The AI uses these files as its source of truth.</CardDescription>
+                        <CardDescription>Upload, manage, and delete operational documents. The AI uses these files as its source of truth for the "Company Brain" assistant.</CardDescription>
                     </div>
                     <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
                         <DialogTrigger asChild>
@@ -178,48 +151,14 @@ export default function KnowledgeBaseManager() {
                         </TableBody>
                     </Table>
                 </CardContent>
-            </Card>
-
-            <Card className="border-primary bg-primary/5">
-                <CardHeader>
-                    <CardTitle className="font-headline text-primary flex items-center gap-2"><Sparkles /> AI Knowledge Assistant</CardTitle>
-                    <CardDescription>Ask questions about your operations, and the AI will answer based on your uploaded documents.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleAskQuestion} className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="ai-question">Your Question</Label>
-                            <Textarea
-                                id="ai-question"
-                                placeholder="e.g., How do I make the Valkyrie Victory Bowl? What is the first step of the closing checklist?"
-                                value={question}
-                                onChange={e => setQuestion(e.target.value)}
-                            />
-                        </div>
-                        <Button type="submit" disabled={isQuerying}>
-                            {isQuerying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                            Ask Assistant
-                        </Button>
-                    </form>
-                    
-                    {(isQuerying || answer) && (
-                        <div className="mt-6">
-                            <Label className="text-muted-foreground">Answer</Label>
-                            <Alert className="mt-2">
-                                <Bot className="h-4 w-4" />
-                                <AlertTitle>AI Assistant</AlertTitle>
-                                {isQuerying ? (
-                                    <div className="flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        <span>Searching documents and generating an answer...</span>
-                                    </div>
-                                ) : (
-                                    <p className="text-sm">{answer}</p>
-                                )}
-                            </Alert>
-                        </div>
-                    )}
-                </CardContent>
+                 <CardFooter>
+                    <Button asChild variant="outline">
+                        <Link href="/dashboard/brain">
+                            <BrainCircuit className="mr-2 h-4 w-4" />
+                            Go to Company Brain
+                        </Link>
+                    </Button>
+                </CardFooter>
             </Card>
             
             <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>

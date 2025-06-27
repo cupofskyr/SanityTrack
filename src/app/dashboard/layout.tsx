@@ -47,6 +47,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import GlobalAICamera from "@/components/global-ai-camera";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export default function DashboardLayout({
   children,
@@ -57,6 +60,16 @@ export default function DashboardLayout({
   const router = useRouter();
   const { user, loading, logout } = useAuth();
   const [role, setRole] = React.useState("User");
+  const [isPolicyModalOpen, setIsPolicyModalOpen] = React.useState(false);
+  const [isPolicyAccepted, setIsPolicyAccepted] = React.useState(false);
+
+  React.useEffect(() => {
+    // Check for policy acceptance on mount. Use sessionStorage for session-only persistence.
+    const policyAccepted = sessionStorage.getItem('sanity-track-policy-accepted');
+    if (!loading && user && policyAccepted !== 'true') {
+      setIsPolicyModalOpen(true);
+    }
+  }, [loading, user]);
 
   React.useEffect(() => {
     // On initial load in the browser, try to get the role from session storage
@@ -92,6 +105,13 @@ export default function DashboardLayout({
   
   const handleLogout = async () => {
       await logout();
+  };
+
+  const handleAcceptPolicy = () => {
+    if (isPolicyAccepted) {
+      sessionStorage.setItem('sanity-track-policy-accepted', 'true');
+      setIsPolicyModalOpen(false);
+    }
   };
 
   const dashboardLink = getDashboardLink();
@@ -215,7 +235,44 @@ export default function DashboardLayout({
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
              </div>
           ) : (
-            children
+            <>
+              {children}
+              <Dialog open={isPolicyModalOpen}>
+                <DialogContent showCloseButton={false} onInteractOutside={(e) => e.preventDefault()}>
+                  <DialogHeader>
+                    <DialogTitle className="font-headline text-2xl">Terms of Use & AI Notice</DialogTitle>
+                    <DialogDescription>
+                      Before using SanityTrack, please read and agree to the following terms.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto text-sm text-muted-foreground pr-2">
+                    <p>Welcome to SanityTrack. This is a powerful operational tool designed to improve safety, efficiency, and compliance.</p>
+                    <h4 className="font-semibold text-foreground">AI & Camera Usage</h4>
+                    <p>By using this application, you acknowledge and agree that SanityTrack utilizes Artificial Intelligence (AI) and camera-based monitoring for operational purposes. This includes, but is not limited to:</p>
+                    <ul className="list-disc list-inside space-y-1 pl-2">
+                        <li>Analyzing camera feeds to detect potential safety hazards (e.g., spills), assess quality standards, and monitor operational efficiency (e.g., wait times).</li>
+                        <li>Generating tasks, reports, and communications based on AI analysis of data you provide or data collected through application features.</li>
+                        <li>Using photos you upload for task completion verification, issue reporting, and AI analysis.</li>
+                    </ul>
+                    <h4 className="font-semibold text-foreground">Data & Privacy</h4>
+                    <p>All data, including images and text you provide, is processed to power the application's features. We are committed to handling your data responsibly. This is a demonstration application; do not upload sensitive personal or business information.</p>
+                     <h4 className="font-semibold text-foreground">User Agreement</h4>
+                    <p>You agree to use SanityTrack responsibly and in accordance with all applicable laws and company policies. You understand that this tool is used for operational management and compliance monitoring.</p>
+                  </div>
+                   <div className="flex items-center space-x-2 pt-4 border-t">
+                      <Checkbox id="terms" checked={isPolicyAccepted} onCheckedChange={(checked) => setIsPolicyAccepted(checked as boolean)} />
+                      <Label htmlFor="terms" className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        I have read and agree to the terms and conditions.
+                      </Label>
+                    </div>
+                  <DialogFooter className="mt-4">
+                    <Button onClick={handleAcceptPolicy} disabled={!isPolicyAccepted}>
+                        Accept & Continue to Dashboard
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
         </main>
       </SidebarInset>

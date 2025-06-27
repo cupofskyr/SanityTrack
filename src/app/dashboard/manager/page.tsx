@@ -1009,7 +1009,7 @@ export default function ManagerDashboard() {
             <StaffMealManager />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Card className="lg:col-span-3" id="ai-issue-analyzer-card">
+                    <Card className="lg:col-span-3 border-primary bg-primary/5" id="ai-issue-analyzer-card">
                          <CardHeader>
                             <CardTitle className="font-headline flex items-center gap-2"><Zap className="text-primary"/> AI Issue Analyzer</CardTitle>
                             <CardDescription>Enter a reported issue to have the AI categorize it. Emergencies will be added to the High-Priority list below.</CardDescription>
