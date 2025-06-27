@@ -9,6 +9,17 @@
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import {
+    OnboardingInterviewInputSchema,
+    type OnboardingInterviewInput,
+    OnboardingInterviewOutputSchema,
+    type OnboardingInterviewOutput
+} from '@/ai/schemas/onboarding-schemas';
+
+
+export async function continueOnboardingInterview(input: OnboardingInterviewInput): Promise<OnboardingInterviewOutput> {
+    return onboardingInterviewFlow(input);
+}
 
 const OnboardingStateSchema = z.object({
   currentStep: z.enum([
@@ -21,21 +32,6 @@ const OnboardingStateSchema = z.object({
     'COMPLETE',
   ]),
 });
-
-export const OnboardingInterviewInputSchema = z.object({
-    conversationHistory: z.any() 
-});
-export type OnboardingInterviewInput = z.infer<typeof OnboardingInterviewInputSchema>;
-
-export const OnboardingInterviewOutputSchema = z.object({
-    response: z.string().describe("The AI's next question or statement in the conversation."),
-    isComplete: z.boolean().describe("Set to true only when the interview portion is complete and you are prompting for documents."),
-});
-export type OnboardingInterviewOutput = z.infer<typeof OnboardingInterviewOutputSchema>;
-
-export async function continueOnboardingInterview(input: OnboardingInterviewInput): Promise<OnboardingInterviewOutput> {
-    return onboardingInterviewFlow(input);
-}
 
 const questions: Record<z.infer<typeof OnboardingStateSchema>['currentStep'], string> = {
     INTRODUCTION: "Great! First, what's the name of your restaurant or business?",

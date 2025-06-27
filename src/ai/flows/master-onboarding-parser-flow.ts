@@ -9,28 +9,13 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
+import {
+    OnboardingParserInputSchema,
+    type OnboardingParserInput,
+    OnboardingParserOutputSchema,
+    type OnboardingParserOutput,
+} from '@/ai/schemas/onboarding-schemas';
 
-export const OnboardingParserInputSchema = z.object({
-    conversationTranscript: z.string().describe("The full transcript of the onboarding conversation."),
-});
-export type OnboardingParserInput = z.infer<typeof OnboardingParserInputSchema>;
-
-export const OnboardingParserOutputSchema = z.object({
-    menuItems: z.array(z.object({
-        name: z.string(),
-        description: z.string(),
-    })).describe("A list of menu items extracted from the conversation."),
-    recurringTasks: z.array(z.object({
-        taskName: z.string(),
-        frequency: z.string().default('Daily'),
-    })).describe("A list of recurring operational tasks."),
-    inventoryItems: z.array(z.object({
-        itemName: z.string(),
-        category: z.string().optional(),
-    })).describe("A list of inventory items to track."),
-});
-export type OnboardingParserOutput = z.infer<typeof OnboardingParserOutputSchema>;
 
 export async function masterOnboardingParser(input: OnboardingParserInput): Promise<OnboardingParserOutput> {
     return masterOnboardingParserFlow(input);

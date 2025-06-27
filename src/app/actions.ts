@@ -23,10 +23,11 @@ import { estimateStockLevel, type EstimateStockLevelInput, type EstimateStockLev
 import { explainTaskImportance, type ExplainTaskImportanceInput, type ExplainTaskImportanceOutput } from '@/ai/flows/explain-task-importance-flow';
 import { analyzeWaitTime, type AnalyzeWaitTimeInput } from '@/ai/flows/analyze-wait-time-flow';
 import type { ServiceAlert } from '@/ai/schemas/service-alert-schemas';
-import { continueOnboardingInterview, type OnboardingInterviewInput, type OnboardingInterviewOutput } from '@/ai/flows/onboarding-interview-flow';
-import { masterOnboardingParser, type OnboardingParserInput, type OnboardingParserOutput } from '@/ai/flows/master-onboarding-parser-flow';
+import { continueOnboardingInterview } from '@/ai/flows/onboarding-interview-flow';
+import { masterOnboardingParser } from '@/ai/flows/master-onboarding-parser-flow';
 import { queryKnowledgeBase, type QueryKnowledgeBaseInput, type QueryKnowledgeBaseOutput } from '@/ai/flows/knowledge-rag-flow';
 import { runMasterAgentDecision, type MasterAgentInput, type MasterAgentOutput } from '@/ai/flows/master-agent-decision-flow';
+import type { OnboardingInterviewInput, OnboardingInterviewOutput, OnboardingParserInput, OnboardingParserOutput } from '@/ai/schemas/onboarding-schemas';
 
 
 // This wrapper function centralizes error handling for all AI flows.
