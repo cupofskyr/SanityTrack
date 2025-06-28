@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch } from 'lucide-react';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch, Megaphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -105,6 +105,10 @@ export default function OwnerDashboard() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
   const [inviteContent, setInviteContent] = useState<{ subject: string; body: string; } | null>(null);
+
+  const [isAnnouncementDialogOpen, setIsAnnouncementDialogOpen] = useState(false);
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementVideo, setAnnouncementVideo] = useState<File | null>(null);
 
   useEffect(() => {
     const storedLocations = JSON.parse(localStorage.getItem('sanity-track-locations') || '[]');
@@ -295,6 +299,28 @@ export default function OwnerDashboard() {
     setIsInviteDialogOpen(false);
     setShopperEmail('');
   };
+
+    const handlePostAnnouncement = (e: FormEvent) => {
+        e.preventDefault();
+        if (!announcementTitle || !announcementVideo) {
+            toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide a title and select a video file.' });
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const videoDataUrl = event.target?.result as string;
+            localStorage.setItem('company-announcement', JSON.stringify({
+                title: announcementTitle,
+                videoUrl: videoDataUrl,
+                postedAt: new Date().toISOString(),
+            }));
+            toast({ title: 'Announcement Posted!', description: 'Your message is now visible to all employees.' });
+            setIsAnnouncementDialogOpen(false);
+            setAnnouncementTitle('');
+            setAnnouncementVideo(null);
+        };
+        reader.readAsDataURL(announcementVideo);
+    };
 
     if (isNewUser) {
         return <OnboardingInterview onOnboardingComplete={onOnboardingComplete} />;
@@ -487,7 +513,7 @@ export default function OwnerDashboard() {
                 <CardDescription>High-level tools for management, security, and system configuration.</CardDescription>
            </CardHeader>
            <CardContent>
-               <Accordion type="single" collapsible className="w-full">
+               <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
                    <AccordionItem value="item-1">
                        <AccordionTrigger><div className="flex items-center gap-2"><Eye className="h-5 w-5"/> AI Sentinel & Security</div></AccordionTrigger>
                        <AccordionContent className="p-1 pt-4">
@@ -630,6 +656,43 @@ export default function OwnerDashboard() {
                                            <Sparkles className="mr-2 h-4 w-4" /> Generate Invitation
                                        </Button>
                                    </form>
+                               </CardContent>
+                           </Card>
+                       </AccordionContent>
+                   </AccordionItem>
+                   <AccordionItem value="item-5">
+                       <AccordionTrigger><div className="flex items-center gap-2"><Megaphone className="h-5 w-5"/> Company Announcement</div></AccordionTrigger>
+                       <AccordionContent className="p-1 pt-4">
+                           <Card>
+                               <CardHeader>
+                                   <CardTitle>Post a Video Message</CardTitle>
+                                   <CardDescription>Record and post a company-wide video message for all employees. It will appear at the top of their dashboard.</CardDescription>
+                               </CardHeader>
+                               <CardContent>
+                                   <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
+                                       <DialogTrigger asChild><Button><Video className="mr-2"/>Post New Announcement</Button></DialogTrigger>
+                                       <DialogContent>
+                                           <DialogHeader>
+                                               <DialogTitle>New Video Announcement</DialogTitle>
+                                               <DialogDescription>Your message will be displayed to all employees immediately.</DialogDescription>
+                                           </DialogHeader>
+                                           <form onSubmit={handlePostAnnouncement}>
+                                               <div className="grid gap-4 py-4">
+                                                   <div className="grid gap-2">
+                                                       <Label htmlFor="ann-title">Message Title</Label>
+                                                       <Input id="ann-title" value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} placeholder="e.g., A Holiday Greeting" required />
+                                                   </div>
+                                                   <div className="grid gap-2">
+                                                       <Label htmlFor="ann-video">Video File</Label>
+                                                       <Input id="ann-video" type="file" accept="video/*" onChange={e => setAnnouncementVideo(e.target.files ? e.target.files[0] : null)} required />
+                                                   </div>
+                                               </div>
+                                               <DialogFooter>
+                                                   <Button type="submit">Post Message</Button>
+                                               </DialogFooter>
+                                           </form>
+                                       </DialogContent>
+                                   </Dialog>
                                </CardContent>
                            </Card>
                        </AccordionContent>

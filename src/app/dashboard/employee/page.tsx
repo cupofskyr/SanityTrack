@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Timer, Megaphone, Sparkles, Loader2, Languages, ArrowRightLeft, ShieldCheck, BookOpen, Link as LinkIcon, Edit, FileText } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Timer, Megaphone, Sparkles, Loader2, Languages, ArrowRightLeft, ShieldCheck, BookOpen, Link as LinkIcon, Edit, FileText, Video } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -93,6 +93,8 @@ export default function EmployeeDashboard() {
   const [currentQaTask, setCurrentQaTask] = useState<QaTask | null>(null);
   const [qaAuditPhoto, setQaAuditPhoto] = useState<string | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
+
+  const [announcement, setAnnouncement] = useState<{title: string, videoUrl: string} | null>(null);
   
   const allCurrentTasks = [...qaTasks, ...tasks];
 
@@ -131,6 +133,16 @@ export default function EmployeeDashboard() {
         const parsedMessage = JSON.parse(message);
         setDirectMessage(parsedMessage);
     }
+    
+    const checkAnnouncement = () => {
+        const storedAnnouncement = localStorage.getItem('company-announcement');
+        if (storedAnnouncement) {
+            setAnnouncement(JSON.parse(storedAnnouncement));
+        }
+    };
+    checkAnnouncement();
+    window.addEventListener('storage', checkAnnouncement);
+    return () => window.removeEventListener('storage', checkAnnouncement);
   }, [toast]);
 
   const handleClockIn = () => {
@@ -257,6 +269,25 @@ export default function EmployeeDashboard() {
   return (
     <TooltipProvider>
     <div className="space-y-6">
+       {announcement && (
+        <Card className="bg-primary/10 border-primary text-primary">
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center justify-between">
+                    <span><Megaphone className="inline-block mr-2"/> A Message from the CEO</span>
+                    <Button variant="ghost" size="sm" onClick={() => {
+                        setAnnouncement(null);
+                        localStorage.removeItem('company-announcement');
+                    }}>Dismiss</Button>
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <p className="font-semibold">{announcement.title}</p>
+                <div className="aspect-video w-full rounded-lg overflow-hidden border bg-black">
+                    <video src={announcement.videoUrl} controls className="w-full h-full object-cover" />
+                </div>
+            </CardContent>
+        </Card>
+       )}
        {directMessage && (
             <Alert variant="destructive" className="bg-accent/10 border-accent/50 text-accent [&>svg]:text-accent">
                 <Megaphone className="h-4 w-4" /><AlertTitle>{directMessage.title}</AlertTitle>
@@ -450,4 +481,3 @@ export default function EmployeeDashboard() {
     </TooltipProvider>
   );
 }
-
