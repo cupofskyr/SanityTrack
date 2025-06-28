@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -31,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
+import Feature from '@/components/feature-flag';
 
 type Location = {
   id: number;
@@ -457,13 +457,15 @@ export default function OwnerDashboard() {
 
        <Card id="high-priority-approvals">
            <CardHeader>
-                <CardTitle className="font-headline">Action & Approval Queue</CardTitle>
+                <CardTitle className="font-headline">Action &amp; Approval Queue</CardTitle>
                 <CardDescription>Your personal inbox for items requiring your immediate attention.</CardDescription>
            </CardHeader>
            <CardContent>
-                <Tabs defaultValue="marketing">
+                <Tabs defaultValue="approvals">
                     <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="marketing" id="marketing">Marketing & Innovation</TabsTrigger>
+                        <Feature name="aiMarketingStudio">
+                           <TabsTrigger value="marketing" id="marketing">Marketing &amp; Innovation</TabsTrigger>
+                        </Feature>
                         <TabsTrigger value="approvals">Approvals</TabsTrigger>
                         <TabsTrigger value="alerts">Alerts</TabsTrigger>
                         <TabsTrigger value="mandates">Mandates</TabsTrigger>
@@ -482,7 +484,7 @@ export default function OwnerDashboard() {
                                                     <blockquote className="mt-2 border-l-2 pl-4 text-sm italic">"{req.justification}"</blockquote>
                                                 </CardContent>
                                                 <CardFooter className="gap-2">
-                                                    <Button onClick={() => handleApproveRequest(req)} size="sm"><Check className="mr-2 h-4 w-4"/> Approve & Post Job</Button>
+                                                    <Button onClick={() => handleApproveRequest(req)} size="sm"><Check className="mr-2 h-4 w-4"/> Approve &amp; Post Job</Button>
                                                     <Button variant="destructive" onClick={() => openRejectDialog(req)} size="sm"><X className="mr-2 h-4 w-4"/> Reject</Button>
                                                 </CardFooter>
                                             </Card>
@@ -504,7 +506,7 @@ export default function OwnerDashboard() {
                                                     <Textarea readOnly value={po.list} rows={5} />
                                                 </CardContent>
                                                 <CardFooter className="gap-2">
-                                                    <Button size="sm" onClick={() => handlePOAction(po.id, 'approved')}> Approve & Send</Button>
+                                                    <Button size="sm" onClick={() => handlePOAction(po.id, 'approved')}> Approve &amp; Send</Button>
                                                     <Button size="sm" variant="destructive" onClick={() => handlePOAction(po.id, 'rejected')}> Reject</Button>
                                                 </CardFooter>
                                             </Card>
@@ -558,170 +560,171 @@ export default function OwnerDashboard() {
                             </CardContent>
                         </Card>
                     </TabsContent>
-                     <TabsContent value="marketing" className="mt-4 space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="font-headline flex items-center gap-2"><Sparkles className='text-primary'/> Proactive AI Suggestions</CardTitle>
-                                <CardDescription>The AI has detected local events that present marketing opportunities for your business.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {opportunities.length > 0 ? (
-                                    opportunities.map(opp => (
-                                        <Card key={opp.opportunityId} className="bg-background">
-                                            <CardHeader>
-                                                <CardTitle className="text-lg">Event: {opp.eventName}</CardTitle>
-                                                <CardDescription>Date: {format(opp.eventDate, 'PPPP')}</CardDescription>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <p className="text-sm font-semibold">AI Insight:</p>
-                                                <p className="text-sm text-muted-foreground italic">"{opp.aiSuggestion}"</p>
-                                            </CardContent>
-                                            <CardFooter className="gap-2">
-                                                <Button size="sm" onClick={() => toast({ title: "Coming Soon!", description: "The AI campaign creation wizard will be implemented next."})}>
-                                                    <Sparkles className="mr-2 h-4 w-4"/>Create Campaign
-                                                </Button>
-                                                <Button size="sm" variant="ghost" onClick={() => handleDismissOpportunity(opp.opportunityId)}>Dismiss</Button>
-                                            </CardFooter>
-                                        </Card>
-                                    ))
-                                ) : (
-                                    <p className="text-center text-muted-foreground py-4">No new marketing opportunities detected.</p>
-                                )}
-                            </CardContent>
-                        </Card>
-                        <Card>
-                           <CardHeader className="flex-row items-center justify-between">
-                               <div>
-                                   <CardTitle className="font-headline flex items-center gap-2"><Lightbulb /> AI Menu Innovation Lab</CardTitle>
-                                   <CardDescription>Leverage sales data and trends to brainstorm new menu items and marketing angles.</CardDescription>
-                               </div>
-                               <Button asChild variant="outline" size="sm">
-                                   <Link href="/dashboard/owner/marketing-setup"><Settings className="mr-2 h-4 w-4"/>Configure AI</Link>
-                               </Button>
-                           </CardHeader>
-                           <CardContent>
-                               <div className="grid gap-2 mb-4 max-w-sm">
-                                   <Label htmlFor="top-seller">Enter Your Top-Selling Ingredient</Label>
-                                   <Input id="top-seller" value={topSeller} onChange={(e) => setTopSeller(e.target.value)} placeholder="e.g., Yuzu, Cold Brew, Acai"/>
-                               </div>
-                               <Button onClick={handleGenerateIdeas} disabled={isGeneratingIdeas}>
-                                   {isGeneratingIdeas ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
-                                   Generate Ideas
-                               </Button>
-                                {marketingIdeas && (
-                                    <div className="mt-6 space-y-4">
-                                        <div className="grid md:grid-cols-3 gap-4">
-                                            {marketingIdeas.trendingIngredients.map((ing, i) => (
-                                                <Card key={i}>
-                                                    <CardHeader><CardTitle className="text-base flex items-center gap-2"><TrendingUp/>{ing.name}</CardTitle></CardHeader>
-                                                    <CardContent><p className="text-sm text-muted-foreground">{ing.reason}</p></CardContent>
-                                                </Card>
-                                            ))}
-                                        </div>
-                                         <div className="grid md:grid-cols-2 gap-4">
-                                             {marketingIdeas.menuIdeas.map((idea, i) => (
-                                                <Card key={i}>
-                                                    <CardHeader>
-                                                        <CardTitle className="text-lg">{idea.name} <Badge variant="secondary">{idea.type}</Badge></CardTitle>
-                                                        <CardDescription>{idea.description}</CardDescription>
-                                                    </CardHeader>
-                                                    <CardContent className="space-y-2">
-                                                        <p className="text-sm"><strong className="font-medium">Ingredients:</strong> {idea.keyIngredients.join(', ')}</p>
-                                                        <p className="text-sm"><strong className="font-medium">Marketing Angle:</strong> {idea.marketingAngle}</p>
-                                                    </CardContent>
-                                                </Card>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                           </CardContent>
-                        </Card>
-                        <Card>
-                               <CardHeader>
-                                   <CardTitle className="font-headline flex items-center gap-2"><UserSearch /> Ghost Shopper Program</CardTitle>
-                                   <CardDescription>
-                                       Invite customers to act as "secret shoppers" in exchange for a reward. The AI will draft a professional invitation email for you to send.
-                                   </CardDescription>
+                     <Feature name="aiMarketingStudio">
+                        <TabsContent value="marketing" className="mt-4 space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="font-headline flex items-center gap-2"><Sparkles className='text-primary'/> Proactive AI Suggestions</CardTitle>
+                                    <CardDescription>The AI has detected local events that present marketing opportunities for your business.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {opportunities.length > 0 ? (
+                                        opportunities.map(opp => (
+                                            <Card key={opp.opportunityId} className="bg-background">
+                                                <CardHeader>
+                                                    <CardTitle className="text-lg">Event: {opp.eventName}</CardTitle>
+                                                    <CardDescription>Date: {format(opp.eventDate, 'PPPP')}</CardDescription>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <p className="text-sm font-semibold">AI Insight:</p>
+                                                    <p className="text-sm text-muted-foreground italic">"{opp.aiSuggestion}"</p>
+                                                </CardContent>
+                                                <CardFooter className="gap-2">
+                                                    <Button size="sm" onClick={() => toast({ title: "Coming Soon!", description: "The AI campaign creation wizard will be implemented next."})}>
+                                                        <Sparkles className="mr-2 h-4 w-4"/>Create Campaign
+                                                    </Button>
+                                                    <Button size="sm" variant="ghost" onClick={() => handleDismissOpportunity(opp.opportunityId)}>Dismiss</Button>
+                                                </CardFooter>
+                                            </Card>
+                                        ))
+                                    ) : (
+                                        <p className="text-center text-muted-foreground py-4">No new marketing opportunities detected.</p>
+                                    )}
+                                </CardContent>
+                            </Card>
+                            <Card>
+                               <CardHeader className="flex-row items-center justify-between">
+                                   <div>
+                                       <CardTitle className="font-headline flex items-center gap-2"><Lightbulb /> AI Menu Innovation Lab</CardTitle>
+                                       <CardDescription>Leverage sales data and trends to brainstorm new menu items and marketing angles.</CardDescription>
+                                   </div>
+                                   <Button asChild variant="outline" size="sm">
+                                       <Link href="/dashboard/owner/marketing-setup"><Settings className="mr-2 h-4 w-4"/>Configure AI</Link>
+                                   </Button>
                                </CardHeader>
                                <CardContent>
-                                   <form onSubmit={handleInviteGhostShopper} className="space-y-4">
-                                       <div className="grid md:grid-cols-2 gap-4">
-                                           <div className="grid gap-2">
-                                               <Label htmlFor="shopper-email">Shopper's Email</Label>
-                                               <Input id="shopper-email" type="email" placeholder="shopper@email.com" value={shopperEmail} onChange={(e) => setShopperEmail(e.target.value)} required />
-                                           </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="shopper-offer">Reward Offer</Label>
-                                                <Select value={shopperOffer} onValueChange={(value) => setShopperOffer(value)} required>
-                                                    <SelectTrigger id="shopper-offer">
-                                                        <SelectValue placeholder="Select a reward..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="$10 Gift Card for your next visit">
-                                                            $10 Gift Card (Service Recovery Standard)
-                                                        </SelectItem>
-                                                        <SelectItem value="$25 Gift Card">
-                                                            $25 Gift Card
-                                                        </SelectItem>
-                                                        <SelectItem value="Free Menu Item of your choice">
-                                                            Free Menu Item
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
+                                   <div className="grid gap-2 mb-4 max-w-sm">
+                                       <Label htmlFor="top-seller">Enter Your Top-Selling Ingredient</Label>
+                                       <Input id="top-seller" value={topSeller} onChange={(e) => setTopSeller(e.target.value)} placeholder="e.g., Yuzu, Cold Brew, Acai"/>
+                                   </div>
+                                   <Button onClick={handleGenerateIdeas} disabled={isGeneratingIdeas}>
+                                       {isGeneratingIdeas ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
+                                       Generate Ideas
+                                   </Button>
+                                    {marketingIdeas && (
+                                        <div className="mt-6 space-y-4">
+                                            <div className="grid md:grid-cols-3 gap-4">
+                                                {marketingIdeas.trendingIngredients.map((ing, i) => (
+                                                    <Card key={i}>
+                                                        <CardHeader><CardTitle className="text-base flex items-center gap-2"><TrendingUp/>{ing.name}</CardTitle></CardHeader>
+                                                        <CardContent><p className="text-sm text-muted-foreground">{ing.reason}</p></CardContent>
+                                                    </Card>
+                                                ))}
                                             </div>
-                                       </div>
-                                       <Button type="submit" disabled={!shopperEmail || !shopperOffer || !selectedLocation}>
-                                           <Sparkles className="mr-2 h-4 w-4" /> Generate Invitation
-                                       </Button>
-                                   </form>
+                                             <div className="grid md:grid-cols-2 gap-4">
+                                                 {marketingIdeas.menuIdeas.map((idea, i) => (
+                                                    <Card key={i}>
+                                                        <CardHeader>
+                                                            <CardTitle className="text-lg">{idea.name} <Badge variant="secondary">{idea.type}</Badge></CardTitle>
+                                                            <CardDescription>{idea.description}</CardDescription>
+                                                        </CardHeader>
+                                                        <CardContent className="space-y-2">
+                                                            <p className="text-sm"><strong className="font-medium">Ingredients:</strong> {idea.keyIngredients.join(', ')}</p>
+                                                            <p className="text-sm"><strong className="font-medium">Marketing Angle:</strong> {idea.marketingAngle}</p>
+                                                        </CardContent>
+                                                    </Card>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                </CardContent>
-                        </Card>
-                         <Card>
-                               <CardHeader>
-                                   <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Company Announcement</CardTitle>
-                                   <CardDescription>Record and post a company-wide video message for all employees. It will appear at the top of their dashboard.</CardDescription>
-                               </CardHeader>
-                               <CardContent>
-                                   <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
-                                       <DialogTrigger asChild><Button variant="outline"><Video className="mr-2"/>Post New Announcement</Button></DialogTrigger>
-                                       <DialogContent>
-                                           <DialogHeader>
-                                               <DialogTitle>New Video Announcement</DialogTitle>
-                                               <DialogDescription>Your message will be displayed to all employees immediately.</DialogDescription>
-                                           </DialogHeader>
-                                           <form onSubmit={handlePostAnnouncement}>
-                                               <div className="grid gap-4 py-4">
-                                                   <div className="grid gap-2">
-                                                       <Label htmlFor="ann-title">Message Title</Label>
-                                                       <Input id="ann-title" value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} placeholder="e.g., A Holiday Greeting" required />
-                                                   </div>
-                                                   <div className="grid gap-2">
-                                                       <Label htmlFor="ann-video">Video File</Label>
-                                                       <Input id="ann-video" type="file" accept="video/*" onChange={e => setAnnouncementVideo(e.target.files ? e.target.files[0] : null)} required />
-                                                   </div>
+                            </Card>
+                            <Card>
+                                   <CardHeader>
+                                       <CardTitle className="font-headline flex items-center gap-2"><UserSearch /> Ghost Shopper Program</CardTitle>
+                                       <CardDescription>
+                                           Invite customers to act as "secret shoppers" in exchange for a reward. The AI will draft a professional invitation email for you to send.
+                                       </CardDescription>
+                                   </CardHeader>
+                                   <CardContent>
+                                       <form onSubmit={handleInviteGhostShopper} className="space-y-4">
+                                           <div className="grid md:grid-cols-2 gap-4">
+                                               <div className="grid gap-2">
+                                                   <Label htmlFor="shopper-email">Shopper's Email</Label>
+                                                   <Input id="shopper-email" type="email" placeholder="shopper@email.com" value={shopperEmail} onChange={(e) => setShopperEmail(e.target.value)} required />
                                                </div>
-                                               <DialogFooter>
-                                                   <Button type="submit">Post Message</Button>
-                                               </DialogFooter>
-                                           </form>
-                                       </DialogContent>
-                                   </Dialog>
-                               </CardContent>
-                           </Card>
-                    </TabsContent>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="shopper-offer">Reward Offer</Label>
+                                                    <Select value={shopperOffer} onValueChange={(value) => setShopperOffer(value)} required>
+                                                        <SelectTrigger id="shopper-offer">
+                                                            <SelectValue placeholder="Select a reward..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="$10 Gift Card for your next visit">
+                                                                $10 Gift Card (Service Recovery Standard)
+                                                            </SelectItem>
+                                                            <SelectItem value="$25 Gift Card">
+                                                                $25 Gift Card
+                                                            </SelectItem>
+                                                            <SelectItem value="Free Menu Item of your choice">
+                                                                Free Menu Item
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                           </div>
+                                           <Button type="submit" disabled={!shopperEmail || !shopperOffer || !selectedLocation}>
+                                               <Sparkles className="mr-2 h-4 w-4" /> Generate Invitation
+                                           </Button>
+                                       </form>
+                                   </CardContent>
+                            </Card>
+                             <Card>
+                                   <CardHeader>
+                                       <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Company Announcement</CardTitle>
+                                       <CardDescription>Record and post a company-wide video message for all employees. It will appear at the top of their dashboard.</CardDescription>
+                                   </CardHeader>
+                                   <CardContent>
+                                       <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
+                                           <DialogTrigger asChild><Button variant="outline"><Video className="mr-2"/>Post New Announcement</Button></DialogTrigger>
+                                           <DialogContent>
+                                               <DialogHeader>
+                                                   <DialogTitle>New Video Announcement</DialogTitle>
+                                                   <DialogDescription>Your message will be displayed to all employees immediately.</DialogDescription>
+                                               </DialogHeader>
+                                               <form onSubmit={handlePostAnnouncement}>
+                                                   <div className="grid gap-4 py-4">
+                                                       <div className="grid gap-2">
+                                                           <Label htmlFor="ann-title">Message Title</Label>
+                                                           <Input id="ann-title" value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} placeholder="e.g., A Holiday Greeting" required />
+                                                       </div>
+                                                       <div className="grid gap-2">
+                                                           <Label htmlFor="ann-video">Video File</Label>
+                                                           <Input id="ann-video" type="file" accept="video/*" onChange={e => setAnnouncementVideo(e.target.files ? e.target.files[0] : null)} required />
+                                                       </div>
+                                                   </div>
+                                                   <DialogFooter>
+                                                       <Button type="submit">Post Message</Button></DialogFooter>
+                                               </form>
+                                           </DialogContent>
+                                       </Dialog>
+                                   </CardContent>
+                               </Card>
+                        </TabsContent>
+                    </Feature>
                 </Tabs>
            </CardContent>
        </Card>
 
        <Card>
            <CardHeader>
-                <CardTitle className="font-headline">Strategic Command & Administration</CardTitle>
+                <CardTitle className="font-headline">Strategic Command &amp; Administration</CardTitle>
                 <CardDescription>High-level tools for management, security, and system configuration.</CardDescription>
            </CardHeader>
            <CardContent>
                <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
                    <AccordionItem value="item-1">
-                       <AccordionTrigger><div className="flex items-center gap-2"><Eye className="h-5 w-5"/> AI Sentinel & Security</div></AccordionTrigger>
+                       <AccordionTrigger><div className="flex items-center gap-2"><Eye className="h-5 w-5"/> AI Sentinel &amp; Security</div></AccordionTrigger>
                        <AccordionContent className="p-1 pt-4">
                            <AIMonitoringSetup />
                            <Card className="mt-6" id="agent-activity-log">
@@ -762,11 +765,11 @@ export default function OwnerDashboard() {
                        </AccordionContent>
                    </AccordionItem>
                    <AccordionItem value="item-2">
-                       <AccordionTrigger><div className="flex items-center gap-2"><Building className="h-5 w-5"/> Team & Locations</div></AccordionTrigger>
+                       <AccordionTrigger><div className="flex items-center gap-2"><Building className="h-5 w-5"/> Team &amp; Locations</div></AccordionTrigger>
                        <AccordionContent className="p-4 space-y-2">
                            <p className="text-sm text-muted-foreground">Manage your organization's users, roles, and business locations.</p>
                             <div className="flex flex-wrap gap-2 pt-2">
-                               <Button asChild variant="outline"><Link href="/dashboard/owner/team"><Users className="mr-2"/> Manage Team & Permissions</Link></Button>
+                               <Button asChild variant="outline"><Link href="/dashboard/owner/team"><Users className="mr-2"/> Manage Team &amp; Permissions</Link></Button>
                                 <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
                                     <DialogTrigger asChild><Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Add or Manage Locations</Button></DialogTrigger>
                                     <DialogContent className="max-w-2xl">
@@ -811,7 +814,7 @@ export default function OwnerDashboard() {
                        </AccordionContent>
                    </AccordionItem>
                    <AccordionItem value="item-3">
-                       <AccordionTrigger><div className="flex items-center gap-2"><Settings className="h-5 w-5"/> System & Administration</div></AccordionTrigger>
+                       <AccordionTrigger><div className="flex items-center gap-2"><Settings className="h-5 w-5"/> System &amp; Administration</div></AccordionTrigger>
                        <AccordionContent className="p-4 space-y-2">
                            <p className="text-sm text-muted-foreground">Configure the core system settings for your organization.</p>
                            <div className="flex flex-wrap gap-2 pt-2">
