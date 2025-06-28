@@ -1,6 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  experimental: {
+    // Genkit instrumentation uses native Node.js packages that aren't
+    // compatible with Webpack. This configuration prevents Webpack
+    // from trying to bundle them.
+    serverComponentsExternalPackages: [
+      '@opentelemetry/api',
+      '@opentelemetry/sdk-node',
+    ],
+  },
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
