@@ -3,6 +3,8 @@
 
 // This file is the single, safe entry point for all AI calls from the client-side UI.
 
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
 import { analyzeCamera } from '@/ai/flows/cameraAnalysisFlow';
 import type { CameraAnalysisInput, CameraAnalysisOutput } from '@/ai/schemas/camera-analysis-schemas';
 import { analyzeIssue, type AnalyzeIssueInput, type AnalyzeIssueOutput } from '@/ai/flows/analyze-issue-flow';
@@ -43,7 +45,10 @@ import type { GenerateBusinessReportInput } from '@/ai/schemas/business-report-s
 import { placeEmergencyOrder, type PlaceEmergencyOrderInput, type PlaceEmergencyOrderOutput } from '@/ai/flows/place-emergency-order-flow';
 import { generateMarketingIdeas } from '@/ai/flows/suggest-menu-trends-flow';
 import type { GenerateMarketingIdeasInput, GenerateMarketingIdeasOutput } from '@/ai/schemas/menu-trends-schemas';
+import { BrandGuidelinesDataSchema, type BrandGuidelinesData } from '@/ai/schemas/brand-guidelines-schemas';
 
+
+const db = getFirestore(app);
 
 // This wrapper function centralizes error handling for all AI flows.
 async function safeRun<I, O>(flow: (input: I) => Promise<O>, input: I, flowName: string): Promise<{ data: O | null; error: string | null; }> {
@@ -290,4 +295,59 @@ export async function resolveServiceAlertAction(input: { alertId: string }): Pro
     console.log(`Resolving service alert ${input.alertId}`);
     // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({ status: 'resolved', resolvedAt: new Date() });
     return { success: true };
+}
+
+
+// Action to save brand guidelines
+export async function saveBrandGuidelinesAction(input: { data: BrandGuidelinesData, userId: string }): Promise<{ success: boolean; error: string | null }> {
+    try {
+        const { data, userId } = input;
+        
+        // Validate input with Zod
+        const parsedData = BrandGuidelinesDataSchema.parse(data);
+
+        const guidelines = {
+            brandName: parsedData.brandName,
+            owner: userId,
+            rules: {
+                visual: { color_primary: { name: 'Primary Brand Color', hex: parsedData.primaryColor } },
+                verbal: {
+                    voiceProfile: parsedData.brandVoice,
+                    forbiddenWords: parsedData.forbiddenWords.split(',').map(word => word.trim().toLowerCase()).filter(Boolean),
+                }
+            }
+        };
+
+        const brandRef = doc(db, 'brandGuidelines', userId);
+        await setDoc(brandRef, guidelines, { merge: true });
+
+        return { success: true, error: null };
+    } catch (e: any) {
+        console.error("Error saving brand guidelines:", e);
+        return { success: false, error: e.message || "An unknown error occurred." };
+    }
+}
+
+// Action to get brand guidelines
+export async function getBrandGuidelinesAction(userId: string): Promise<{ data: BrandGuidelinesData | null; error: string | null; }> {
+    try {
+        const brandRef = doc(db, 'brandGuidelines', userId);
+        const docSnap = await getDoc(brandRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            const flattenedData: BrandGuidelinesData = {
+                brandName: data.brandName || '',
+                primaryColor: data.rules?.visual?.color_primary?.hex || '#D9534F',
+                brandVoice: data.rules?.verbal?.voiceProfile || '',
+                forbiddenWords: data.rules?.verbal?.forbiddenWords?.join(', ') || ''
+            };
+            return { data: flattenedData, error: null };
+        } else {
+            return { data: null, error: null }; // No guidelines found, not an error
+        }
+    } catch (e: any) {
+         console.error("Error fetching brand guidelines:", e);
+        return { data: null, error: e.message || "An unknown error occurred." };
+    }
 }

@@ -433,7 +433,7 @@ export default function OwnerDashboard() {
                         <TabsTrigger value="approvals">Approvals</TabsTrigger>
                         <TabsTrigger value="alerts">Alerts</TabsTrigger>
                         <TabsTrigger value="mandates">Mandates</TabsTrigger>
-                        <TabsTrigger value="marketing" id="marketing">Marketing</TabsTrigger>
+                        <TabsTrigger value="marketing" id="marketing">Marketing & Innovation</TabsTrigger>
                     </TabsList>
                     <TabsContent value="approvals" className="mt-4">
                         <div className="space-y-4">
@@ -527,9 +527,14 @@ export default function OwnerDashboard() {
                     </TabsContent>
                      <TabsContent value="marketing" className="mt-4 space-y-6">
                         <Card>
-                           <CardHeader>
-                               <CardTitle className="font-headline flex items-center gap-2"><Sparkles className='text-primary'/> AI Menu Innovation Lab</CardTitle>
-                               <CardDescription>Leverage sales data and seasonal trends to brainstorm new menu items and marketing angles for upcoming holidays and events.</CardDescription>
+                           <CardHeader className="flex-row items-center justify-between">
+                               <div>
+                                   <CardTitle className="font-headline flex items-center gap-2"><Sparkles className='text-primary'/> AI Menu Innovation Lab</CardTitle>
+                                   <CardDescription>Leverage sales data and trends to brainstorm new menu items and marketing angles.</CardDescription>
+                               </div>
+                               <Button asChild variant="outline" size="sm">
+                                   <Link href="/dashboard/owner/marketing-setup"><Settings className="mr-2 h-4 w-4"/>Configure AI</Link>
+                               </Button>
                            </CardHeader>
                            <CardContent>
                                <div className="grid gap-2 mb-4 max-w-sm">
