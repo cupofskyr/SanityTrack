@@ -8,14 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Timer, Megaphone, Sparkles, Loader2, Languages, ArrowRightLeft, ShieldCheck, BookOpen, Link as LinkIcon, Edit, FileText, Video } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Timer, Megaphone, Sparkles, Loader2, Languages, ArrowRightLeft, ShieldCheck, BookOpen, Link as LinkIcon, Edit, FileText, Video, Zap } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { analyzePhotoIssueAction, translateTextAction, compareFoodQualityAction } from '@/app/actions';
+import { analyzePhotoIssueAction, translateTextAction, compareFoodQualityAction, placeEmergencyOrderAction } from '@/app/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import EmployeeServiceAlertWidget from "@/components/employee-service-alert-widget";
@@ -96,6 +96,10 @@ export default function EmployeeDashboard() {
 
   const [announcement, setAnnouncement] = useState<{title: string, videoUrl: string} | null>(null);
   
+  const [isEmergencyOrderOpen, setIsEmergencyOrderOpen] = useState(false);
+  const [emergencyItem, setEmergencyItem] = useState("");
+  const [isOrdering, setIsOrdering] = useState(false);
+
   const allCurrentTasks = [...qaTasks, ...tasks];
 
   useEffect(() => {
@@ -259,6 +263,35 @@ export default function EmployeeDashboard() {
         setIsAuditing(false);
         setQaAuditPhoto(null);
         setCurrentQaTask(null);
+    }
+  };
+  
+  const handleEmergencyOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emergencyItem.trim()) {
+        toast({ variant: 'destructive', title: 'Item Needed', description: 'Please describe the item you need to order.' });
+        return;
+    }
+    setIsOrdering(true);
+    try {
+        const result = await placeEmergencyOrderAction({
+            itemDescription: emergencyItem,
+            locationName: "Downtown" // In real app, from user context
+        });
+        if (result.error || !result.data) {
+            throw new Error(result.error || "Failed to place order.");
+        }
+        toast({
+            title: "Order Placed!",
+            description: result.data.confirmationMessage,
+            duration: 10000,
+        });
+        setIsEmergencyOrderOpen(false);
+        setEmergencyItem("");
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Order Failed', description: error.message });
+    } finally {
+        setIsOrdering(false);
     }
   };
 
@@ -448,6 +481,48 @@ export default function EmployeeDashboard() {
                                     </Table>
                                 </CardContent>
                             </Card>
+                            <Card className="md:col-span-2 border-accent bg-accent/5">
+                              <CardHeader>
+                                  <CardTitle className="font-headline flex items-center gap-2 text-accent"><Zap /> Emergency Order</CardTitle>
+                                  <CardDescription>If you run out of a critical item mid-shift, use this to place an automated priority order via the owner's Instacart account.</CardDescription>
+                              </CardHeader>
+                              <CardContent>
+                                  <Dialog open={isEmergencyOrderOpen} onOpenChange={setIsEmergencyOrderOpen}>
+                                      <DialogTrigger asChild>
+                                          <Button variant="destructive" className="bg-accent hover:bg-accent/90">
+                                              <Zap className="mr-2 h-4 w-4" /> Place Emergency Order
+                                          </Button>
+                                      </DialogTrigger>
+                                      <DialogContent>
+                                          <DialogHeader>
+                                              <DialogTitle className="font-headline">Place Emergency Order</DialogTitle>
+                                              <DialogDescription>
+                                                  Describe the single most critical item you are out of. The AI will place a priority order. Use only for true emergencies.
+                                              </DialogDescription>
+                                          </DialogHeader>
+                                          <form onSubmit={handleEmergencyOrder} className="space-y-4 py-4">
+                                              <div className="grid gap-2">
+                                                  <Label htmlFor="emergency-item">What item do you need?</Label>
+                                                  <Textarea
+                                                      id="emergency-item"
+                                                      placeholder="e.g., We are completely out of whole milk for lattes."
+                                                      value={emergencyItem}
+                                                      onChange={(e) => setEmergencyItem(e.target.value)}
+                                                      required
+                                                      rows={3}
+                                                  />
+                                              </div>
+                                              <DialogFooter>
+                                                  <Button type="submit" disabled={isOrdering} className="bg-accent hover:bg-accent/90">
+                                                      {isOrdering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+                                                      Submit Order to AI
+                                                  </Button>
+                                              </DialogFooter>
+                                          </form>
+                                      </DialogContent>
+                                  </Dialog>
+                              </CardContent>
+                          </Card>
                         </div>
                     </TabsContent>
                     <TabsContent value="resources" className="mt-6">

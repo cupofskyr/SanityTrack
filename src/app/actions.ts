@@ -35,6 +35,7 @@ import type { ShoppingListItem, OptimizeOrderOutput } from '@/ai/schemas/orderin
 import { generateGhostShopperInvite, type GenerateGhostShopperInviteInput, type GenerateGhostShopperInviteOutput } from '@/ai/flows/generate-ghost-shopper-invite-flow';
 import { generateBusinessReport, type GenerateBusinessReportOutput } from '@/ai/flows/generate-business-report-flow';
 import type { GenerateBusinessReportInput } from '@/ai/schemas/business-report-schemas';
+import { placeEmergencyOrder, type PlaceEmergencyOrderInput, type PlaceEmergencyOrderOutput } from '@/ai/flows/place-emergency-order-flow';
 
 
 // This wrapper function centralizes error handling for all AI flows.
@@ -139,6 +140,10 @@ export async function scanInvoiceAction(input: ScanInvoiceInput): Promise<{ data
 
 export async function optimizeOrderAction(input: { shoppingList: ShoppingListItem[] }): Promise<{ data: OptimizeOrderOutput | null; error: string | null; }> {
     return safeRun(optimizeOrder, input, 'optimizeOrder');
+}
+
+export async function placeEmergencyOrderAction(input: PlaceEmergencyOrderInput): Promise<{ data: PlaceEmergencyOrderOutput | null; error: string | null; }> {
+    return safeRun(placeEmergencyOrder, input, 'placeEmergencyOrder');
 }
 
 
