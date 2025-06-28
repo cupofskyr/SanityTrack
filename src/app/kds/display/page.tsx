@@ -104,14 +104,3 @@ export default function KdsDisplayPage() {
         </main>
     );
 }
-
-// Add this to your tailwind.config.ts to make the animations work
-// keyframes: {
-//     'pulse-bg': {
-//         '0%, 100%': { backgroundColor: 'hsl(var(--destructive))' }, // using a variable for red
-//         '50%': { backgroundColor: 'hsl(var(--destructive) / 0.8)' },
-//     }
-// },
-// animation: {
-//     'pulse-bg': 'pulse-bg 2s ease-in-out infinite',
-// }

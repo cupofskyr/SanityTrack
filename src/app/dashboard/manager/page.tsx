@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle, AlertCircle, MailWarning, HelpCircle, Utensils, Sigma, Thermometer, Tag } from "lucide-react";
+import { Users, AlertTriangle, Sparkles, Flag, Phone, Wrench, PlusCircle, ExternalLink, ListTodo, Zap, Loader2, ShieldAlert, CheckCircle, MessageSquare, Megaphone, CalendarClock, CalendarIcon, LinkIcon, UtensilsCrossed, UserPlus, Clock, Send, Languages, Printer, Info, XCircle, AlertCircle, MailWarning, HelpCircle, Utensils, Sigma, Thermometer, Tag, BarChart } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -32,6 +32,8 @@ import { analyzeIssueAction, generateDailyBriefingAction, translateTextAction, g
 import type { GenerateDailyBriefingOutput } from '@/ai/schemas/daily-briefing-schemas';
 import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
 import type { AnalyzeIssueOutput } from '@/ai/schemas/issue-analysis-schemas';
+import ComplianceChart from '@/components/compliance-chart';
+
 
 const teamMembers = [
     { name: "John Doe", tasksCompleted: 8, tasksPending: 2, progress: 80 },
@@ -50,6 +52,16 @@ const initialTempData = {
     'Freezer': -2,
     'Holding Cabinet': 145,
 };
+
+const complianceData = [
+  { month: "Jan", score: 92 },
+  { month: "Feb", score: 95 },
+  { month: "Mar", score: 88 },
+  { month: "Apr", score: 91 },
+  { month: "May", score: 96 },
+  { month: "Jun", score: 94 },
+];
+
 
 type TempData = typeof initialTempData;
 
@@ -528,47 +540,58 @@ export default function ManagerDashboard() {
                     </Alert>
                 </CardContent>
             </Card>
+            
+            <Card className="lg:col-span-2">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><BarChart /> Compliance Overview</CardTitle>
+                    <CardDescription>Monthly compliance scores based on completed tasks and resolved issues.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ComplianceChart data={complianceData} />
+                </CardContent>
+            </Card>
 
+            <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Printer /> Monthly Reporting</CardTitle>
+                    <CardDescription>Generate a printable report of this month's activities.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="w-full"><Printer className="mr-2 h-4 w-4" /> Generate Report</Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl">
+                                <DialogHeader>
+                                <DialogTitle className="font-headline text-2xl">Monthly Activity Report</DialogTitle>
+                                <DialogDescription>Summary for {format(new Date(), 'MMMM yyyy')}</DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4 space-y-6 max-h-[70vh] overflow-y-auto pr-4">
+                                    <Card>
+                                        <CardHeader><CardTitle className="text-lg">Team Performance</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <Table>
+                                            <TableHeader><TableRow><TableHead>Member</TableHead><TableHead>Tasks Completed</TableHead><TableHead>Completion Rate</TableHead></TableRow></TableHeader>
+                                            <TableBody>{teamMembers.map(member => (<TableRow key={member.name}><TableCell>{member.name}</TableCell><TableCell>{member.tasksCompleted}/{member.tasksCompleted + member.tasksPending}</TableCell><TableCell><Progress value={member.progress} className="h-2" /></TableCell></TableRow>))}</TableBody>
+                                            </Table>
+                                        </CardContent>
+                                    </Card>
+                                     <Card>
+                                        <CardHeader><CardTitle className="text-lg">Issues Logged</CardTitle></CardHeader>
+                                        <CardContent>
+                                           <p className="text-sm text-muted-foreground">This report would include summaries of high and standard priority issues logged during the month.</p>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                                <DialogFooter className="sm:justify-between items-center gap-4 mt-4">
+                                <Alert className="text-left max-w-md"><AlertCircle className="h-4 w-4" /><AlertTitle>For Your Records</AlertTitle><AlertDescription>In a production app, this report could be automatically generated and emailed to you and the owner monthly.</AlertDescription></Alert>
+                                <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print Report</Button>
+                                </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </CardContent>
+            </Card>
 
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Card className="lg:col-span-3">
-                        <CardHeader>
-                             <CardTitle className="font-headline flex items-center gap-2"><Printer /> Monthly Reporting</CardTitle>
-                            <CardDescription>Generate a printable report of this month's activities to share with the owner or for your records.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button><Printer className="mr-2 h-4 w-4" /> Generate Monthly Report</Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-4xl">
-                                     <DialogHeader>
-                                        <DialogTitle className="font-headline text-2xl">Monthly Activity Report</DialogTitle>
-                                        <DialogDescription>Summary for {format(new Date(), 'MMMM yyyy')}</DialogDescription>
-                                      </DialogHeader>
-                                      <div className="py-4 space-y-6">
-                                        <Card>
-                                            <CardHeader><CardTitle className="text-lg">Team Performance</CardTitle></CardHeader>
-                                            <CardContent>
-                                                <Table>
-                                                <TableHeader><TableRow><TableHead>Member</TableHead><TableHead>Tasks Completed</TableHead><TableHead>Completion Rate</TableHead></TableRow></TableHeader>
-                                                <TableBody>{teamMembers.map(member => (<TableRow key={member.name}><TableCell>{member.name}</TableCell><TableCell>{member.tasksCompleted}/{member.tasksCompleted + member.tasksPending}</TableCell><TableCell><Progress value={member.progress} className="h-2" /></TableCell></TableRow>))}</TableBody>
-                                                </Table>
-                                            </CardContent>
-                                        </Card>
-                                      </div>
-                                       <DialogFooter className="sm:justify-between items-center gap-4">
-                                        <Alert className="text-left max-w-md"><AlertCircle className="h-4 w-4" /><AlertTitle>For Your Records</AlertTitle><AlertDescription>In a production app, this report could be automatically generated and emailed to you and the owner monthly.</AlertDescription></Alert>
-                                        <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print Report</Button>
-                                      </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        </CardContent>
-                    </Card>
-                </TooltipTrigger>
-                <TooltipContent><p>Generate a printable report of this month's activities to share with the owner.</p></TooltipContent>
-            </Tooltip>
 
              {rejectedRequests.length > 0 && (
                 <Card className="lg:col-span-3">
