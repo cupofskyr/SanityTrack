@@ -42,7 +42,8 @@ import {
   FileText as FileTextIcon,
   ShoppingCart,
   Megaphone,
-  Lightbulb
+  Lightbulb,
+  Flag
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -141,6 +142,7 @@ const ownerNav = [
             { name: "Team & Permissions", href: "/dashboard/owner/team" },
             { name: "Branding", href: "/dashboard/owner/branding" },
             { name: "AI Agent Rules", href: "/dashboard/owner/agent-rules" },
+            { name: "Feature Flags", href: "/dashboard/owner/features" },
             { name: "Billing", href: "/dashboard/owner/billing" },
         ]
     }

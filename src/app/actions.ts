@@ -355,3 +355,14 @@ export async function getBrandGuidelinesAction(userId: string): Promise<{ data: 
         return { data: null, error: e.message || "An unknown error occurred." };
     }
 }
+
+export async function saveFeatureFlagsAction(features: any): Promise<{success: boolean; error?: string}> {
+    try {
+        const docRef = doc(db, 'appConfig', 'features');
+        await setDoc(docRef, features, { merge: true });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error saving feature flags:", error);
+        return { success: false, error: error.message };
+    }
+}
