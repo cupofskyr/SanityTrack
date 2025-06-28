@@ -76,7 +76,21 @@ This section details the primary features of the application, organized by opera
     *   **Location:** Manager Dashboard -> Ordering.
     *   **Functionality:** Managers build a shopping list. The AI (`optimizeOrderFlow.ts`) then analyzes simulated prices from different suppliers (e.g., a major distributor vs. a local supermarket) and recommends a "smart-split" order to achieve the lowest total cost.
 
-### Theme 4: Knowledge, Training & Administration
+### Theme 4: Strategic Growth & Marketing
+
+*   **AI Menu Innovation Lab (Owner):**
+    *   **Location:** Owner Dashboard -> Marketing & Innovation tab.
+    *   **Functionality:** Owners can input their top-selling ingredient or flavor. The AI (`suggest-menu-trends-flow.ts`) then analyzes current food trends and seasonality (e.g., upcoming holidays) to suggest new, complementary ingredients and invent two complete, themed menu item concepts (name, description, marketing angle).
+
+*   **Ghost Shopper Program (Owner):**
+    *   **Location:** Owner Dashboard -> Marketing & Innovation tab.
+    *   **Functionality:** The owner can enter a customer's email and select a reward. The AI (`generate-ghost-shopper-invite-flow.ts`) drafts a professional invitation for them to act as a "secret shopper" and provide valuable, unbiased feedback.
+
+*   **Company Announcements (Owner):**
+    *   **Location:** Owner Dashboard -> Marketing & Innovation tab.
+    *   **Functionality:** The owner or CEO can record and upload a video message. This announcement is then prominently displayed at the top of every employee's dashboard, ensuring high visibility for important communications.
+
+### Theme 5: Knowledge, Training & Administration
 
 *   **AI Onboarding (New Owners):**
     *   **Location:** Root page `/` for new, unauthenticated users.
