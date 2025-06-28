@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -13,12 +12,12 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch, Megaphone, Lightbulb, LineChart } from 'lucide-react';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch, Megaphone, Lightbulb, LineChart, TrendingUp, AlertTriangle, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
-import type { ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
+import type { ToastPOSData } from '@/ai/schemas/toast-pos-schemas';
 import OwnerServiceAlertWidget from '@/components/owner-service-alert-widget';
 import { Input } from '@/components/ui/input';
 import OnboardingInterview from '@/components/onboarding/onboarding-interview';
@@ -553,7 +552,7 @@ export default function OwnerDashboard() {
                                         <div className="grid md:grid-cols-3 gap-4">
                                             {marketingIdeas.trendingIngredients.map((ing, i) => (
                                                 <Card key={i}>
-                                                    <CardHeader><CardTitle className="text-base">{ing.name}</CardTitle></CardHeader>
+                                                    <CardHeader><CardTitle className="text-base flex items-center gap-2"><TrendingUp/>{ing.name}</CardTitle></CardHeader>
                                                     <CardContent><p className="text-sm text-muted-foreground">{ing.reason}</p></CardContent>
                                                 </Card>
                                             ))}
