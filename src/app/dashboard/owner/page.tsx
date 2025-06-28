@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -12,7 +13,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch, Megaphone, Lightbulb, LineChart, TrendingUp, AlertTriangle, Trophy } from 'lucide-react';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch, Megaphone, Lightbulb, TrendingUp, AlertTriangle, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
