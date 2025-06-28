@@ -161,7 +161,7 @@ export default function TrainingPage() {
 
             <Card>
                 <CardHeader>
-                    <h3 className="text-lg font-semibold flex items-center gap-2"><Trophy className="text-accent" /> Leaderboard</h3>
+                     <h3 className="text-lg font-semibold flex items-center gap-2"><Trophy className="text-accent" /> Leaderboard</h3>
                 </CardHeader>
                 <CardContent>
                     <div className="border rounded-lg">

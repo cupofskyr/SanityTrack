@@ -1,3 +1,4 @@
+
 "use client";
 
 import TrainingManager from '@/components/training-manager';

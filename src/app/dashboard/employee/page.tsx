@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Timer, Megaphone, Sparkles, Loader2, Languages, ArrowRightLeft, ShieldCheck, BookOpen, Link as LinkIcon, Edit, FileText, Video, Zap } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Timer, Megaphone, Sparkles, Loader2, Languages, ArrowRightLeft, ShieldCheck, BookOpen, Edit, FileText, Video, Zap } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -303,10 +303,10 @@ export default function EmployeeDashboard() {
     <TooltipProvider>
     <div className="space-y-6">
        {announcement && (
-        <Card className="bg-primary/10 border-primary text-primary">
+        <Card className="bg-primary/10 border-primary">
             <CardHeader>
                 <CardTitle className="font-headline flex items-center justify-between">
-                    <span><Megaphone className="inline-block mr-2"/> A Message from the CEO</span>
+                    <span><Megaphone className="inline-block mr-2 text-primary"/> A Message from the CEO</span>
                     <Button variant="ghost" size="sm" onClick={() => {
                         setAnnouncement(null);
                         localStorage.removeItem('company-announcement');

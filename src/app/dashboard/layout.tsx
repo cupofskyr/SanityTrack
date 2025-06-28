@@ -35,6 +35,7 @@ import {
   BrainCircuit,
   FileText as FileTextIcon,
   Lightbulb,
+  BookOpen,
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -142,7 +143,7 @@ const ownerNav = [
 
 const employeeNav = [
     { name: "Dashboard", href: "/dashboard/employee", icon: LayoutDashboard },
-    { name: "Training Center", href: "/dashboard/training", icon: Activity },
+    { name: "Training Center", href: "/dashboard/training", icon: BookOpen },
     { name: "Ask the Brain", href: "/dashboard/brain", icon: BrainCircuit },
 ];
 
