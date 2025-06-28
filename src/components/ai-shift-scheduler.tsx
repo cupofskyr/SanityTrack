@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle, Send, Pencil, DollarSign, Info } from "lucide-react";
+import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle, Send, Pencil, DollarSign, Info, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
@@ -18,8 +18,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { generateScheduleAction } from "@/app/actions";
+import { generateScheduleAction, generateShiftSuggestionsAction } from "@/app/actions";
 import type { GenerateScheduleInput, GenerateScheduleOutput } from "@/ai/flows/ai-shift-planner";
+import type { ShiftSuggestion } from "@/ai/schemas/shift-suggestion-schemas";
 
 type Shift = {
   id: string;
@@ -65,6 +66,9 @@ export default function AIShiftScheduler() {
     const [result, setResult] = useState<GenerateScheduleOutput | null>(null);
     const [isPublished, setIsPublished] = useState(false);
     const { toast } = useToast();
+
+    const [suggestedShifts, setSuggestedShifts] = useState<ShiftSuggestion[] | null>(null);
+    const [isSuggesting, setIsSuggesting] = useState(false);
 
     useEffect(() => {
         // Clear published state if shifts change
@@ -141,6 +145,23 @@ export default function AIShiftScheduler() {
         }
     };
 
+    const handleSuggestShifts = async () => {
+        setIsSuggesting(true);
+        setSuggestedShifts(null);
+        try {
+            const result = await generateShiftSuggestionsAction({});
+            if (result.error || !result.data) {
+                throw new Error(result.error || "Failed to get suggestions.");
+            }
+            setSuggestedShifts(result.data.suggestions);
+            toast({ title: "AI Suggestions Ready", description: "Click a suggestion to use its times." });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'AI Error', description: error.message });
+        } finally {
+            setIsSuggesting(false);
+        }
+    };
+
     const handleGenerateSchedule = async () => {
         if (shifts.length === 0) {
              toast({ variant: "destructive", title: "No Shifts", description: "Please create shifts before generating a schedule." });
@@ -190,6 +211,7 @@ export default function AIShiftScheduler() {
         setShifts([]);
         setResult(null);
         setIsPublished(false);
+        setSuggestedShifts(null);
         localStorage.removeItem('published-schedule'); // Clear from employee view
         toast({
             title: "Roster Cleared",
@@ -264,7 +286,7 @@ export default function AIShiftScheduler() {
                 <CardHeader>
                     <CardTitle className="text-lg">1. Add Shifts to Roster</CardTitle>
                     <CardDescription>
-                        Define a set of shifts (e.g., 'Morning Shift') and add them to the roster. You can repeat this to add multiple shift types (e.g., 'Evening Shift') for the same days.
+                        Define a set of shifts (e.g., 'Morning Shift') and add them to the roster. Use the AI to suggest common shift times.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -331,6 +353,15 @@ export default function AIShiftScheduler() {
                                 </div>
                             </div>
                         </div>
+                        
+                        <div className="flex items-center justify-between pt-4 border-t">
+                            <h4 className="font-semibold text-sm">Define Shift Times</h4>
+                            <Button type="button" variant="outline" size="sm" onClick={handleSuggestShifts} disabled={isSuggesting || isPublished}>
+                                {isSuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                Suggest Times
+                            </Button>
+                        </div>
+                        
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="start-time">Start Time</Label>
@@ -344,6 +375,28 @@ export default function AIShiftScheduler() {
                                 <Button type="submit" className="w-full" disabled={isPublished}>Add Shifts to Roster</Button>
                             </div>
                         </div>
+
+                         {suggestedShifts && (
+                            <div className="space-y-2">
+                                <Label>AI Suggestions</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {suggestedShifts.map(suggestion => (
+                                        <Button
+                                            key={suggestion.name}
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => {
+                                                setShiftTime({ startTime: suggestion.startTime, endTime: suggestion.endTime });
+                                                toast({ title: "Times Populated!", description: `Set to ${suggestion.name} (${suggestion.startTime} - ${suggestion.endTime})` });
+                                            }}
+                                        >
+                                            {suggestion.name} ({suggestion.startTime} - {suggestion.endTime})
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </form>
                 </CardContent>
             </Card>

@@ -46,6 +46,11 @@ import { placeEmergencyOrder, type PlaceEmergencyOrderInput, type PlaceEmergency
 import { generateMarketingIdeas } from '@/ai/flows/suggest-menu-trends-flow';
 import type { GenerateMarketingIdeasInput, GenerateMarketingIdeasOutput } from '@/ai/schemas/menu-trends-schemas';
 import { BrandGuidelinesDataSchema, type BrandGuidelinesData } from '@/ai/schemas/brand-guidelines-schemas';
+import { generateShiftSuggestions } from '@/ai/flows/generate-shift-suggestions-flow';
+import type {
+  GenerateShiftSuggestionsInput,
+  GenerateShiftSuggestionsOutput,
+} from '@/ai/schemas/shift-suggestion-schemas';
 
 
 const db = getFirestore(app);
@@ -364,4 +369,10 @@ export async function saveFeatureFlagsAction(features: any): Promise<{success: b
         console.error("Error saving feature flags:", error);
         return { success: false, error: error.message };
     }
+}
+
+export async function generateShiftSuggestionsAction(
+  input: GenerateShiftSuggestionsInput
+): Promise<{ data: GenerateShiftSuggestionsOutput | null; error: string | null }> {
+  return safeRun(generateShiftSuggestions, input, 'generateShiftSuggestions');
 }
