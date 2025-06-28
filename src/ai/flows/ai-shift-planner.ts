@@ -57,7 +57,8 @@ Assign employees to the open shifts following these rules:
 2.  **Identify and Reduce Staff in Dead Zones:** During the quietest hours (dead zones), schedule the minimum number of employees required for basic operations (usually 1-2 people).
 3.  **Respect Unavailability:** Crucially, never assign an employee to a shift on a date they are unavailable.
 4.  **Prioritize Cost-Effectiveness:** When multiple employees are available and capable, prefer the one with the lower hourly rate if it doesn't compromise service quality.
-5.  **Output:** Provide the final shift assignments. In your 'reasoning' field, you **MUST** first identify the peak hours and dead zones you found in the data, and then briefly explain your overall staffing strategy (e.g., "Increased staffing during the 12-2 PM lunch rush and scheduled a single employee for the 3-5 PM dead zone.").
+5.  **No Sales Data Constraint:** If the provided 'posData' is empty or sparse, you MUST ignore sales volume analysis. Instead, create a balanced schedule based on employee roles and availability, ensuring adequate coverage throughout the day without sales data as a primary driver. Prioritize having at least one of each key role (e.g., Cook, Server) on shift if possible.
+6.  **Output:** Provide the final shift assignments. In your 'reasoning' field, you **MUST** first identify the peak hours and dead zones you found in the data (or state that data was unavailable), and then briefly explain your overall staffing strategy (e.g., "Increased staffing during the 12-2 PM lunch rush and scheduled a single employee for the 3-5 PM dead zone.").
 `,
 });
 

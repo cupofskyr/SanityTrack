@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle, Send, Pencil, DollarSign, Info, Sparkles } from "lucide-react";
+import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle, Send, Pencil, DollarSign, Info, Sparkles, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
@@ -29,6 +29,13 @@ type Shift = {
   endTime: string;
   assignedTo?: string;
   status?: 'scheduled' | 'offered';
+};
+
+type ShiftTemplate = {
+  id: number;
+  name: string;
+  startTime: string;
+  endTime: string;
 };
 
 const employees = [
@@ -68,7 +75,10 @@ export default function AIShiftScheduler() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [shifts, setShifts] = useState<Shift[]>([]);
     const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]);
-    const [shiftTime, setShiftTime] = useState({ startTime: '09:00', endTime: '17:00' });
+    const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([
+        { id: 1, name: 'Opening Shift', startTime: '08:00', endTime: '16:00' },
+        { id: 2, name: 'Closing Shift', startTime: '15:00', endTime: '23:00' }
+    ]);
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<GenerateScheduleOutput | null>(null);
     const [isPublished, setIsPublished] = useState(false);
@@ -80,6 +90,21 @@ export default function AIShiftScheduler() {
     useEffect(() => {
         setIsPublished(false);
     }, [shifts]);
+    
+    const handleAddTemplate = () => {
+        setShiftTemplates([
+            ...shiftTemplates,
+            { id: Date.now(), name: 'New Shift', startTime: '09:00', endTime: '17:00' }
+        ]);
+    };
+
+    const handleRemoveTemplate = (id: number) => {
+        setShiftTemplates(shiftTemplates.filter(t => t.id !== id));
+    };
+
+    const handleTemplateChange = (id: number, field: keyof ShiftTemplate, value: string) => {
+        setShiftTemplates(shiftTemplates.map(t => t.id === id ? { ...t, [field]: value } : t));
+    };
 
     const handleAddShiftsToRoster = (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,7 +112,6 @@ export default function AIShiftScheduler() {
             toast({ variant: "destructive", title: "Schedule Published", description: "Clear the roster to create a new schedule." });
             return;
         }
-
         if (!dateRange?.from || !dateRange?.to) {
             toast({ variant: "destructive", title: "Missing Date Range", description: "Please select a start and end date." });
             return;
@@ -96,19 +120,27 @@ export default function AIShiftScheduler() {
             toast({ variant: "destructive", title: "No Days Selected", description: "Please select at least one day of the week." });
             return;
         }
+        if (shiftTemplates.length === 0) {
+            toast({ variant: "destructive", title: "No Shift Templates", description: "Please define at least one shift template." });
+            return;
+        }
 
         const daysInInterval = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
-        const newShifts = daysInInterval
+        const newShifts: Shift[] = [];
+        
+        daysInInterval
             .filter(day => selectedDays.includes(getDay(day)))
-            .map(day => {
-                const dateStr = format(day, 'yyyy-MM-dd');
-                return {
-                    id: `shift-${dateStr}-${shiftTime.startTime}-${shiftTime.endTime}`,
-                    date: dateStr,
-                    startTime: shiftTime.startTime,
-                    endTime: shiftTime.endTime,
-                    status: 'scheduled' as const,
-                };
+            .forEach(day => {
+                shiftTemplates.forEach(template => {
+                    const dateStr = format(day, 'yyyy-MM-dd');
+                    newShifts.push({
+                        id: `shift-${dateStr}-${template.startTime}-${template.endTime}-${template.id}`,
+                        date: dateStr,
+                        startTime: template.startTime,
+                        endTime: template.endTime,
+                        status: 'scheduled' as const,
+                    });
+                });
             });
         
         const shiftMap = new Map<string, Shift>();
@@ -120,7 +152,7 @@ export default function AIShiftScheduler() {
 
         toast({
             title: "Shifts Added",
-            description: `Added ${newShifts.length} new shifts to the roster.`,
+            description: `Added ${newShifts.length} new shifts to the roster from your templates.`,
         });
     };
 
@@ -292,7 +324,7 @@ export default function AIShiftScheduler() {
                 <CardHeader>
                     <CardTitle className="text-lg">1. Add Shifts to Roster</CardTitle>
                     <CardDescription>
-                        Define a set of shifts (e.g., 'Morning Shift') and add them to the roster. Use the AI to suggest common shift times.
+                       First, define a date range and the days of the week to schedule. Then, create your daily shift templates. This is ideal for new locations with no sales data or when you need a specific staffing structure.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -360,52 +392,32 @@ export default function AIShiftScheduler() {
                             </div>
                         </div>
                         
-                        <div className="flex items-center justify-between pt-4 border-t">
-                            <h4 className="font-semibold text-sm">Define Shift Times</h4>
-                            <Button type="button" variant="outline" size="sm" onClick={handleSuggestShifts} disabled={isSuggesting || isPublished}>
-                                {isSuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                Suggest Times
-                            </Button>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="start-time">Start Time</Label>
-                                <Input id="start-time" type="time" value={shiftTime.startTime} onChange={e => setShiftTime({...shiftTime, startTime: e.target.value})} required disabled={isPublished}/>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="end-time">End Time</Label>
-                                <Input id="end-time" type="time" value={shiftTime.endTime} onChange={e => setShiftTime({...shiftTime, endTime: e.target.value})} required disabled={isPublished}/>
-                            </div>
-                             <div className="flex items-end">
-                                <Button type="submit" className="w-full" disabled={isPublished}>Add Shifts to Roster</Button>
+                        <div className="pt-4 border-t space-y-4">
+                            <h4 className="font-semibold text-sm">Define Daily Shift Templates</h4>
+                             {shiftTemplates.map((template, index) => (
+                                <div key={template.id} className="flex flex-col md:flex-row gap-4 items-end p-2 border rounded-md bg-muted/50">
+                                    <div className="grid gap-2 flex-grow"><Label htmlFor={`name-${template.id}`}>Shift Name</Label><Input id={`name-${template.id}`} value={template.name} onChange={e => handleTemplateChange(template.id, 'name', e.target.value)} disabled={isPublished}/></div>
+                                    <div className="grid gap-2"><Label htmlFor={`start-${template.id}`}>Start Time</Label><Input id={`start-${template.id}`} type="time" value={template.startTime} onChange={e => handleTemplateChange(template.id, 'startTime', e.target.value)} disabled={isPublished}/></div>
+                                    <div className="grid gap-2"><Label htmlFor={`end-${template.id}`}>End Time</Label><Input id={`end-${template.id}`} type="time" value={template.endTime} onChange={e => handleTemplateChange(template.id, 'endTime', e.target.value)} disabled={isPublished}/></div>
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveTemplate(template.id)} disabled={isPublished || shiftTemplates.length <= 1}><Trash2 className="h-4 w-4"/></Button>
+                                </div>
+                            ))}
+                            <div className="flex gap-2">
+                                <Button type="button" variant="outline" onClick={handleAddTemplate} disabled={isPublished}><PlusCircle className="mr-2 h-4 w-4"/>Add Another Shift Template</Button>
+                                 <Button type="submit" className="w-full md:w-auto" disabled={isPublished}>Add All Templates to Roster</Button>
                             </div>
                         </div>
 
-                         {suggestedShifts && (
-                            <div className="space-y-2">
-                                <Label>AI Suggestions</Label>
-                                <div className="flex flex-wrap gap-2">
-                                    {suggestedShifts.map(suggestion => (
-                                        <Button
-                                            key={suggestion.name}
-                                            type="button"
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() => {
-                                                setShiftTime({ startTime: suggestion.startTime, endTime: suggestion.endTime });
-                                                toast({ title: "Times Populated!", description: `Set to ${suggestion.name} (${suggestion.startTime} - ${suggestion.endTime})` });
-                                            }}
-                                        >
-                                            {suggestion.name} ({suggestion.startTime} - {suggestion.endTime})
-                                        </Button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </form>
                 </CardContent>
             </Card>
+            
+             <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>Labor Law Compliance</AlertTitle>
+                <AlertDescription>You are responsible for ensuring all schedules comply with your local labor laws regarding breaks and shift lengths. The AI's suggestions are for coverage and cost-optimization only.</AlertDescription>
+            </Alert>
+
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2">
