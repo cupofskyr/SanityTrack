@@ -10,10 +10,12 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2, Palette, Save } from "lucide-react";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Loader2, Palette, Save, MapPin, Facebook, Instagram, CheckCircle } from "lucide-react";
 import { getBrandGuidelinesAction, saveBrandGuidelinesAction } from '@/app/actions';
 import { BrandGuidelinesDataSchema, type BrandGuidelinesData } from '@/ai/schemas/brand-guidelines-schemas';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 export default function MarketingSetupPage() {
     const { user, loading: authLoading } = useAuth();
@@ -25,9 +27,14 @@ export default function MarketingSetupPage() {
         resolver: zodResolver(BrandGuidelinesDataSchema),
         defaultValues: {
             brandName: '',
-            primaryColor: '#3F51B5', // Default from theme
+            primaryColor: '#3F51B5',
             brandVoice: 'Friendly, delicious, welcoming',
-            forbiddenWords: 'cheap, nasty, gross'
+            forbiddenWords: 'cheap, nasty, gross',
+            address: '',
+            socials: {
+                facebookConnected: false,
+                instagramConnected: false,
+            }
         },
     });
 
@@ -54,7 +61,7 @@ export default function MarketingSetupPage() {
         setIsSubmitting(false);
 
         if (result.success) {
-            toast({ title: 'Success!', description: 'Your Marketing AI has learned your brand voice.' });
+            toast({ title: 'Success!', description: 'Your Marketing AI settings have been saved.' });
             router.push('/dashboard/owner');
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.error });
@@ -64,6 +71,17 @@ export default function MarketingSetupPage() {
     if (authLoading) {
         return <div className="flex justify-center items-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
     }
+    
+    const handleSocialConnect = (social: 'facebook' | 'instagram') => {
+        const currentSocials = form.getValues('socials') || { facebookConnected: false, instagramConnected: false };
+        if (social === 'facebook') {
+            form.setValue('socials', { ...currentSocials, facebookConnected: !currentSocials.facebookConnected });
+        } else {
+            form.setValue('socials', { ...currentSocials, instagramConnected: !currentSocials.instagramConnected });
+        }
+        form.trigger('socials'); // Manually trigger validation/rerender
+        toast({ title: "Connection Simulated", description: "In a real app, this would trigger an OAuth flow."});
+    };
 
     return (
         <Card>
@@ -90,6 +108,49 @@ export default function MarketingSetupPage() {
                                 )}
                             />
                         </div>
+                        <Separator />
+
+                        <div>
+                            <h3 className="text-lg font-semibold border-b pb-2 mb-4">Social & Location Integration</h3>
+                             <FormField
+                                control={form.control}
+                                name="address"
+                                render={({ field }) => (
+                                    <FormItem className='mb-6'>
+                                        <FormLabel>Restaurant Address</FormLabel>
+                                        <FormControl>
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="h-5 w-5 text-muted-foreground" />
+                                                <Input placeholder="e.g., 123 Main St, Phoenix, AZ" {...field} />
+                                            </div>
+                                        </FormControl>
+                                        <FormDescription>Powered by Google Places Autocomplete for accuracy.</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="socials"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Social Channel Connections</FormLabel>
+                                    <FormDescription>Connect your accounts to enable automated posting.</FormDescription>
+                                    <div className="flex gap-4 pt-2">
+                                        <Button type="button" variant="outline" className={cn(field.value?.facebookConnected && "border-blue-600 bg-blue-50 text-blue-700")} onClick={() => handleSocialConnect('facebook')}>
+                                            {field.value?.facebookConnected ? <CheckCircle className="mr-2 h-4 w-4"/> : <Facebook className="mr-2 h-4 w-4" />}
+                                            {field.value?.facebookConnected ? "Facebook Connected" : "Connect Facebook"}
+                                        </Button>
+                                         <Button type="button" variant="outline" className={cn(field.value?.instagramConnected && "border-pink-600 bg-pink-50 text-pink-700")} onClick={() => handleSocialConnect('instagram')}>
+                                            {field.value?.instagramConnected ? <CheckCircle className="mr-2 h-4 w-4"/> : <Instagram className="mr-2 h-4 w-4" />}
+                                            {field.value?.instagramConnected ? "Instagram Connected" : "Connect Instagram"}
+                                        </Button>
+                                    </div>
+                                </FormItem>
+                                )}
+                                />
+                        </div>
+                        <Separator />
 
                         <div>
                             <h3 className="text-lg font-semibold border-b pb-2 mb-4">Brand Voice</h3>
@@ -122,6 +183,7 @@ export default function MarketingSetupPage() {
                                 />
                             </div>
                         </div>
+                        <Separator />
 
                         <div>
                             <h3 className="text-lg font-semibold border-b pb-2 mb-4">Visual Identity</h3>

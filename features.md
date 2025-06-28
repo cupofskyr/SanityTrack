@@ -78,6 +78,11 @@ This section details the primary features of the application, organized by opera
 
 ### Theme 4: Strategic Growth & Marketing
 
+*   **Proactive Hyper-Local Marketing Engine (Owner):**
+    *   **Location:** Owner Dashboard -> Marketing & Innovation tab -> Proactive AI Suggestions.
+    *   **Functionality:** An automated backend system (simulated via mock data) scans for local events (e.g., festivals, concerts) near the restaurant's address. When an opportunity is found, it appears as an alert on the dashboard with an AI-generated insight. The owner can then initiate a campaign creation workflow based on that event.
+    *   **How it Works:** The UI on the Owner Dashboard displays mock `marketingOpportunities`. The full backend implementation would involve a scheduled Cloud Function (`scanForLocalEvents`) calling external event APIs and an AI flow to generate insights.
+
 *   **AI Menu Innovation Lab (Owner):**
     *   **Location:** Owner Dashboard -> Marketing & Innovation tab.
     *   **Functionality:** Owners can input their top-selling ingredient or flavor. The AI (`suggest-menu-trends-flow.ts`) then analyzes current food trends and seasonality (e.g., upcoming holidays) to suggest new, complementary ingredients and invent two complete, themed menu item concepts (name, description, marketing angle).
@@ -135,6 +140,9 @@ SanityTrack's intelligence is powered by **Google's Gemini models** accessed thr
 
 2.  **The Owner Experience:**
     *   Briefly show the KPI dashboard.
+    *   Go to the **Marketing & Innovation** tab. Show the "Proactive AI Suggestions" card for "First Friday."
+    *   Click "Create Campaign" (explain this will be the next step).
+    *   In the "AI Menu Innovation Lab," enter "Yuzu" and generate new menu ideas.
     *   Navigate to **System Administration -> AI Agent Rules**. Explain how an owner can create custom rules for the AI.
     *   Navigate to **AI Sentinel & Security -> AI Monitoring Setup**. Add a "virtual camera" and write a prompt like "Count people in line."
     *   Click the **"Run Agent Cycle"** button. Show the result in the **Activity Log**, explaining that the AI followed the rules to take an action.

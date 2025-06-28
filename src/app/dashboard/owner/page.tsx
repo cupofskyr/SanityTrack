@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import OnboardingInterview from '@/components/onboarding/onboarding-interview';
 import type { MasterAgentOutput } from '@/ai/schemas/agent-schemas';
 import type { GenerateMarketingIdeasOutput } from '@/ai/schemas/menu-trends-schemas';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, add } from 'date-fns';
 import AIMonitoringSetup from '@/components/ai-monitoring-setup';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -70,6 +70,14 @@ type PurchaseOrder = {
     list: string;
 };
 
+type MarketingOpportunity = {
+    opportunityId: string;
+    eventName: string;
+    eventDate: Date;
+    aiSuggestion: string;
+    status: 'new' | 'acknowledged' | 'campaign_created' | 'dismissed';
+}
+
 const initialDelegatedTasks: DelegatedTask[] = [
     { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: 'Pending' },
     { id: 3, description: "Clear blockage from back storage area hand-washing sink.", source: "Health Inspector Report (2024-07-01)", status: 'Pending' },
@@ -114,6 +122,23 @@ export default function OwnerDashboard() {
   const [isAnnouncementDialogOpen, setIsAnnouncementDialogOpen] = useState(false);
   const [announcementTitle, setAnnouncementTitle] = useState('');
   const [announcementVideo, setAnnouncementVideo] = useState<File | null>(null);
+
+  const [opportunities, setOpportunities] = useState<MarketingOpportunity[]>([
+    {
+        opportunityId: 'opp-1',
+        eventName: 'First Friday Art Walk',
+        eventDate: add(new Date(), { days: 3 }),
+        aiSuggestion: 'High foot-traffic event near your location. A perfect opportunity to attract new customers.',
+        status: 'new'
+    },
+    {
+        opportunityId: 'opp-2',
+        eventName: 'Phoenix Suns Season Opener',
+        eventDate: add(new Date(), { days: 12 }),
+        aiSuggestion: "Major sporting event. Suggest a 'Game Day Special' to capture pre-game and post-game crowds.",
+        status: 'new'
+    }
+  ]);
 
   useEffect(() => {
     const storedLocations = JSON.parse(localStorage.getItem('sanity-track-locations') || '[]');
@@ -346,6 +371,14 @@ export default function OwnerDashboard() {
         reader.readAsDataURL(announcementVideo);
     };
 
+    const handleDismissOpportunity = (id: string) => {
+        setOpportunities(prev => prev.filter(op => op.opportunityId !== id));
+        toast({
+            variant: 'secondary',
+            title: 'Opportunity Dismissed',
+        });
+    };
+
     if (isNewUser) {
         return <OnboardingInterview onOnboardingComplete={handleOnboardingComplete} />;
     }
@@ -428,12 +461,12 @@ export default function OwnerDashboard() {
                 <CardDescription>Your personal inbox for items requiring your immediate attention.</CardDescription>
            </CardHeader>
            <CardContent>
-                <Tabs defaultValue="approvals">
+                <Tabs defaultValue="marketing">
                     <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="marketing" id="marketing">Marketing & Innovation</TabsTrigger>
                         <TabsTrigger value="approvals">Approvals</TabsTrigger>
                         <TabsTrigger value="alerts">Alerts</TabsTrigger>
                         <TabsTrigger value="mandates">Mandates</TabsTrigger>
-                        <TabsTrigger value="marketing" id="marketing">Marketing & Innovation</TabsTrigger>
                     </TabsList>
                     <TabsContent value="approvals" className="mt-4">
                         <div className="space-y-4">
@@ -527,9 +560,39 @@ export default function OwnerDashboard() {
                     </TabsContent>
                      <TabsContent value="marketing" className="mt-4 space-y-6">
                         <Card>
+                            <CardHeader>
+                                <CardTitle className="font-headline flex items-center gap-2"><Sparkles className='text-primary'/> Proactive AI Suggestions</CardTitle>
+                                <CardDescription>The AI has detected local events that present marketing opportunities for your business.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {opportunities.length > 0 ? (
+                                    opportunities.map(opp => (
+                                        <Card key={opp.opportunityId} className="bg-background">
+                                            <CardHeader>
+                                                <CardTitle className="text-lg">Event: {opp.eventName}</CardTitle>
+                                                <CardDescription>Date: {format(opp.eventDate, 'PPPP')}</CardDescription>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <p className="text-sm font-semibold">AI Insight:</p>
+                                                <p className="text-sm text-muted-foreground italic">"{opp.aiSuggestion}"</p>
+                                            </CardContent>
+                                            <CardFooter className="gap-2">
+                                                <Button size="sm" onClick={() => toast({ title: "Coming Soon!", description: "The AI campaign creation wizard will be implemented next."})}>
+                                                    <Sparkles className="mr-2 h-4 w-4"/>Create Campaign
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => handleDismissOpportunity(opp.opportunityId)}>Dismiss</Button>
+                                            </CardFooter>
+                                        </Card>
+                                    ))
+                                ) : (
+                                    <p className="text-center text-muted-foreground py-4">No new marketing opportunities detected.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                        <Card>
                            <CardHeader className="flex-row items-center justify-between">
                                <div>
-                                   <CardTitle className="font-headline flex items-center gap-2"><Sparkles className='text-primary'/> AI Menu Innovation Lab</CardTitle>
+                                   <CardTitle className="font-headline flex items-center gap-2"><Lightbulb /> AI Menu Innovation Lab</CardTitle>
                                    <CardDescription>Leverage sales data and trends to brainstorm new menu items and marketing angles.</CardDescription>
                                </div>
                                <Button asChild variant="outline" size="sm">
@@ -542,7 +605,7 @@ export default function OwnerDashboard() {
                                    <Input id="top-seller" value={topSeller} onChange={(e) => setTopSeller(e.target.value)} placeholder="e.g., Yuzu, Cold Brew, Acai"/>
                                </div>
                                <Button onClick={handleGenerateIdeas} disabled={isGeneratingIdeas}>
-                                   {isGeneratingIdeas ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Lightbulb className="mr-2 h-4 w-4"/>}
+                                   {isGeneratingIdeas ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
                                    Generate Ideas
                                </Button>
                                 {marketingIdeas && (

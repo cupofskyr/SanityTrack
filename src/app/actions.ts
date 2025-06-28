@@ -309,6 +309,8 @@ export async function saveBrandGuidelinesAction(input: { data: BrandGuidelinesDa
         const guidelines = {
             brandName: parsedData.brandName,
             owner: userId,
+            address: parsedData.address,
+            socials: parsedData.socials,
             rules: {
                 visual: { color_primary: { name: 'Primary Brand Color', hex: parsedData.primaryColor } },
                 verbal: {
@@ -340,7 +342,9 @@ export async function getBrandGuidelinesAction(userId: string): Promise<{ data: 
                 brandName: data.brandName || '',
                 primaryColor: data.rules?.visual?.color_primary?.hex || '#D9534F',
                 brandVoice: data.rules?.verbal?.voiceProfile || '',
-                forbiddenWords: data.rules?.verbal?.forbiddenWords?.join(', ') || ''
+                forbiddenWords: data.rules?.verbal?.forbiddenWords?.join(', ') || '',
+                address: data.address || '',
+                socials: data.socials || { facebookConnected: false, instagramConnected: false },
             };
             return { data: flattenedData, error: null };
         } else {
