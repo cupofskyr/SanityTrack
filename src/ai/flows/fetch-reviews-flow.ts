@@ -1,4 +1,6 @@
 
+'use server';
+
 /**
  * @fileOverview An AI flow for fetching and summarizing customer reviews for a specific location.
  */
@@ -49,9 +51,6 @@ const fetchReviewsTool = ai.defineTool(
     }
   }
 );
-
-
-export type { SummarizeReviewsOutput, SummarizeReviewsInput };
 
 const summarizeReviewsFlow = ai.defineFlow(
     {

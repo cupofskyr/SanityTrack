@@ -1,4 +1,5 @@
 
+'use server';
 
 /**
  * @fileOverview An AI flow for fetching simulated sales data from a Toast POS for a specific location.
@@ -8,19 +9,12 @@
  * - ToastPOSData - The return type for the function.
  */
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-
-const FetchToastDataInputSchema = z.object({
-    location: z.string().describe('The name or ID of the location to fetch data for.'),
-});
-export type FetchToastDataInput = z.infer<typeof FetchToastDataInputSchema>;
-
-
-const ToastPOSDataSchema = z.object({
-  liveSalesToday: z.number().describe("The live, up-to-the-minute sales revenue for today."),
-  salesThisMonth: z.number().describe("The total sales revenue for the current month so far."),
-});
-export type ToastPOSData = z.infer<typeof ToastPOSDataSchema>;
+import {
+  FetchToastDataInputSchema,
+  type FetchToastDataInput,
+  ToastPOSDataSchema,
+  type ToastPOSData,
+} from '@/ai/schemas/toast-pos-schemas';
 
 // This is a placeholder for a real API call.
 async function getSimulatedToastData(input: FetchToastDataInput): Promise<ToastPOSData> {

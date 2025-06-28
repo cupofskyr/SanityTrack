@@ -7,6 +7,11 @@ export const ShoppingListItemSchema = z.object({
 });
 export type ShoppingListItem = z.infer<typeof ShoppingListItemSchema>;
 
+export const OptimizeOrderInputSchema = z.object({
+    shoppingList: z.array(ShoppingListItemSchema),
+});
+export type OptimizeOrderInput = z.infer<typeof OptimizeOrderInputSchema>;
+
 
 const OptimizedItemSchema = z.object({
     name: z.string().describe("The name of the item."),

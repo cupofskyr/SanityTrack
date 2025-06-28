@@ -13,17 +13,14 @@ import {
     ShoppingListItemSchema,
     OptimizeOrderOutputSchema,
     type OptimizeOrderOutput,
+    OptimizeOrderInputSchema,
+    type OptimizeOrderInput,
 } from '@/ai/schemas/ordering-schemas';
 import { z } from 'zod';
 
-export async function optimizeOrder(input: z.infer<typeof OptimizeOrderInputSchema>): Promise<OptimizeOrderOutput> {
+export async function optimizeOrder(input: OptimizeOrderInput): Promise<OptimizeOrderOutput> {
     return optimizeOrderFlow(input);
 }
-
-const OptimizeOrderInputSchema = z.object({
-    shoppingList: z.array(ShoppingListItemSchema),
-});
-
 
 const prompt = ai.definePrompt({
     name: 'optimizeOrderPrompt',

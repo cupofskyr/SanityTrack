@@ -4,19 +4,15 @@
  * @fileOverview An AI flow for analyzing customer wait times from a camera image.
  *
  * - analyzeWaitTime - A function that estimates customer count and wait time, and determines if an alert is needed.
- * - WaitTimeAnalysisOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-import { WaitTimeAnalysisSchema } from '@/ai/schemas/service-alert-schemas';
-export type { WaitTimeAnalysisOutput } from '@/ai/schemas/service-alert-schemas';
-
-
-const AnalyzeWaitTimeInputSchema = z.object({
-  imageUrl: z.string().url().describe('The URL of the camera image to analyze.'),
-});
-export type AnalyzeWaitTimeInput = z.infer<typeof AnalyzeWaitTimeInputSchema>;
+import { 
+    AnalyzeWaitTimeInputSchema,
+    type AnalyzeWaitTimeInput,
+    WaitTimeAnalysisSchema,
+    type WaitTimeAnalysisOutput
+} from '@/ai/schemas/service-alert-schemas';
 
 
 export async function analyzeWaitTime(input: AnalyzeWaitTimeInput): Promise<WaitTimeAnalysisOutput> {

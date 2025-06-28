@@ -3,11 +3,13 @@
 
 // This file is the single, safe entry point for all AI calls from the client-side UI.
 
-import { analyzeCamera, type CameraAnalysisInput, type CameraAnalysisOutput } from '@/ai/flows/cameraAnalysisFlow';
+import { analyzeCamera } from '@/ai/flows/cameraAnalysisFlow';
+import type { CameraAnalysisInput, CameraAnalysisOutput } from '@/ai/schemas/camera-analysis-schemas';
 import { analyzeIssue, type AnalyzeIssueInput, type AnalyzeIssueOutput } from '@/ai/flows/analyze-issue-flow';
 import { analyzePhotoIssue, type AnalyzePhotoInput, type AnalyzePhotoOutput } from '@/ai/flows/analyze-photo-issue-flow';
 import { generateDailyBriefing, type GenerateDailyBriefingOutput } from '@/ai/flows/generate-daily-briefing-flow';
-import { generateSchedule, type GenerateScheduleInput, type GenerateScheduleOutput } from '@/ai/flows/ai-shift-planner';
+import { generateSchedule } from '@/ai/flows/ai-shift-planner';
+import type { GenerateScheduleInput, GenerateScheduleOutput } from '@/ai/schemas/ai-shift-planner-schemas';
 import { generateShoppingList, type GenerateShoppingListInput, type GenerateShoppingListOutput } from '@/ai/flows/generate-shopping-list-flow';
 import { generateTasksFromInventory, type GenerateTasksFromInventoryInput, type GenerateTasksFromInventoryOutput } from '@/ai/flows/generate-tasks-from-inventory';
 import { suggestTaskAssignment, type SuggestTaskAssignmentInput, type SuggestTaskAssignmentOutput } from '@/ai/flows/suggest-task-assignment-flow';
@@ -15,13 +17,16 @@ import { translateText, type TranslateTextInput, type TranslateTextOutput } from
 import { generateInquiry, type GenerateInquiryInput, type GenerateInquiryOutput } from '@/ai/flows/generate-inquiry-flow';
 import { processInspectionReport, type ProcessInspectionReportInput, type ProcessInspectionReportOutput } from '@/ai/flows/process-inspection-report-flow';
 import { generateWarningLetter, type GenerateWarningLetterInput, type GenerateWarningLetterOutput } from '@/ai/flows/generate-warning-letter-flow';
-import { fetchToastData, type FetchToastDataInput, type ToastPOSData } from '@/ai/flows/fetch-toast-data-flow';
-import { summarizeReviews, type SummarizeReviewsInput, type SummarizeReviewsOutput } from '@/ai/flows/fetch-reviews-flow';
+import { fetchToastData } from '@/ai/flows/fetch-toast-data-flow';
+import type { FetchToastDataInput, ToastPOSData } from '@/ai/schemas/toast-pos-schemas';
+import { summarizeReviews } from '@/ai/flows/fetch-reviews-flow';
+import type { SummarizeReviewsInput, SummarizeReviewsOutput } from '@/ai/schemas/review-summary-schemas';
 import { postJob, type JobPostingInput, type JobPostingOutput } from '@/ai/flows/post-job-flow';
 import { compareFoodQuality, type CompareFoodQualityInput, type CompareFoodQualityOutput } from '@/ai/flows/compare-food-quality-flow';
 import { estimateStockLevel, type EstimateStockLevelInput, type EstimateStockLevelOutput } from '@/ai/flows/estimate-stock-level-flow';
 import { explainTaskImportance, type ExplainTaskImportanceInput, type ExplainTaskImportanceOutput } from '@/ai/flows/explain-task-importance-flow';
-import { analyzeWaitTime, type AnalyzeWaitTimeInput } from '@/ai/flows/analyze-wait-time-flow';
+import { analyzeWaitTime } from '@/ai/flows/analyze-wait-time-flow';
+import type { AnalyzeWaitTimeInput } from '@/ai/schemas/service-alert-schemas';
 import type { ServiceAlert } from '@/ai/schemas/service-alert-schemas';
 import { continueOnboardingInterview } from '@/ai/flows/onboarding-interview-flow';
 import { masterOnboardingParser } from '@/ai/flows/master-onboarding-parser-flow';
@@ -31,7 +36,7 @@ import type { OnboardingInterviewInput, OnboardingInterviewOutput, OnboardingPar
 import { scanInvoice, type ScanInvoiceInput, type ScanInvoiceOutput } from '@/ai/flows/scan-invoice-flow';
 import { generatePermitChecklist, type GeneratePermitChecklistInput, type GeneratePermitChecklistOutput } from '@/ai/flows/generate-permit-checklist-flow';
 import { optimizeOrder } from '@/ai/flows/optimizeOrderFlow';
-import type { ShoppingListItem, OptimizeOrderOutput } from '@/ai/schemas/ordering-schemas';
+import type { OptimizeOrderInput, OptimizeOrderOutput } from '@/ai/schemas/ordering-schemas';
 import { generateGhostShopperInvite, type GenerateGhostShopperInviteInput, type GenerateGhostShopperInviteOutput } from '@/ai/flows/generate-ghost-shopper-invite-flow';
 import { generateBusinessReport, type GenerateBusinessReportOutput } from '@/ai/flows/generate-business-report-flow';
 import type { GenerateBusinessReportInput } from '@/ai/schemas/business-report-schemas';
@@ -140,7 +145,7 @@ export async function scanInvoiceAction(input: ScanInvoiceInput): Promise<{ data
     return safeRun(scanInvoice, input, 'scanInvoice');
 }
 
-export async function optimizeOrderAction(input: { shoppingList: ShoppingListItem[] }): Promise<{ data: OptimizeOrderOutput | null; error: string | null; }> {
+export async function optimizeOrderAction(input: OptimizeOrderInput): Promise<{ data: OptimizeOrderOutput | null; error: string | null; }> {
     return safeRun(optimizeOrder, input, 'optimizeOrder');
 }
 

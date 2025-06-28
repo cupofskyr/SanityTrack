@@ -1,6 +1,11 @@
 
 import { z } from 'zod';
 
+export const AnalyzeWaitTimeInputSchema = z.object({
+  imageUrl: z.string().describe('The URL of the camera image to analyze. Can be a public URL or a data URI.'),
+});
+export type AnalyzeWaitTimeInput = z.infer<typeof AnalyzeWaitTimeInputSchema>;
+
 export const WaitTimeAnalysisSchema = z.object({
   isAlert: z.boolean().describe('True if a service alert should be triggered (line > 4 people OR wait > 3 min).'),
   customerCount: z.number().describe('The estimated number of customers waiting.'),
