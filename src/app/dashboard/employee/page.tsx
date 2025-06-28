@@ -20,7 +20,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { format } from "date-fns";
 import EmployeeServiceAlertWidget from "@/components/employee-service-alert-widget";
 import type { CompareFoodQualityOutput } from "@/ai/schemas/food-quality-schemas";
-import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 
@@ -31,12 +30,10 @@ const initialTasks = [
   { id: 4, name: "Mandatory Team Meeting: Q3 Planning", area: "Main Office", priority: "High", status: "Pending", type: 'regular' }
 ];
 
-const initialQaTasks: QaTask[] = [
-    // This will be populated by localStorage now
-];
+const initialQaTasks: QaTask[] = [];
 
 type Task = { id: number; name: string; area: string; priority: string; status: string; type: 'regular' };
-type QaTask = { id: number; description: string; source: string; status: 'Pending'; itemToAudit?: string; standardImageUrl?: string; type: 'qa' };
+type QaTask = { id: number; description: string; source: string; status: 'Pending' | 'Failed'; itemToAudit: string; standardImageUrl: string; type: 'qa' };
 
 const initialCompletedTasks: ( (Task | QaTask) & {completedAt: string})[] = [
   { id: 5, name: "Empty trash bins", area: "All Areas", priority: "Low", status: "Approved", completedAt: "2024-05-20 09:00", type: 'regular' },
@@ -57,7 +54,6 @@ const initialBriefing = {
 type Shift = { id: string; date: string; startTime: string; endTime: string; assignedTo?: string; status?: 'scheduled' | 'offered'; };
 
 const employeeName = "John Doe";
-const goldenStandards = [{ name: "Classic Burger", imageUrl: "https://storage.googleapis.com/gen-ai-recipes/golden-burger.jpg" }];
 
 export default function EmployeeDashboard() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
@@ -109,14 +105,22 @@ export default function EmployeeDashboard() {
     const qaTaskInterval = setInterval(() => {
       const storedQaTask = localStorage.getItem('qa-employee-task');
       if (storedQaTask) {
-        const newTask = JSON.parse(storedQaTask);
-        setQaTasks(prev => {
-          if (!prev.some(t => t.id === newTask.id)) {
-            toast({ variant: "destructive", title: "New QA Task Assigned", description: "A high-priority QA task has been added to your list." });
-            return [...prev, { ...newTask, itemToAudit: 'Classic Burger', type: 'qa' }];
+        try {
+          const newTask: QaTask = JSON.parse(storedQaTask);
+          if (newTask.type === 'qa') {
+            setQaTasks(prev => {
+              if (!prev.some(t => t.id === newTask.id)) {
+                toast({ variant: "destructive", title: "New QA Task Assigned", description: "A high-priority QA task has been added to your list." });
+                localStorage.removeItem('qa-employee-task'); // Consume the task
+                return [...prev, newTask];
+              }
+              return prev;
+            });
           }
-          return prev;
-        });
+        } catch (error) {
+          console.error("Error parsing QA task from localStorage", error);
+          localStorage.removeItem('qa-employee-task');
+        }
       }
     }, 2000);
 
@@ -236,33 +240,54 @@ export default function EmployeeDashboard() {
     setCurrentQaTask(task);
     setIsQaTaskDialogOpen(true);
   };
+  
+  const dispatchQaFailure = (itemName: string, result: CompareFoodQualityOutput) => {
+    toast({
+        variant: "destructive",
+        title: "QA Check Failed!",
+        description: "Manager and KDS have been notified of the low score."
+    });
+
+    const kdsAlertData = {
+        itemName,
+        score: result.score,
+        feedback: result.feedback,
+        deviations: result.deviations,
+        timestamp: new Date().toISOString(),
+    };
+    // In a real app, location would be from user context
+    const locationId = "Downtown"; 
+    localStorage.setItem(`kds-alert-${locationId}`, JSON.stringify(kdsAlertData));
+  };
+
 
   const handleQaAudit = async () => {
     if (!currentQaTask || !qaAuditPhoto) return;
-    const standard = goldenStandards.find(s => s.name === currentQaTask.itemToAudit);
-    if (!standard) {
-        toast({ variant: "destructive", title: "Error", description: "Could not find golden standard for this item." });
-        return;
-    }
+    
     setIsAuditing(true);
     try {
-        const { data } = await compareFoodQualityAction({ standardImageUri: standard.imageUrl, actualImageUri: qaAuditPhoto, itemName: standard.name });
-        if (data && data.score >= 7) {
+        const { data, error } = await compareFoodQualityAction({ 
+            standardImageUri: currentQaTask.standardImageUrl, 
+            actualImageUri: qaAuditPhoto, 
+            itemName: currentQaTask.itemToAudit 
+        });
+
+        if (error || !data) throw new Error(error || "Could not complete audit.");
+
+        if (data.score >= 7) {
             toast({ title: "QA Check Passed!", description: `Score: ${data.score}/10. Great job!` });
             setQaTasks(prev => prev.filter(t => t.id !== currentQaTask.id));
-            localStorage.removeItem('qa-employee-task');
-            setIsQaTaskDialogOpen(false);
         } else {
-             toast({ variant: "destructive", title: "QA Check Failed", description: `Score: ${data?.score}/10. A manager has been notified.` });
-             setQaTasks(prev => prev.map(t => t.id === currentQaTask.id ? {...t, description: `[FAILED] ${t.description}`} : t));
-             setIsQaTaskDialogOpen(false);
+             dispatchQaFailure(currentQaTask.itemToAudit, data);
+             setQaTasks(prev => prev.map(t => t.id === currentQaTask.id ? {...t, status: 'Failed', description: `[FAILED] ${t.description}`} : t));
         }
-    } catch (error) {
-        toast({ variant: 'destructive', title: 'Audit Failed', description: 'Could not complete the QA audit.' });
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Audit Failed', description: error.message });
     } finally {
         setIsAuditing(false);
         setQaAuditPhoto(null);
         setCurrentQaTask(null);
+        setIsQaTaskDialogOpen(false);
     }
   };
   
@@ -329,7 +354,6 @@ export default function EmployeeDashboard() {
         )}
        <EmployeeServiceAlertWidget />
       
-       {/* Tier 1: Immediate Action */}
        <Card>
         <CardHeader><CardTitle className="font-headline flex items-center gap-2"><ListTodo /> My Mission for Today</CardTitle><CardDescription>Tasks assigned to you for your current shift. Complete these to maintain our standards.</CardDescription></CardHeader>
         <CardContent><Table><TableHeader><TableRow><TableHead>Task</TableHead><TableHead>Area / Source</TableHead><TableHead>Priority</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
@@ -338,17 +362,19 @@ export default function EmployeeDashboard() {
             <TableRow key={task.id} className={task.type === 'qa' ? 'bg-destructive/5' : ''}>
                 <TableCell className="font-medium flex items-center gap-2">
                   {task.type === 'qa' && <ShieldCheck className="h-4 w-4 text-destructive" />}
-                  {task.type === 'qa' ? task.description : task.name}
+                  {task.type === 'qa' ? task.description : (task as Task).name}
                 </TableCell>
-                <TableCell>{task.type === 'qa' ? task.source : task.area}</TableCell>
-                <TableCell><Badge variant={task.type === 'qa' || task.priority === "High" ? "destructive" : "secondary"}>{task.type === 'qa' ? 'High' : task.priority}</Badge></TableCell>
+                <TableCell>{task.type === 'qa' ? task.source : (task as Task).area}</TableCell>
+                <TableCell><Badge variant={task.type === 'qa' || (task as Task).priority === "High" ? "destructive" : "secondary"}>{task.type === 'qa' ? 'High' : (task as Task).priority}</Badge></TableCell>
                 <TableCell className="text-right">
                     {task.type === 'qa' ? (
-                        <Button size="sm" variant="destructive" onClick={() => handleOpenQaDialog(task as QaTask)}>Perform Check</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleOpenQaDialog(task as QaTask)} disabled={(task as QaTask).status === 'Failed'}>
+                            {(task as QaTask).status === 'Failed' ? 'Failed' : 'Perform Check'}
+                        </Button>
                     ) : (
                         <Dialog open={isTaskDialogsOpen[task.id] || false} onOpenChange={(isOpen) => setIsTaskDialogsOpen(prev => ({...prev, [task.id]: isOpen}))}>
                             <DialogTrigger asChild><Button size="sm">Complete Task</Button></DialogTrigger>
-                            <DialogContent><DialogHeader><DialogTitle className="font-headline">Complete: {task.name}</DialogTitle><DialogDescription>Upload a photo as proof of completion. This helps us track our quality standards.</DialogDescription></DialogHeader><PhotoUploader /><DialogFooter><Button type="button" onClick={() => handleCompleteTask(task as Task)}>Submit Completion</Button></DialogFooter></DialogContent>
+                            <DialogContent><DialogHeader><DialogTitle className="font-headline">Complete: {(task as Task).name}</DialogTitle><DialogDescription>Upload a photo as proof of completion. This helps us track our quality standards.</DialogDescription></DialogHeader><PhotoUploader /><DialogFooter><Button type="button" onClick={() => handleCompleteTask(task as Task)}>Submit Completion</Button></DialogFooter></DialogContent>
                         </Dialog>
                     )}
                 </TableCell>
@@ -357,7 +383,6 @@ export default function EmployeeDashboard() {
         </TableBody></Table></CardContent>
       </Card>
 
-        {/* Tier 2: Shift Awareness */}
        <div className="grid gap-6 md:grid-cols-2">
             <Card>
                 <CardHeader className="flex-row justify-between items-start">
@@ -391,7 +416,6 @@ export default function EmployeeDashboard() {
             </Card>
        </div>
 
-        {/* Tier 3: Personal & Team Hub */}
         <Card>
             <CardHeader>
                 <CardTitle className="font-headline">Tools & Resources</CardTitle>
@@ -471,7 +495,7 @@ export default function EmployeeDashboard() {
                                         <TableBody>
                                             {completedTasks.length > 0 ? completedTasks.map((task) => (
                                                 <TableRow key={task.id}>
-                                                    <TableCell className="font-medium">{task.type === 'qa' ? task.description : task.name}</TableCell>
+                                                    <TableCell className="font-medium">{task.type === 'qa' ? task.description : (task as Task).name}</TableCell>
                                                     <TableCell className="text-right text-xs text-muted-foreground">{task.completedAt}</TableCell>
                                                 </TableRow>
                                             )) : (
