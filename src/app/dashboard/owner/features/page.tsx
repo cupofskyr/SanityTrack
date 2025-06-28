@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -17,13 +18,98 @@ import { saveFeatureFlagsAction } from '@/app/actions';
 const db = getFirestore(app);
 
 const defaultFeatures = {
-  taskManagement: { isEnabled: true, displayName: "Task Management", description: "Core features for creating, assigning, and tracking tasks." },
-  temperatureLogs: { isEnabled: true, displayName: "Temperature Logs", description: "Allows for logging and monitoring of temperature-sensitive equipment." },
-  aiMarketingStudio: { isEnabled: true, displayName: "AI Marketing Studio", description: "Enables AI-powered generation of marketing content and ideas." },
-  emergencyInstacart: { isEnabled: false, displayName: "Emergency Ordering", description: "Allows employees to place emergency orders via Instacart integration." },
-  shiftScheduling: { isEnabled: true, displayName: "Shift Scheduling", description: "Full suite of tools for planning and publishing employee schedules." },
-  qualityControl: { isEnabled: true, displayName: "Quality Control Audits", description: "AI-powered audits to compare dishes against golden standards." },
+  executiveVitals: {
+    isEnabled: true,
+    displayName: "Executive Vitals",
+    description: "Shows the main KPI cards at the top of the dashboard."
+  },
+  approvalsQueue: {
+    isEnabled: true,
+    displayName: "Action & Approval Queue",
+    description: "Shows the main tabbed section for handling approvals, alerts, and marketing."
+  },
+  hiringApprovals: {
+    isEnabled: true,
+    displayName: "Hiring Approvals",
+    description: "Allow managers to submit hiring requests for owner approval."
+  },
+  purchaseOrderApprovals: {
+    isEnabled: true,
+    displayName: "Purchase Order Approvals",
+    description: "Allow managers to submit purchase orders for owner approval."
+  },
+  serviceAlerts: {
+    isEnabled: true,
+    displayName: "Service Alerts Widget",
+    description: "Shows real-time service alerts (e.g., long wait times)."
+  },
+  inspectorMandates: {
+    isEnabled: true,
+    displayName: "Health Inspector Mandates",
+    description: "Shows tasks assigned by health inspectors that require action."
+  },
+  aiMarketingStudio: {
+    isEnabled: true,
+    displayName: "AI Marketing Studio",
+    description: "The master switch for the entire 'Marketing & Innovation' tab."
+  },
+  aiProactiveSuggestions: {
+    isEnabled: true,
+    displayName: "AI Proactive Suggestions",
+    description: "AI automatically finds and suggests local marketing opportunities."
+  },
+  aiMenuInnovation: {
+    isEnabled: true,
+    displayName: "AI Menu Innovation Lab",
+    description: "Brainstorm new menu items based on trends and sales data."
+  },
+  ghostShopperProgram: {
+    isEnabled: true,
+    displayName: "Ghost Shopper Program",
+    description: "Invite and manage 'secret shoppers' to get guest feedback."
+  },
+  companyAnnouncements: {
+    isEnabled: true,
+    displayName: "Company Announcements",
+    description: "Allows the owner to post company-wide video messages."
+  },
+  strategicCommand: {
+    isEnabled: true,
+    displayName: "Strategic Command Panel",
+    description: "Shows the accordion section for high-level system configuration."
+  },
+  aiSentinel: {
+    isEnabled: true,
+    displayName: "AI Sentinel & Security",
+    description: "Configure and view logs for the autonomous AI security agent."
+  },
+  teamManagement: {
+    isEnabled: true,
+    displayName: "Team & Locations",
+    description: "Manage users, roles, and business locations."
+  },
+  systemAdministration: {
+    isEnabled: true,
+    displayName: "System Administration Links",
+    description: "Links to billing, branding, and other admin pages."
+  },
+   emergencyInstacart: { 
+    isEnabled: false, 
+    displayName: "Emergency Ordering", 
+    description: "Allows employees to place emergency orders via Instacart integration." 
+  },
+  shiftScheduling: { 
+    isEnabled: true, 
+    displayName: "Shift Scheduling", 
+    description: "Full suite of tools for planning and publishing employee schedules." 
+  },
+  qualityControl: { 
+    isEnabled: true, 
+    displayName: "Quality Control Audits", 
+    description: "AI-powered audits to compare dishes against golden standards." 
+  },
 };
+
 
 type Features = typeof defaultFeatures;
 
@@ -86,7 +172,7 @@ export default function FeatureManagementPage() {
           <Skeleton className="h-4 w-4/5" />
         </CardHeader>
         <CardContent className="space-y-6">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <div key={i} className="flex items-center space-x-4 rounded-lg border p-4">
               <div className="flex-1 space-y-1">
                 <Skeleton className="h-5 w-1/3" />
