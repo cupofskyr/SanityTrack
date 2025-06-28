@@ -298,7 +298,6 @@ export async function resolveServiceAlertAction(input: { alertId: string }): Pro
 }
 
 
-// Action to save brand guidelines
 export async function saveBrandGuidelinesAction(input: { data: BrandGuidelinesData, userId: string }): Promise<{ success: boolean; error: string | null }> {
     try {
         const { data, userId } = input;
