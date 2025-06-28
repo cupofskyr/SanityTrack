@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +57,10 @@ export default function QualityControlPage() {
         setCurrentItem(item ? { ...item } : { id: 0, name: '', imageUrl: '' });
         setIsMenuDialogOpen(true);
     };
+
+    const handlePhotoDataChange = useCallback((dataUrl: string | null) => {
+        setCurrentItem(prev => prev ? { ...prev, imageUrl: dataUrl || '' } : null);
+    }, []);
 
     const handleSaveMenuItem = (e: React.FormEvent) => {
         e.preventDefault();
@@ -215,7 +219,7 @@ export default function QualityControlPage() {
                          <form onSubmit={handleSaveMenuItem}>
                             <div className="grid gap-4 py-4">
                                 <div className="grid gap-2"><Label htmlFor="item-name">Menu Item Name</Label><Input id="item-name" value={currentItem.name} onChange={(e) => setCurrentItem({...currentItem, name: e.target.value})} required/></div>
-                                <div className="grid gap-2"><Label>Reference Photo</Label><PhotoUploader initialPreview={currentItem.imageUrl ? { url: currentItem.imageUrl, name: "reference.png" } : undefined} onPhotoDataChange={(dataUrl) => setCurrentItem(prev => prev ? {...prev, imageUrl: dataUrl || ''} : null)} /></div>
+                                <div className="grid gap-2"><Label>Reference Photo</Label><PhotoUploader initialPreview={currentItem.imageUrl ? { url: currentItem.imageUrl, name: "reference.png" } : undefined} onPhotoDataChange={handlePhotoDataChange} /></div>
                             </div>
                             <DialogFooter><Button type="button" variant="secondary" onClick={() => setIsMenuDialogOpen(false)}>Cancel</Button><Button type="submit">Save Standard</Button></DialogFooter>
                         </form>
@@ -235,3 +239,4 @@ export default function QualityControlPage() {
         </div>
     );
 }
+
