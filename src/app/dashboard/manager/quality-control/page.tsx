@@ -47,6 +47,7 @@ export default function QualityControlPage() {
     const [isMenuDialogOpen, setIsMenuDialogOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<StandardItem | null>(null);
     const [itemToDelete, setItemToDelete] = useState<StandardItem | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     // State for task assignment
     const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
