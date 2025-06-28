@@ -744,7 +744,7 @@ export default function OwnerDashboard() {
        <Feature name="strategicCommand">
          <Card>
              <CardHeader>
-                  <CardTitle className="font-headline">Strategic Command &amp; Administration</CardTitle>
+                  <CardTitle className="font-headline">Strategic Command & Administration</CardTitle>
                   <CardDescription>High-level tools for management, security, and system configuration.</CardDescription>
              </CardHeader>
              <CardContent>
@@ -797,7 +797,7 @@ export default function OwnerDashboard() {
                            <AccordionTrigger><div className="flex items-center gap-2"><Building className="h-5 w-5"/> Team &amp; Locations</div></AccordionTrigger>
                            <AccordionContent className="p-4 space-y-2">
                                <p className="text-sm text-muted-foreground">Manage your organization's users, roles, and business locations.</p>
-                                <div className="flex flex-wrap gap-2 pt-2">
+                               <div className="flex flex-wrap gap-2 pt-2">
                                    <Button asChild variant="outline"><Link href="/dashboard/owner/team"><Users className="mr-2"/> Manage Team &amp; Permissions</Link></Button>
                                     <Dialog open={isAddLocationDialogOpen} onOpenChange={setIsAddLocationDialogOpen}>
                                         <DialogTrigger asChild><Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Add or Manage Locations</Button></DialogTrigger>
