@@ -334,7 +334,7 @@ export default function OwnerDashboard() {
            <CardHeader>
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="font-headline">Executive Vitals (Static Demo Data)</CardTitle>
+                        <CardTitle className="font-headline">Executive Vitals (Simulated Data)</CardTitle>
                         <CardDescription>A high-level overview of your enterprise's health.</CardDescription>
                     </div>
                      <Select value={selectedLocation?.name} onValueChange={(name) => setSelectedLocation(locations.find(l => l.name === name))}>
@@ -687,5 +687,3 @@ export default function OwnerDashboard() {
     </div>
   );
 }
-
-    
