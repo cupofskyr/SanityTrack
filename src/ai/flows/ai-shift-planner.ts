@@ -25,24 +25,39 @@ const prompt = ai.definePrompt({
     model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: GenerateScheduleInputSchema },
     output: { schema: GenerateScheduleOutputSchema },
-    prompt: `You are an intelligent shift scheduling assistant for a restaurant manager.
-Your task is to create a fair and balanced shift schedule.
+    prompt: `You are an expert restaurant operations analyst and AI scheduler. Your task is to create the most cost-effective and efficient weekly shift schedule based on sales data and employee capabilities.
 
-Here are the employees and the dates they are NOT available:
+**Primary Goal:** Minimize labor costs while ensuring excellent customer service. This means staffing up for peak hours and staffing down for "dead zones."
+
+**1. Analyze the Sales Data:**
+Here is the simulated hourly transaction data for a typical week. The 'hour' represents the start of the hour (e.g., 11 means 11:00 AM - 12:00 PM).
+\`\`\`json
+{{{posData}}}
+\`\`\`
+First, identify the peak hours (highest transaction volume) and the dead zones (lowest transaction volume).
+
+**2. Understand Employee Capabilities:**
+Here are the employees, their roles, hourly rates, unavailability, and their individual productivity (transactions they can handle per hour).
 {{#each employees}}
-- {{name}}: Unavailable on {{#if unavailableDates}}{{#each unavailableDates}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}No unavailable dates{{/if}}
+- **{{name}}** ({{role}}):
+  - Rate: \${{hourlyRate}}/hr
+  - Productivity: {{transactionsPerHour}} transactions/hr
+  - Unavailable: {{#if unavailableDates}}{{#each unavailableDates}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
 {{/each}}
 
-Here are the open shifts that need to be filled:
+**3. The Open Shifts:**
+These are the shifts that need to be filled for the upcoming week.
 {{#each shifts}}
 - Shift ID {{id}}: {{date}} from {{startTime}} to {{endTime}}
 {{/each}}
 
-Your goal is to assign each shift to an employee. Follow these rules:
-1.  **Crucially, do not assign an employee to a shift on a date they have marked as unavailable.**
-2.  Try to distribute the shifts as evenly as possible among the employees.
-3.  If a shift cannot be assigned because no one is available, list it in the 'unassignedShifts' field.
-4.  Provide a brief reasoning for your assignment decisions.
+**4. Your Task - Create the Schedule:**
+Assign employees to the open shifts following these rules:
+1.  **Match Staffing to Sales:** During peak sales hours, ensure enough staff are scheduled to handle the transaction volume. Use the employee 'transactionsPerHour' metric to guide your decision. For example, if peak hours have 60 transactions, you'll need employees whose combined productivity meets or exceeds that number.
+2.  **Identify and Reduce Staff in Dead Zones:** During the quietest hours (dead zones), schedule the minimum number of employees required for basic operations (usually 1-2 people).
+3.  **Respect Unavailability:** Crucially, never assign an employee to a shift on a date they are unavailable.
+4.  **Prioritize Cost-Effectiveness:** When multiple employees are available and capable, prefer the one with the lower hourly rate if it doesn't compromise service quality.
+5.  **Output:** Provide the final shift assignments. In your 'reasoning' field, you **MUST** first identify the peak hours and dead zones you found in the data, and then briefly explain your overall staffing strategy (e.g., "Increased staffing during the 12-2 PM lunch rush and scheduled a single employee for the 3-5 PM dead zone.").
 `,
 });
 

@@ -5,6 +5,7 @@ export const EmployeeSchema = z.object({
   unavailableDates: z.array(z.string()).describe('A list of dates the employee cannot work, in YYYY-MM-DD format.'),
   hourlyRate: z.number().describe("The employee's hourly wage for cost calculation."),
   role: z.string().describe("The employee's job title, e.g., 'Line Cook', 'Server'.").optional(),
+  transactionsPerHour: z.number().describe("The number of transactions this employee can handle per hour."),
 });
 
 export const ShiftSchema = z.object({
@@ -15,8 +16,9 @@ export const ShiftSchema = z.object({
 });
 
 export const GenerateScheduleInputSchema = z.object({
-  employees: z.array(EmployeeSchema).describe('The list of employees, their roles, unavailability, and hourly rates.'),
+  employees: z.array(EmployeeSchema).describe('The list of employees, their roles, unavailability, hourly rates, and productivity.'),
   shifts: z.array(ShiftSchema).describe('The list of open shifts to be scheduled.'),
+  posData: z.string().describe("A JSON string representing simulated hourly transaction data for a typical week."),
 });
 export type GenerateScheduleInput = z.infer<typeof GenerateScheduleInputSchema>;
 
@@ -27,7 +29,7 @@ export const AssignmentSchema = z.object({
 
 export const GenerateScheduleOutputSchema = z.object({
   assignments: z.array(AssignmentSchema).describe('The list of shift assignments.'),
-  reasoning: z.string().describe('A brief explanation of how the schedule was generated.'),
+  reasoning: z.string().describe('A brief explanation of how the schedule was generated, including identified peak and dead zones.'),
   unassignedShifts: z.array(z.string()).describe('A list of shift IDs that could not be assigned.'),
 });
 export type GenerateScheduleOutput = z.infer<typeof GenerateScheduleOutputSchema>;

@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { generateScheduleAction, generateShiftSuggestionsAction } from "@/app/actions";
-import type { GenerateScheduleInput, GenerateScheduleOutput } from "@/ai/flows/ai-shift-planner";
+import type { GenerateScheduleInput, GenerateScheduleOutput } from "@/ai/schemas/ai-shift-planner-schemas";
 import type { ShiftSuggestion } from "@/ai/schemas/shift-suggestion-schemas";
 
 type Shift = {
@@ -31,15 +31,23 @@ type Shift = {
   status?: 'scheduled' | 'offered';
 };
 
-// Mock data that would typically come from a central store (e.g., Firestore via context or props)
-// This mirrors the data managed on the Owner's Team page.
 const employees = [
-    { name: "John Doe", role: "Line Cook", hourlyRate: 20, unavailableDates: ["2024-07-25"] },
-    { name: "Jane Smith", role: "Server", hourlyRate: 18, unavailableDates: ["2024-07-26", "2024-07-27"] },
-    { name: "Sam Wilson", role: "Dishwasher", hourlyRate: 16.50, unavailableDates: [] },
-    { name: "Alice Brown", role: "Shift Lead", hourlyRate: 22, unavailableDates: ["2024-07-22", "2024-07-29"] },
-    { name: "Casey Lee", role: "Manager", hourlyRate: 25, unavailableDates: [] },
+    { name: "John Doe", role: "Line Cook", hourlyRate: 20.00, unavailableDates: ["2024-07-25"], transactionsPerHour: 25 },
+    { name: "Jane Smith", role: "Server", hourlyRate: 18.00, unavailableDates: ["2024-07-26", "2024-07-27"], transactionsPerHour: 15 },
+    { name: "Sam Wilson", role: "Dishwasher", hourlyRate: 16.50, unavailableDates: [], transactionsPerHour: 10 },
+    { name: "Alice Brown", role: "Shift Lead", hourlyRate: 22.00, unavailableDates: ["2024-07-22", "2024-07-29"], transactionsPerHour: 20 },
+    { name: "Casey Lee", role: "Manager", hourlyRate: 25.00, unavailableDates: [], transactionsPerHour: 30 },
 ];
+
+const mockPosData = {
+    "monday":   { "9": 15, "10": 20, "11": 45, "12": 60, "13": 55, "14": 30, "15": 10, "16": 15, "17": 25 },
+    "tuesday":  { "9": 18, "10": 22, "11": 48, "12": 65, "13": 60, "14": 35, "15": 12, "16": 18, "17": 28 },
+    "wednesday":{ "9": 20, "10": 25, "11": 50, "12": 70, "13": 65, "14": 40, "15": 15, "16": 20, "17": 30 },
+    "thursday": { "9": 22, "10": 28, "11": 55, "12": 75, "13": 70, "14": 45, "15": 18, "16": 22, "17": 35 },
+    "friday":   { "9": 25, "10": 35, "11": 60, "12": 85, "13": 80, "14": 50, "15": 25, "16": 30, "17": 45 },
+    "saturday": { "9": 30, "10": 40, "11": 70, "12": 90, "13": 85, "14": 60, "15": 30, "16": 35, "17": 50 },
+    "sunday":   { "9": 28, "10": 38, "11": 65, "12": 80, "13": 75, "14": 55, "15": 28, "16": 32, "17": 48 },
+};
 
 const weekDays = [
     { id: 'sunday', label: 'Sunday', value: 0 },
@@ -52,7 +60,6 @@ const weekDays = [
 ]
 
 const parseDate = (dateString: string) => {
-    // This helper prevents timezone issues with new Date()
     const [year, month, day] = dateString.split('-').map(Number);
     return new Date(year, month - 1, day);
 };
@@ -71,7 +78,6 @@ export default function AIShiftScheduler() {
     const [isSuggesting, setIsSuggesting] = useState(false);
 
     useEffect(() => {
-        // Clear published state if shifts change
         setIsPublished(false);
     }, [shifts]);
 
@@ -135,7 +141,6 @@ export default function AIShiftScheduler() {
         );
         setShifts(updatedShifts);
 
-        // If the schedule is already published, re-publish the changes.
         if (isPublished) {
             localStorage.setItem('published-schedule', JSON.stringify(updatedShifts));
             toast({
@@ -175,6 +180,7 @@ export default function AIShiftScheduler() {
         const input: GenerateScheduleInput = {
             employees,
             shifts: unassignedShifts.map(({ id, date, startTime, endTime }) => ({ id, date, startTime, endTime })),
+            posData: JSON.stringify(mockPosData, null, 2),
         };
 
         try {
@@ -212,7 +218,7 @@ export default function AIShiftScheduler() {
         setResult(null);
         setIsPublished(false);
         setSuggestedShifts(null);
-        localStorage.removeItem('published-schedule'); // Clear from employee view
+        localStorage.removeItem('published-schedule');
         toast({
             title: "Roster Cleared",
             description: "All shifts have been removed from the roster.",
