@@ -1,12 +1,2 @@
 
-# This file specifies the Python packages required by the Cloud Function.
-# The Google Cloud Functions runtime will automatically install these dependencies.
-
-# Required for the Cloud Functions framework
-functions-framework==3.*
-
-# Required for interacting with Firebase services (Firestore)
-firebase-admin==6.*
-
-# Used for data validation and modeling
-pydantic==2.*
+    
