@@ -36,6 +36,8 @@ import { generateGhostShopperInvite, type GenerateGhostShopperInviteInput, type 
 import { generateBusinessReport, type GenerateBusinessReportOutput } from '@/ai/flows/generate-business-report-flow';
 import type { GenerateBusinessReportInput } from '@/ai/schemas/business-report-schemas';
 import { placeEmergencyOrder, type PlaceEmergencyOrderInput, type PlaceEmergencyOrderOutput } from '@/ai/flows/place-emergency-order-flow';
+import { generateMarketingIdeas } from '@/ai/flows/suggest-menu-trends-flow';
+import type { GenerateMarketingIdeasInput, GenerateMarketingIdeasOutput } from '@/ai/schemas/menu-trends-schemas';
 
 
 // This wrapper function centralizes error handling for all AI flows.
@@ -144,6 +146,10 @@ export async function optimizeOrderAction(input: { shoppingList: ShoppingListIte
 
 export async function placeEmergencyOrderAction(input: PlaceEmergencyOrderInput): Promise<{ data: PlaceEmergencyOrderOutput | null; error: string | null; }> {
     return safeRun(placeEmergencyOrder, input, 'placeEmergencyOrder');
+}
+
+export async function generateMarketingIdeasAction(input: GenerateMarketingIdeasInput): Promise<{ data: GenerateMarketingIdeasOutput | null; error: string | null; }> {
+    return safeRun(generateMarketingIdeas, input, 'generateMarketingIdeas');
 }
 
 

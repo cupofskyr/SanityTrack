@@ -8,11 +8,12 @@ import {
   postJobAction,
   runMasterAgentCycleAction,
   generateGhostShopperInviteAction,
+  generateMarketingIdeasAction,
 } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch, Megaphone } from 'lucide-react';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch, Megaphone, Lightbulb, LineChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -22,6 +23,7 @@ import OwnerServiceAlertWidget from '@/components/owner-service-alert-widget';
 import { Input } from '@/components/ui/input';
 import OnboardingInterview from '@/components/onboarding/onboarding-interview';
 import type { MasterAgentOutput } from '@/ai/schemas/agent-schemas';
+import type { GenerateMarketingIdeasOutput } from '@/ai/schemas/menu-trends-schemas';
 import { formatDistanceToNow } from 'date-fns';
 import AIMonitoringSetup from '@/components/ai-monitoring-setup';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -100,12 +102,19 @@ export default function OwnerDashboard() {
 
   const [copiedUrlId, setCopiedUrlId] = useState<number | null>(null);
 
+  // Marketing & Innovation State
+  const [topSeller, setTopSeller] = useState('Yuzu');
+  const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
+  const [marketingIdeas, setMarketingIdeas] = useState<GenerateMarketingIdeasOutput | null>(null);
+
+  // Ghost Shopper State
   const [shopperEmail, setShopperEmail] = useState('');
   const [shopperOffer, setShopperOffer] = useState('$10 Gift Card for your next visit');
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
   const [inviteContent, setInviteContent] = useState<{ subject: string; body: string; } | null>(null);
 
+  // Announcement State
   const [isAnnouncementDialogOpen, setIsAnnouncementDialogOpen] = useState(false);
   const [announcementTitle, setAnnouncementTitle] = useState('');
   const [announcementVideo, setAnnouncementVideo] = useState<File | null>(null);
@@ -266,6 +275,27 @@ export default function OwnerDashboard() {
     setTimeout(() => setCopiedUrlId(null), 2000);
   };
 
+  const handleGenerateIdeas = async () => {
+    if (!topSeller) {
+        toast({ variant: 'destructive', title: 'Missing Input', description: 'Please provide a top-selling ingredient.' });
+        return;
+    }
+    setIsGeneratingIdeas(true);
+    setMarketingIdeas(null);
+    try {
+        const result = await generateMarketingIdeasAction({
+            topSeller,
+            companyConcept: "Skyr bowls and shakes"
+        });
+        if (result.error || !result.data) throw new Error(result.error || "Failed to generate ideas.");
+        setMarketingIdeas(result.data);
+    } catch (e: any) {
+        toast({ variant: 'destructive', title: 'AI Error', description: e.message });
+    } finally {
+        setIsGeneratingIdeas(false);
+    }
+  };
+
   const handleInviteGhostShopper = async (e: FormEvent) => {
     e.preventDefault();
     if (!shopperEmail || !shopperOffer || !selectedLocation) {
@@ -323,7 +353,7 @@ export default function OwnerDashboard() {
     };
 
     if (isNewUser) {
-        return <OnboardingInterview onOnboardingComplete={onOnboardingComplete} />;
+        return <OnboardingInterview onOnboardingComplete={handleOnboardingComplete} />;
     }
 
     if (locations.length === 0) {
@@ -407,10 +437,11 @@ export default function OwnerDashboard() {
            </CardHeader>
            <CardContent>
                 <Tabs defaultValue="approvals">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="approvals">High-Priority Approvals</TabsTrigger>
                         <TabsTrigger value="alerts">Crucial Alerts</TabsTrigger>
                         <TabsTrigger value="mandates">Inspector Mandates</TabsTrigger>
+                        <TabsTrigger value="marketing">Marketing & Innovation</TabsTrigger>
                     </TabsList>
                     <TabsContent value="approvals" className="mt-4">
                         <div className="space-y-4">
@@ -501,6 +532,122 @@ export default function OwnerDashboard() {
                                 )}
                             </CardContent>
                         </Card>
+                    </TabsContent>
+                     <TabsContent value="marketing" className="mt-4 space-y-6">
+                        <Card>
+                           <CardHeader>
+                               <CardTitle className="font-headline flex items-center gap-2"><Sparkles className='text-primary'/> AI Menu Innovation Lab</CardTitle>
+                               <CardDescription>Leverage sales data to brainstorm new menu items and marketing angles.</CardDescription>
+                           </CardHeader>
+                           <CardContent>
+                               <div className="grid gap-2 mb-4 max-w-sm">
+                                   <Label htmlFor="top-seller">Enter Your Top-Selling Ingredient</Label>
+                                   <Input id="top-seller" value={topSeller} onChange={(e) => setTopSeller(e.target.value)} placeholder="e.g., Yuzu, Cold Brew, Acai"/>
+                               </div>
+                               <Button onClick={handleGenerateIdeas} disabled={isGeneratingIdeas}>
+                                   {isGeneratingIdeas ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Lightbulb className="mr-2 h-4 w-4"/>}
+                                   Generate Ideas
+                               </Button>
+                                {marketingIdeas && (
+                                    <div className="mt-6 space-y-4">
+                                        <div className="grid md:grid-cols-3 gap-4">
+                                            {marketingIdeas.trendingIngredients.map((ing, i) => (
+                                                <Card key={i}>
+                                                    <CardHeader><CardTitle className="text-base">{ing.name}</CardTitle></CardHeader>
+                                                    <CardContent><p className="text-sm text-muted-foreground">{ing.reason}</p></CardContent>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                         <div className="grid md:grid-cols-2 gap-4">
+                                             {marketingIdeas.menuIdeas.map((idea, i) => (
+                                                <Card key={i}>
+                                                    <CardHeader>
+                                                        <CardTitle className="text-lg">{idea.name} <Badge variant="secondary">{idea.type}</Badge></CardTitle>
+                                                        <CardDescription>{idea.description}</CardDescription>
+                                                    </CardHeader>
+                                                    <CardContent className="space-y-2">
+                                                        <p className="text-sm"><strong className="font-medium">Ingredients:</strong> {idea.keyIngredients.join(', ')}</p>
+                                                        <p className="text-sm"><strong className="font-medium">Marketing Angle:</strong> {idea.marketingAngle}</p>
+                                                    </CardContent>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                           </CardContent>
+                        </Card>
+                        <Card>
+                               <CardHeader>
+                                   <CardTitle className="font-headline flex items-center gap-2"><UserSearch /> Ghost Shopper Program</CardTitle>
+                                   <CardDescription>
+                                       Invite customers to act as "secret shoppers" in exchange for a reward. The AI will draft a professional invitation email for you to send.
+                                   </CardDescription>
+                               </CardHeader>
+                               <CardContent>
+                                   <form onSubmit={handleInviteGhostShopper} className="space-y-4">
+                                       <div className="grid md:grid-cols-2 gap-4">
+                                           <div className="grid gap-2">
+                                               <Label htmlFor="shopper-email">Shopper's Email</Label>
+                                               <Input id="shopper-email" type="email" placeholder="shopper@email.com" value={shopperEmail} onChange={(e) => setShopperEmail(e.target.value)} required />
+                                           </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="shopper-offer">Reward Offer</Label>
+                                                <Select value={shopperOffer} onValueChange={(value) => setShopperOffer(value)} required>
+                                                    <SelectTrigger id="shopper-offer">
+                                                        <SelectValue placeholder="Select a reward..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="$10 Gift Card for your next visit">
+                                                            $10 Gift Card (Service Recovery Standard)
+                                                        </SelectItem>
+                                                        <SelectItem value="$25 Gift Card">
+                                                            $25 Gift Card
+                                                        </SelectItem>
+                                                        <SelectItem value="Free Menu Item of your choice">
+                                                            Free Menu Item
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                       </div>
+                                       <Button type="submit" disabled={!shopperEmail || !shopperOffer || !selectedLocation}>
+                                           <Sparkles className="mr-2 h-4 w-4" /> Generate Invitation
+                                       </Button>
+                                   </form>
+                               </CardContent>
+                        </Card>
+                         <Card>
+                               <CardHeader>
+                                   <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Company Announcement</CardTitle>
+                                   <CardDescription>Record and post a company-wide video message for all employees. It will appear at the top of their dashboard.</CardDescription>
+                               </CardHeader>
+                               <CardContent>
+                                   <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
+                                       <DialogTrigger asChild><Button variant="outline"><Video className="mr-2"/>Post New Announcement</Button></DialogTrigger>
+                                       <DialogContent>
+                                           <DialogHeader>
+                                               <DialogTitle>New Video Announcement</DialogTitle>
+                                               <DialogDescription>Your message will be displayed to all employees immediately.</DialogDescription>
+                                           </DialogHeader>
+                                           <form onSubmit={handlePostAnnouncement}>
+                                               <div className="grid gap-4 py-4">
+                                                   <div className="grid gap-2">
+                                                       <Label htmlFor="ann-title">Message Title</Label>
+                                                       <Input id="ann-title" value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} placeholder="e.g., A Holiday Greeting" required />
+                                                   </div>
+                                                   <div className="grid gap-2">
+                                                       <Label htmlFor="ann-video">Video File</Label>
+                                                       <Input id="ann-video" type="file" accept="video/*" onChange={e => setAnnouncementVideo(e.target.files ? e.target.files[0] : null)} required />
+                                                   </div>
+                                               </div>
+                                               <DialogFooter>
+                                                   <Button type="submit">Post Message</Button>
+                                               </DialogFooter>
+                                           </form>
+                                       </DialogContent>
+                                   </Dialog>
+                               </CardContent>
+                           </Card>
                     </TabsContent>
                 </Tabs>
            </CardContent>
@@ -613,88 +760,6 @@ export default function OwnerDashboard() {
                                <Button asChild variant="outline"><Link href="/dashboard/owner/branding"><FileText className="mr-2"/> Branding</Link></Button>
                                <Button asChild variant="outline"><Link href="/dashboard/owner/billing"><DollarSign className="mr-2"/> Billing</Link></Button>
                            </div>
-                       </AccordionContent>
-                   </AccordionItem>
-                   <AccordionItem value="item-4">
-                       <AccordionTrigger><div className="flex items-center gap-2"><UserSearch className="h-5 w-5"/> Ghost Shopper Program</div></AccordionTrigger>
-                       <AccordionContent className="p-1 pt-4">
-                           <Card>
-                               <CardHeader>
-                                   <CardTitle>Invite a Ghost Shopper</CardTitle>
-                                   <CardDescription>
-                                       Invite a customer to act as a "secret shopper" in exchange for a reward. The AI will draft a professional invitation email for you to send.
-                                   </CardDescription>
-                               </CardHeader>
-                               <CardContent>
-                                   <form onSubmit={handleInviteGhostShopper} className="space-y-4">
-                                       <div className="grid md:grid-cols-2 gap-4">
-                                           <div className="grid gap-2">
-                                               <Label htmlFor="shopper-email">Shopper's Email</Label>
-                                               <Input id="shopper-email" type="email" placeholder="shopper@email.com" value={shopperEmail} onChange={(e) => setShopperEmail(e.target.value)} required />
-                                           </div>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="shopper-offer">Reward Offer</Label>
-                                                <Select value={shopperOffer} onValueChange={(value) => setShopperOffer(value)} required>
-                                                    <SelectTrigger id="shopper-offer">
-                                                        <SelectValue placeholder="Select a reward..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="$10 Gift Card for your next visit">
-                                                            $10 Gift Card (Service Recovery Standard)
-                                                        </SelectItem>
-                                                        <SelectItem value="$25 Gift Card">
-                                                            $25 Gift Card
-                                                        </SelectItem>
-                                                        <SelectItem value="Free Menu Item of your choice">
-                                                            Free Menu Item
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                       </div>
-                                       <Button type="submit" disabled={!shopperEmail || !shopperOffer || !selectedLocation}>
-                                           <Sparkles className="mr-2 h-4 w-4" /> Generate Invitation
-                                       </Button>
-                                   </form>
-                               </CardContent>
-                           </Card>
-                       </AccordionContent>
-                   </AccordionItem>
-                   <AccordionItem value="item-5">
-                       <AccordionTrigger><div className="flex items-center gap-2"><Megaphone className="h-5 w-5"/> Company Announcement</div></AccordionTrigger>
-                       <AccordionContent className="p-1 pt-4">
-                           <Card>
-                               <CardHeader>
-                                   <CardTitle>Post a Video Message</CardTitle>
-                                   <CardDescription>Record and post a company-wide video message for all employees. It will appear at the top of their dashboard.</CardDescription>
-                               </CardHeader>
-                               <CardContent>
-                                   <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
-                                       <DialogTrigger asChild><Button><Video className="mr-2"/>Post New Announcement</Button></DialogTrigger>
-                                       <DialogContent>
-                                           <DialogHeader>
-                                               <DialogTitle>New Video Announcement</DialogTitle>
-                                               <DialogDescription>Your message will be displayed to all employees immediately.</DialogDescription>
-                                           </DialogHeader>
-                                           <form onSubmit={handlePostAnnouncement}>
-                                               <div className="grid gap-4 py-4">
-                                                   <div className="grid gap-2">
-                                                       <Label htmlFor="ann-title">Message Title</Label>
-                                                       <Input id="ann-title" value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} placeholder="e.g., A Holiday Greeting" required />
-                                                   </div>
-                                                   <div className="grid gap-2">
-                                                       <Label htmlFor="ann-video">Video File</Label>
-                                                       <Input id="ann-video" type="file" accept="video/*" onChange={e => setAnnouncementVideo(e.target.files ? e.target.files[0] : null)} required />
-                                                   </div>
-                                               </div>
-                                               <DialogFooter>
-                                                   <Button type="submit">Post Message</Button>
-                                               </DialogFooter>
-                                           </form>
-                                       </DialogContent>
-                                   </Dialog>
-                               </CardContent>
-                           </Card>
                        </AccordionContent>
                    </AccordionItem>
                </Accordion>
