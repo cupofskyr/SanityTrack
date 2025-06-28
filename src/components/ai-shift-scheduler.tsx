@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle, Send, Pencil, DollarSign } from "lucide-react";
+import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle, Send, Pencil, DollarSign, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
@@ -206,24 +207,55 @@ export default function AIShiftScheduler() {
         });
     };
     
-    const totalCost = useMemo(() => {
-        const getDurationInHours = (start: string, end: string) => {
-            const [startHours, startMinutes] = start.split(':').map(Number);
-            const [endHours, endMinutes] = end.split(':').map(Number);
-            const durationMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
-            return durationMinutes / 60;
-        };
+    const laborAnalysis = useMemo(() => {
+        const weeklyHours: { [key: string]: number } = {};
+        const employeesInOvertime = new Set<string>();
 
-        return shifts.reduce((total, shift) => {
-            if (!shift.assignedTo) return total;
-            const employee = employees.find(e => e.name === shift.assignedTo);
-            if (!employee) return total;
-            
-            const duration = getDurationInHours(shift.startTime, shift.endTime);
-            const shiftCost = duration * employee.hourlyRate;
-            
-            return total + shiftCost;
-        }, 0);
+        shifts.forEach(shift => {
+            if (shift.assignedTo) {
+                if (!weeklyHours[shift.assignedTo]) {
+                    weeklyHours[shift.assignedTo] = 0;
+                }
+                const start = new Date(`1970-01-01T${shift.startTime}:00`);
+                const end = new Date(`1970-01-01T${shift.endTime}:00`);
+                const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                weeklyHours[shift.assignedTo] += duration;
+            }
+        });
+
+        let totalRegularHours = 0;
+        let totalOvertimeHours = 0;
+        let totalRegularCost = 0;
+        let totalOvertimeCost = 0;
+
+        for (const employeeName in weeklyHours) {
+            const totalHours = weeklyHours[employeeName];
+            const employee = employees.find(e => e.name === employeeName);
+            if (!employee) continue;
+
+            const regularHours = Math.min(totalHours, 40);
+            const overtimeHours = Math.max(0, totalHours - 40);
+
+            if (overtimeHours > 0) {
+                employeesInOvertime.add(employeeName);
+            }
+
+            totalRegularHours += regularHours;
+            totalOvertimeHours += overtimeHours;
+            totalRegularCost += regularHours * employee.hourlyRate;
+            totalOvertimeCost += overtimeHours * employee.hourlyRate * 1.5;
+        }
+
+        const totalCost = totalRegularCost + totalOvertimeCost;
+
+        return {
+            totalRegularHours,
+            totalOvertimeHours,
+            totalRegularCost,
+            totalOvertimeCost,
+            totalCost,
+            employeesInOvertime,
+        };
     }, [shifts]);
 
     return (
@@ -351,13 +383,25 @@ export default function AIShiftScheduler() {
                     <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
                             <DollarSign />
-                            Projected Labor Cost
+                            Projected Labor Summary
                         </CardTitle>
-                        <CardDescription>Based on currently assigned shifts in the roster for the selected period.</CardDescription>
+                        <CardDescription>An estimate of labor costs for the currently rostered shifts.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-4xl font-bold">${totalCost.toFixed(2)}</p>
+                    <CardContent className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span>Regular Hours:</span> <span>{laborAnalysis.totalRegularHours.toFixed(2)}</span></div>
+                        <div className="flex justify-between font-semibold text-destructive"><span>Overtime Hours:</span> <span>{laborAnalysis.totalOvertimeHours.toFixed(2)}</span></div>
+                        <div className="flex justify-between pt-2 border-t"><span>Regular Cost:</span> <span>${laborAnalysis.totalRegularCost.toFixed(2)}</span></div>
+                        <div className="flex justify-between font-semibold text-destructive"><span>Overtime Cost (1.5x):</span> <span>${laborAnalysis.totalOvertimeCost.toFixed(2)}</span></div>
+                        <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Total Cost:</span> <span>${laborAnalysis.totalCost.toFixed(2)}</span></div>
                     </CardContent>
+                    <CardFooter>
+                        <Alert variant="default" className="text-xs p-2">
+                            <Info className="h-4 w-4" />
+                            <AlertDescription>
+                                Rates are managed by the owner on the Team & Payroll page.
+                            </AlertDescription>
+                        </Alert>
+                    </CardFooter>
                 </Card>
             </div>
 
@@ -400,7 +444,7 @@ export default function AIShiftScheduler() {
                         </TableHeader>
                         <TableBody>
                             {shifts.length > 0 ? shifts.sort((a,b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)).map(shift => (
-                                <TableRow key={shift.id}>
+                                <TableRow key={shift.id} className={cn(shift.assignedTo && laborAnalysis.employeesInOvertime.has(shift.assignedTo) && 'bg-destructive/10')}>
                                     <TableCell>{format(parseDate(shift.date), 'PPP')}</TableCell>
                                     <TableCell>{shift.startTime} - {shift.endTime}</TableCell>
                                     <TableCell>
