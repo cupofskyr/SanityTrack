@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const EmployeeSchema = z.object({
   name: z.string().describe('The name of the employee.'),
   unavailableDates: z.array(z.string()).describe('A list of dates the employee cannot work, in YYYY-MM-DD format.'),
+  hourlyRate: z.number().describe('The employee\'s hourly wage for cost calculation.'),
 });
 
 export const ShiftSchema = z.object({
