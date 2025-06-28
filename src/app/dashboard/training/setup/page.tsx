@@ -1,4 +1,3 @@
-
 "use client";
 
 import TrainingManager from '@/components/training-manager';
@@ -10,5 +9,3 @@ export default function TrainingSetupPage() {
         </div>
     );
 }
-
-    
