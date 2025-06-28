@@ -537,7 +537,7 @@ export default function OwnerDashboard() {
                         <Card>
                            <CardHeader>
                                <CardTitle className="font-headline flex items-center gap-2"><Sparkles className='text-primary'/> AI Menu Innovation Lab</CardTitle>
-                               <CardDescription>Leverage sales data to brainstorm new menu items and marketing angles.</CardDescription>
+                               <CardDescription>Leverage sales data and seasonal trends to brainstorm new menu items and marketing angles for upcoming holidays and events.</CardDescription>
                            </CardHeader>
                            <CardContent>
                                <div className="grid gap-2 mb-4 max-w-sm">
