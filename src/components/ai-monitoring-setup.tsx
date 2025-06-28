@@ -8,11 +8,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, PlusCircle, Trash2, Video, Sparkles, Loader2, Link as LinkIcon, AlertCircle } from 'lucide-react';
+import { Camera, PlusCircle, Trash2, Video, Sparkles, Loader2, Link as LinkIcon, AlertCircle, Terminal } from 'lucide-react';
 import { analyzeCameraImageAction } from '@/app/actions';
-import type { CameraAnalysisOutput } from '@/ai/flows/cameraAnalysisFlow';
+import type { CameraAnalysisOutput } from '@/ai/flows/camera-analysis-schemas';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Textarea } from './ui/textarea';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 
 type VirtualCamera = {
   id: number;
@@ -31,6 +32,7 @@ export default function AIMonitoringSetup() {
     const { toast } = useToast();
     const [cameras, setCameras] = useState<VirtualCamera[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [monitoringType, setMonitoringType] = useState<'digital' | 'manual'>('digital');
     
     // Form state for new camera
     const [newCameraName, setNewCameraName] = useState('');
@@ -117,108 +119,142 @@ export default function AIMonitoringSetup() {
 
     return (
         <Card className="lg:col-span-3" id="ai-monitoring">
-            <CardHeader className="flex-row items-start justify-between">
-                <div>
-                    <CardTitle className="font-headline flex items-center gap-2"><Video /> AI Monitoring Setup</CardTitle>
-                    <CardDescription>Configure the daily tasks for your AI camera assistant. Tell it what to look for, and it will report back its findings.</CardDescription>
-                </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Add Camera</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle className="font-headline">Add New Camera Feed</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleAddCamera} className="space-y-4 py-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="cam-name">Camera Name</Label>
-                                <Input id="cam-name" value={newCameraName} onChange={e => setNewCameraName(e.target.value)} placeholder="e.g., Front Counter Cam" required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="cam-location">Location</Label>
-                                <Input id="cam-location" value={newCameraLocation} onChange={e => setNewCameraLocation(e.target.value)} placeholder="e.g., Main Dining Room" required />
-                            </div>
-                             <div className="grid gap-2">
-                                <Label htmlFor="cam-stream">Live Stream URL</Label>
-                                <Input id="cam-stream" value={newStreamUrl} onChange={e => setNewStreamUrl(e.target.value)} placeholder="e.g., rtsp://..." required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="cam-video">Placeholder Video File</Label>
-                                <Input id="cam-video" type="file" accept="video/*" onChange={e => setVideoFile(e.target.files ? e.target.files[0] : null)} required />
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit">Add Camera</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><Video /> Monitoring & Automation</CardTitle>
+                <CardDescription>Choose your monitoring method and configure your AI assistant.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <Alert variant="default">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Video Analysis Simulation</AlertTitle>
-                    <AlertDescription>
-                        For this prototype, AI analysis is performed on a representative static image, not the full video file. This simulates analyzing a keyframe from a live feed to generate insights.
-                    </AlertDescription>
-                </Alert>
-                {cameras.length === 0 ? (
-                    <div className="text-center text-sm text-muted-foreground p-8 border-dashed border-2 rounded-md">
-                        <Camera className="mx-auto h-12 w-12" />
-                        <p className="mt-4 font-semibold">No cameras added yet.</p>
-                        <p>Click "Add Camera" to get started.</p>
+                <div className="space-y-3 rounded-lg border p-4">
+                    <Label className="font-semibold">Monitoring Method</Label>
+                    <RadioGroup
+                        value={monitoringType}
+                        onValueChange={(value) => setMonitoringType(value as 'digital' | 'manual')}
+                        className="flex flex-col sm:flex-row gap-x-4 gap-y-2"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="digital" id="r-digital" />
+                            <Label htmlFor="r-digital" className="font-normal">Digital IoT Sensors</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="manual" id="r-manual" />
+                            <Label htmlFor="r-manual" className="font-normal">Manual Photo-Verified Checks</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+                
+                {monitoringType === 'digital' ? (
+                    <div>
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
+                            <div>
+                                <h3 className="font-semibold">Camera Feeds</h3>
+                                <p className="text-sm text-muted-foreground">Configure tasks for your AI camera assistant.</p>
+                            </div>
+                            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" size="sm" className="mt-2 sm:mt-0"><PlusCircle className="mr-2 h-4 w-4" /> Add Camera</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle className="font-headline">Add New Camera Feed</DialogTitle>
+                                    </DialogHeader>
+                                    <form onSubmit={handleAddCamera} className="space-y-4 py-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="cam-name">Camera Name</Label>
+                                            <Input id="cam-name" value={newCameraName} onChange={e => setNewCameraName(e.target.value)} placeholder="e.g., Front Counter Cam" required />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="cam-location">Location</Label>
+                                            <Input id="cam-location" value={newCameraLocation} onChange={e => setNewCameraLocation(e.target.value)} placeholder="e.g., Main Dining Room" required />
+                                        </div>
+                                         <div className="grid gap-2">
+                                            <Label htmlFor="cam-stream">Live Stream URL</Label>
+                                            <Input id="cam-stream" value={newStreamUrl} onChange={e => setNewStreamUrl(e.target.value)} placeholder="e.g., rtsp://..." required />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="cam-video">Placeholder Video File</Label>
+                                            <Input id="cam-video" type="file" accept="video/*" onChange={e => setVideoFile(e.target.files ? e.target.files[0] : null)} required />
+                                        </div>
+                                        <DialogFooter>
+                                            <Button type="submit">Add Camera</Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                        <Alert variant="default" className="mb-6">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Video Analysis Simulation</AlertTitle>
+                            <AlertDescription>
+                                For this prototype, AI analysis is performed on a representative static image, not the full video file. This simulates analyzing a keyframe from a live feed to generate insights.
+                            </AlertDescription>
+                        </Alert>
+                        {cameras.length === 0 ? (
+                            <div className="text-center text-sm text-muted-foreground p-8 border-dashed border-2 rounded-md">
+                                <Camera className="mx-auto h-12 w-12" />
+                                <p className="mt-4 font-semibold">No cameras added yet.</p>
+                                <p>Click "Add Camera" to get started.</p>
+                            </div>
+                        ) : (
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {cameras.map(camera => (
+                                    <Card key={camera.id}>
+                                        <CardHeader>
+                                            <CardTitle className="flex justify-between items-start">
+                                                <span>{camera.name}</span>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCamera(camera.id)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </CardTitle>
+                                            <CardDescription>{camera.location}</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            <div className="aspect-video w-full rounded-md overflow-hidden border bg-black">
+                                                <video src={camera.videoUrl} loop autoPlay muted playsInline className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                                <LinkIcon className="h-3 w-3" />
+                                                <span className="truncate">{camera.streamUrl}</span>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor={`prompt-${camera.id}`} className="font-semibold">Tell the AI what to analyze:</Label>
+                                                <Textarea
+                                                    id={`prompt-${camera.id}`}
+                                                    value={analysisPrompts[camera.id] || ''}
+                                                    onChange={e => setAnalysisPrompts({...analysisPrompts, [camera.id]: e.target.value})}
+                                                    placeholder="Be specific. For example: 'Count how many customers are in line.' or 'Alert me if a spill is not cleaned within 5 minutes.'"
+                                                    rows={3}
+                                                />
+                                            </div>
+                                             {analysisResult && analysisResult.cameraId === camera.id && (
+                                                <Alert>
+                                                    <AlertTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" />{analysisResult.output.reportTitle}</AlertTitle>
+                                                    <AlertDescription>
+                                                        <ul className="list-disc list-inside mt-2">
+                                                            {analysisResult.output.observations.map((obs, i) => <li key={i}>{obs}</li>)}
+                                                        </ul>
+                                                    </AlertDescription>
+                                                </Alert>
+                                            )}
+                                        </CardContent>
+                                        <CardFooter>
+                                            <Button className="w-full" onClick={() => handleAnalyzeVideo(camera)} disabled={isLoading === camera.id}>
+                                                {isLoading === camera.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                                Run Daily Analysis
+                                            </Button>
+                                        </CardFooter>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 ) : (
-                    <div className="grid md:grid-cols-2 gap-6">
-                        {cameras.map(camera => (
-                            <Card key={camera.id}>
-                                <CardHeader>
-                                    <CardTitle className="flex justify-between items-start">
-                                        <span>{camera.name}</span>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCamera(camera.id)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                    </CardTitle>
-                                    <CardDescription>{camera.location}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="aspect-video w-full rounded-md overflow-hidden border bg-black">
-                                        <video src={camera.videoUrl} loop autoPlay muted playsInline className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="text-xs text-muted-foreground flex items-center gap-2">
-                                        <LinkIcon className="h-3 w-3" />
-                                        <span className="truncate">{camera.streamUrl}</span>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`prompt-${camera.id}`} className="font-semibold">Tell the AI what to analyze:</Label>
-                                        <Textarea
-                                            id={`prompt-${camera.id}`}
-                                            value={analysisPrompts[camera.id] || ''}
-                                            onChange={e => setAnalysisPrompts({...analysisPrompts, [camera.id]: e.target.value})}
-                                            placeholder="Be specific. For example: 'Count how many customers are in line.' or 'Alert me if a spill is not cleaned within 5 minutes.'"
-                                            rows={3}
-                                        />
-                                    </div>
-                                     {analysisResult && analysisResult.cameraId === camera.id && (
-                                        <Alert>
-                                            <AlertTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" />{analysisResult.output.reportTitle}</AlertTitle>
-                                            <AlertDescription>
-                                                <ul className="list-disc list-inside mt-2">
-                                                    {analysisResult.output.observations.map((obs, i) => <li key={i}>{obs}</li>)}
-                                                </ul>
-                                            </AlertDescription>
-                                        </Alert>
-                                    )}
-                                </CardContent>
-                                <CardFooter>
-                                    <Button className="w-full" onClick={() => handleAnalyzeVideo(camera)} disabled={isLoading === camera.id}>
-                                        {isLoading === camera.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                        Run Daily Analysis
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        ))}
-                    </div>
+                    <Alert>
+                        <Terminal className="h-4 w-4" />
+                        <AlertTitle>Manual Mode Active</AlertTitle>
+                        <AlertDescription>
+                            To implement manual checks, please instruct your managers to create recurring tasks in the "Master Task List". Employees will be required to upload a photo as proof of completion for each manual check.
+                        </AlertDescription>
+                    </Alert>
                 )}
             </CardContent>
         </Card>
