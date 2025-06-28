@@ -70,7 +70,6 @@ type PurchaseOrder = {
     list: string;
 };
 
-// Mock data for inspector tasks, mirroring what's on the manager's dashboard
 const initialDelegatedTasks: DelegatedTask[] = [
     { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: 'Pending' },
     { id: 3, description: "Clear blockage from back storage area hand-washing sink.", source: "Health Inspector Report (2024-07-01)", status: 'Pending' },
@@ -102,19 +101,16 @@ export default function OwnerDashboard() {
 
   const [copiedUrlId, setCopiedUrlId] = useState<number | null>(null);
 
-  // Marketing & Innovation State
   const [topSeller, setTopSeller] = useState('Yuzu');
   const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
   const [marketingIdeas, setMarketingIdeas] = useState<GenerateMarketingIdeasOutput | null>(null);
 
-  // Ghost Shopper State
   const [shopperEmail, setShopperEmail] = useState('');
   const [shopperOffer, setShopperOffer] = useState('$10 Gift Card for your next visit');
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isGeneratingInvite, setIsGeneratingInvite] = useState(false);
   const [inviteContent, setInviteContent] = useState<{ subject: string; body: string; } | null>(null);
 
-  // Announcement State
   const [isAnnouncementDialogOpen, setIsAnnouncementDialogOpen] = useState(false);
   const [announcementTitle, setAnnouncementTitle] = useState('');
   const [announcementVideo, setAnnouncementVideo] = useState<File | null>(null);
@@ -139,6 +135,7 @@ export default function OwnerDashboard() {
     if (selectedLocation) {
         handleFetchToastData(selectedLocation.name);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLocation]);
   
   useEffect(() => {
@@ -151,7 +148,7 @@ export default function OwnerDashboard() {
     };
 
     checkStorage();
-    const interval = setInterval(checkStorage, 2000); // Poll for updates
+    const interval = setInterval(checkStorage, 2000); 
 
     return () => clearInterval(interval);
   }, []);
@@ -173,7 +170,6 @@ export default function OwnerDashboard() {
           id: newId,
           name: newLocationData.name,
           manager: newLocationData.managerName,
-          // Use a fixed code for the demo to make KDS pairing easier
           inspectionCode: newLocationData.name.toLowerCase().includes('down') ? 'DT-1A2B' : 'UP-3C4D'
       };
       const updatedLocations = [...locations, newLoc];
@@ -234,7 +230,6 @@ export default function OwnerDashboard() {
 
   const handleRunAgent = async () => {
     setIsAgentRunning(true);
-    // Add "Employee idle" to the list of simulated camera observations
     const simulatedState = {
         cameraObservations: ["Spill detected on floor near counter.", "Employee idle for 5 minutes at front counter."],
         stockLevels: [{ item: 'Coffee Cups', level: 'Critical' as const }],
@@ -243,7 +238,6 @@ export default function OwnerDashboard() {
     const simulatedRules = [
         { id: 'auto-spill-cleaner', name: 'Auto-Tasker for Spills', description: 'IF a camera detects a spill, THEN automatically create a high-priority cleaning task.', isEnabled: true, config: {} },
         { id: 'auto-restock-alerter', name: 'Proactive Restock Alerter', description: 'IF inventory of a critical item is low, THEN automatically email the manager.', isEnabled: true, config: {} },
-        // Add a new rule for the agent to use
         { id: 'auto-idle-tasker', name: 'Proactive Idle Tasker', description: 'IF a camera detects an employee is idle, THEN create a low-priority task to restock napkins.', isEnabled: true, config: {} },
     ];
 
@@ -318,7 +312,7 @@ export default function OwnerDashboard() {
         setInviteContent(result.data);
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'AI Error', description: error.message });
-        setIsInviteDialogOpen(false); // Close dialog on error
+        setIsInviteDialogOpen(false);
     } finally {
         setIsGeneratingInvite(false);
     }
@@ -385,7 +379,6 @@ export default function OwnerDashboard() {
 
   return (
     <div className="space-y-6">
-       {/* Tier 1: Vitals */}
        <Card>
            <CardHeader>
                 <div className="flex items-center justify-between">
@@ -429,7 +422,6 @@ export default function OwnerDashboard() {
            </CardContent>
        </Card>
 
-       {/* Tier 2: Action & Approval Queue */}
        <Card id="high-priority-approvals">
            <CardHeader>
                 <CardTitle className="font-headline">Action & Approval Queue</CardTitle>
@@ -438,10 +430,10 @@ export default function OwnerDashboard() {
            <CardContent>
                 <Tabs defaultValue="approvals">
                     <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="approvals">High-Priority Approvals</TabsTrigger>
-                        <TabsTrigger value="alerts">Crucial Alerts</TabsTrigger>
-                        <TabsTrigger value="mandates">Inspector Mandates</TabsTrigger>
-                        <TabsTrigger value="marketing">Marketing & Innovation</TabsTrigger>
+                        <TabsTrigger value="approvals">Approvals</TabsTrigger>
+                        <TabsTrigger value="alerts">Alerts</TabsTrigger>
+                        <TabsTrigger value="mandates">Mandates</TabsTrigger>
+                        <TabsTrigger value="marketing" id="marketing">Marketing</TabsTrigger>
                     </TabsList>
                     <TabsContent value="approvals" className="mt-4">
                         <div className="space-y-4">
@@ -653,7 +645,6 @@ export default function OwnerDashboard() {
            </CardContent>
        </Card>
 
-       {/* Tier 3: Strategic Command */}
        <Card>
            <CardHeader>
                 <CardTitle className="font-headline">Strategic Command & Administration</CardTitle>

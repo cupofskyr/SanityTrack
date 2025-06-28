@@ -40,7 +40,9 @@ import {
   Database,
   Bot,
   FileText as FileTextIcon,
-  ShoppingCart
+  ShoppingCart,
+  Megaphone,
+  Lightbulb
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -67,7 +69,7 @@ const managerNav = [
     links: [
       { name: "Dashboard", href: "/dashboard/manager", exact: true },
       { name: "Live Time Clock", href: "/dashboard/manager#time-clock-feed" },
-      { name: "QA & Service Alerts", href: "/dashboard/manager/quality-control" },
+      { name: "Quality Control", href: "/dashboard/manager/quality-control" },
     ]
   },
   { 
@@ -85,7 +87,8 @@ const managerNav = [
     icon: Users,
     links: [
       { name: "Training Center", href: "/dashboard/training" },
-      { name: "Quality Control", href: "/dashboard/manager/quality-control" },
+      { name: "Training Setup", href: "/dashboard/training/setup"},
+      { name: "Knowledge Base", href: "/dashboard/manager/knowledge" },
     ]
   },
   {
@@ -107,12 +110,20 @@ const ownerNav = [
         ]
     },
     {
-        category: "Strategic Oversight",
+        category: "Strategic Command",
         icon: Eye,
         links: [
-            { name: "High-Priority Approvals", href: "/dashboard/owner#high-priority-approvals" },
-            { name: "Agent Activity Log", href: "/dashboard/owner#agent-activity-log" },
-            { name: "AI Monitoring Setup", href: "/dashboard/owner#ai-monitoring" },
+            { name: "Approvals & Alerts", href: "/dashboard/owner#high-priority-approvals" },
+            { name: "AI Monitoring Setup", href: "/dashboard/owner/agent-rules" }, // Merged for simplicity
+             { name: "Agent Activity Log", href: "/dashboard/owner#agent-activity-log" },
+        ]
+    },
+    {
+        category: "Growth & Innovation",
+        icon: Lightbulb,
+        links: [
+            { name: "Marketing Hub", href: "/dashboard/owner#marketing" },
+            { name: "Menu Innovation Lab", href: "/dashboard/owner#marketing" },
         ]
     },
      {
@@ -121,17 +132,6 @@ const ownerNav = [
         links: [
             { name: "Permit Applications", href: "/dashboard/owner/permits" },
             { name: "Document Storage", href: "/dashboard/owner/documents" },
-        ]
-    },
-    {
-        category: "Operational Oversight",
-        icon: Wrench,
-        links: [
-            { name: "Shift Planner", href: "/dashboard/manager/shifts" },
-            { name: "Inventory", href: "/dashboard/manager/inventory" },
-            { name: "Ordering", href: "/dashboard/manager/ordering" },
-            { name: "Quality Control", href: "/dashboard/manager/quality-control" },
-            { name: "Master Task List", href: "/dashboard/manager/equipment" },
         ]
     },
     {
@@ -148,14 +148,12 @@ const ownerNav = [
 
 const employeeNav = [
     { name: "Dashboard", href: "/dashboard/employee", icon: LayoutDashboard },
-    { name: "My Schedule", href: "/dashboard/employee", icon: CalendarDays },
-    { name: "Training", href: "/dashboard/training", icon: BookOpen },
+    { name: "Training Center", href: "/dashboard/training", icon: BookOpen },
     { name: "Ask the Brain", href: "/dashboard/brain", icon: BrainCircuit },
 ];
 
 const inspectorNav = [
     { name: "Dashboard", href: "/dashboard/health-department", icon: LayoutDashboard },
-    { name: "Reports", href: "/dashboard/health-department", icon: ClipboardList },
 ];
 
 export default function DashboardLayout({
@@ -171,7 +169,6 @@ export default function DashboardLayout({
   const [isPolicyAccepted, setIsPolicyAccepted] = React.useState(false);
 
   React.useEffect(() => {
-    // Check for policy acceptance on mount. Use sessionStorage for session-only persistence.
     const policyAccepted = sessionStorage.getItem('sanity-track-policy-accepted');
     if (!loading && user && policyAccepted !== 'true') {
       setIsPolicyModalOpen(true);
@@ -179,7 +176,6 @@ export default function DashboardLayout({
   }, [loading, user]);
 
   React.useEffect(() => {
-    // On initial load in the browser, try to get the role from session storage
     const savedRole = sessionStorage.getItem('userRole');
     if (savedRole) {
       setRole(savedRole);
@@ -187,7 +183,6 @@ export default function DashboardLayout({
   }, []);
 
   React.useEffect(() => {
-    // When the path changes, detect if it's a role-specific page
     let detectedRole = "";
     if (pathname.includes("/owner")) detectedRole = "Owner";
     else if (pathname.includes("/manager")) detectedRole = "Manager";
@@ -237,7 +232,6 @@ export default function DashboardLayout({
         navItems = employeeNav;
     }
 
-    // For roles with collapsible sections
     if (role === 'Manager' || role === 'Owner') {
         const defaultActive = (navItems as any[]).findIndex(category => 
             category.links.some((link: any) => pathname.startsWith(link.href.split('#')[0]))
@@ -278,7 +272,6 @@ export default function DashboardLayout({
         );
     }
 
-    // For roles with flat navigation
     return (
         <SidebarMenu>
             {(navItems as any[]).map((item) => (
@@ -286,7 +279,7 @@ export default function DashboardLayout({
                 <SidebarMenuButton
                 asChild
                 isActive={pathname === item.href}
-                tooltip={item.label}
+                tooltip={item.name}
                 >
                 <Link href={item.href}>
                     <item.icon />
@@ -425,5 +418,3 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
-
-    
