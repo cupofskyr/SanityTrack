@@ -43,7 +43,8 @@ import {
   ShoppingCart,
   Megaphone,
   Lightbulb,
-  Flag
+  Flag,
+  Banknote
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -143,6 +144,7 @@ const ownerNav = [
             { name: "Branding", href: "/dashboard/owner/branding" },
             { name: "AI Agent Rules", href: "/dashboard/owner/agent-rules" },
             { name: "Feature Flags", href: "/dashboard/owner/features" },
+            { name: "Financials", href: "/dashboard/owner/financials" },
             { name: "Billing", href: "/dashboard/owner/billing" },
         ]
     }
