@@ -29,12 +29,14 @@ type Shift = {
   status?: 'scheduled' | 'offered';
 };
 
-// Mock data, in a real app this would come from a database.
+// Mock data that would typically come from a central store (e.g., Firestore via context or props)
+// This mirrors the data managed on the Owner's Team page.
 const employees = [
-    { name: "John Doe", unavailableDates: ["2024-07-25"], hourlyRate: 20 },
-    { name: "Jane Smith", unavailableDates: ["2024-07-26", "2024-07-27"], hourlyRate: 18 },
-    { name: "Sam Wilson", unavailableDates: [], hourlyRate: 18 },
-    { name: "Alice Brown", unavailableDates: ["2024-07-22", "2024-07-29"], hourlyRate: 22 },
+    { name: "John Doe", role: "Line Cook", hourlyRate: 20, unavailableDates: ["2024-07-25"] },
+    { name: "Jane Smith", role: "Server", hourlyRate: 18, unavailableDates: ["2024-07-26", "2024-07-27"] },
+    { name: "Sam Wilson", role: "Dishwasher", hourlyRate: 16.50, unavailableDates: [] },
+    { name: "Alice Brown", role: "Shift Lead", hourlyRate: 22, unavailableDates: ["2024-07-22", "2024-07-29"] },
+    { name: "Casey Lee", role: "Manager", hourlyRate: 25, unavailableDates: [] },
 ];
 
 const weekDays = [

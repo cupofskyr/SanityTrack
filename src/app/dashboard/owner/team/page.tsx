@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -13,92 +12,111 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, MoreHorizontal, Pencil } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Pencil, DollarSign, Info } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+// Mock data for state minimum wages
+const stateLaborLaws = {
+    'Arizona': 14.35,
+    'California': 16.00,
+    'New York': 16.00,
+    'Texas': 7.25,
+};
+type State = keyof typeof stateLaborLaws;
 
 type TeamMember = {
   id: number;
   name: string;
   email: string;
   role: 'Owner' | 'Manager' | 'Employee' | 'Health Department';
+  roleTitle: string;
   status: 'Active' | 'Pending';
   avatar: string;
+  hourlyRate: number;
 };
 
 const initialTeamMembers: TeamMember[] = [
-  { id: 1, name: 'Alex Ray', email: 'alex.ray@example.com', role: 'Owner', status: 'Active', avatar: 'https://placehold.co/100x100/3F51B5/FFFFFF.png' },
-  { id: 2, name: 'Casey Lee', email: 'casey.lee@example.com', role: 'Manager', status: 'Active', avatar: 'https://placehold.co/100x100/FF5722/FFFFFF.png' },
-  { id: 3, name: 'John Doe', email: 'john.doe@example.com', role: 'Employee', status: 'Active', avatar: 'https://placehold.co/100x100/4CAF50/FFFFFF.png' },
-  { id: 4, name: 'Inspector Gadget', email: 'inspector.gadget@health.gov', role: 'Health Department', status: 'Active', avatar: 'https://placehold.co/100x100/2196F3/FFFFFF.png' },
-  { id: 5, name: 'Jane Smith', email: 'jane.smith@example.com', role: 'Employee', status: 'Pending', avatar: 'https://placehold.co/100x100/9E9E9E/FFFFFF.png' },
+  { id: 1, name: 'Alex Ray', email: 'alex.ray@example.com', role: 'Owner', roleTitle: 'Owner/Operator', status: 'Active', avatar: 'https://placehold.co/100x100/3F51B5/FFFFFF.png', hourlyRate: 35.00 },
+  { id: 2, name: 'Casey Lee', email: 'casey.lee@example.com', role: 'Manager', roleTitle: 'General Manager', status: 'Active', avatar: 'https://placehold.co/100x100/FF5722/FFFFFF.png', hourlyRate: 25.00 },
+  { id: 3, name: 'John Doe', email: 'john.doe@example.com', role: 'Employee', roleTitle: 'Line Cook', status: 'Active', avatar: 'https://placehold.co/100x100/4CAF50/FFFFFF.png', hourlyRate: 20.00 },
+  { id: 4, name: 'Jane Smith', email: 'jane.smith@example.com', role: 'Employee', roleTitle: 'Server', status: 'Pending', avatar: 'https://placehold.co/100x100/9E9E9E/FFFFFF.png', hourlyRate: 18.00 },
 ];
 
 export default function TeamPage() {
     const { toast } = useToast();
     const [team, setTeam] = useState<TeamMember[]>(initialTeamMembers);
     const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
-    const [newMember, setNewMember] = useState({ name: '', email: '', role: 'Employee' as TeamMember['role'] });
-
-    const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
     const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
-    const [editedRole, setEditedRole] = useState<TeamMember['role']>('Employee');
+    const [editedRate, setEditedRate] = useState('');
+    const [businessState, setBusinessState] = useState<State>('Arizona');
+    
+    const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('');
+    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-    const handleInvite = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newMember.name || !newMember.email) {
-            toast({ variant: 'destructive', title: 'Missing information', description: 'Please provide a name and email.' });
+    const handleOpenEditDialog = (member: TeamMember) => {
+        setMemberToEdit(member);
+        setEditedRate(String(member.hourlyRate));
+    };
+
+    const handleSaveRate = () => {
+        if (!memberToEdit) return;
+        const newRate = parseFloat(editedRate);
+        if (isNaN(newRate) || newRate < 0) {
+            toast({ variant: 'destructive', title: 'Invalid Rate', description: 'Please enter a valid hourly rate.' });
             return;
         }
-        const newTeamMember: TeamMember = {
-            id: Date.now(),
-            ...newMember,
-            status: 'Pending',
-            avatar: `https://placehold.co/100x100.png?text=${newMember.name.charAt(0)}`
-        };
-        setTeam([...team, newTeamMember]);
-        toast({ title: 'Invite Sent!', description: `An invitation has been sent to ${newMember.email}.` });
-        setIsInviteDialogOpen(false);
-        setNewMember({ name: '', email: '', role: 'Employee' });
-    };
 
-    const openDeleteDialog = (member: TeamMember) => {
-        setMemberToDelete(member);
-        setIsDeleteDialogOpen(true);
-    };
-
-    const confirmDelete = () => {
-        if (!memberToDelete) return;
-        setTeam(team.filter(m => m.id !== memberToDelete.id));
-        toast({ title: 'Member Removed', description: `${memberToDelete.name} has been removed from the team.` });
-        setIsDeleteDialogOpen(false);
-        setMemberToDelete(null);
-    };
-
-    const openPermissionsDialog = (member: TeamMember) => {
-        setMemberToEdit(member);
-        setEditedRole(member.role);
-        setIsPermissionsDialogOpen(true);
-    };
-
-    const handleSavePermissions = () => {
-        if (!memberToEdit) return;
-        setTeam(team.map(m => m.id === memberToEdit.id ? { ...m, role: editedRole } : m));
-        toast({ title: 'Permissions Updated', description: `${memberToEdit.name}'s role has been changed to ${editedRole}.` });
-        setIsPermissionsDialogOpen(false);
+        setTeam(team.map(m => m.id === memberToEdit.id ? { ...m, hourlyRate: newRate } : m));
+        toast({ title: 'Rate Updated', description: `${memberToEdit.name}'s hourly rate has been set to ${formatCurrency(newRate)}.` });
         setMemberToEdit(null);
     };
+    
+    const handleSetToMinWage = () => {
+        if (!memberToEdit) return;
+        const minWage = stateLaborLaws[businessState];
+        setEditedRate(String(minWage));
+    }
 
     return (
         <div className="space-y-6">
             <Card>
+                <CardHeader>
+                     <CardTitle className="font-headline flex items-center gap-2">
+                        Staff & Payroll Overview
+                    </CardTitle>
+                    <CardDescription>Manage your team, their roles, and their hourly rates. This information is used for labor cost projections.</CardDescription>
+                </CardHeader>
+                 <CardContent>
+                    <div className="grid sm:grid-cols-3 gap-4 mb-6">
+                        <div className="grid gap-2">
+                            <Label htmlFor="business-state">Business State</Label>
+                            <Select value={businessState} onValueChange={(val) => setBusinessState(val as State)}>
+                                <SelectTrigger id="business-state">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.keys(stateLaborLaws).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                             <p className="text-xs text-muted-foreground">State minimum wage is used as a baseline. Current: {formatCurrency(stateLaborLaws[businessState])}/hr</p>
+                        </div>
+                    </div>
+                     <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Labor Law Simulation</AlertTitle>
+                        <AlertDescription>
+                          This is a simplified simulation. In a real-world application, this data would be integrated with a payroll provider or a service that tracks up-to-date labor laws.
+                        </AlertDescription>
+                    </Alert>
+                 </CardContent>
+            </Card>
+
+            <Card>
                 <CardHeader className="flex-row items-start justify-between">
                     <div>
-                        <CardTitle className="font-headline flex items-center gap-2">
-                            Team & Permissions
-                        </CardTitle>
-                        <CardDescription>Manage your organization's users and their roles.</CardDescription>
+                        <CardTitle>Team Members</CardTitle>
+                        <CardDescription>An overview of all active and pending users in your organization.</CardDescription>
                     </div>
                     <Button onClick={() => setIsInviteDialogOpen(true)}>
                         <PlusCircle className="mr-2 h-4 w-4"/>
@@ -110,8 +128,8 @@ export default function TeamPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>User</TableHead>
-                                <TableHead>Role</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead>Role Title</TableHead>
+                                <TableHead>Hourly Rate</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -122,7 +140,7 @@ export default function TeamPage() {
                                         <div className="flex items-center gap-3">
                                             <Avatar>
                                                 <AvatarImage src={member.avatar} data-ai-hint="user avatar"/>
-                                                <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                                <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                                             </Avatar>
                                             <div>
                                                 <p className="font-semibold">{member.name}</p>
@@ -130,31 +148,17 @@ export default function TeamPage() {
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell>{member.role}</TableCell>
                                     <TableCell>
-                                        <Badge variant={member.status === 'Active' ? 'default' : 'secondary'}>
-                                            {member.status}
-                                        </Badge>
+                                        <Badge variant="outline">{member.roleTitle}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {formatCurrency(member.hourlyRate)}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => openPermissionsDialog(member)}>
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit Permissions
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem disabled={member.status === 'Pending'}>Resend Invite</DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="text-destructive" onClick={() => openDeleteDialog(member)}>
-                                                    Remove Member
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <Button variant="outline" size="sm" onClick={() => handleOpenEditDialog(member)}>
+                                            <DollarSign className="mr-2 h-4 w-4" />
+                                            Manage Salary
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -163,90 +167,37 @@ export default function TeamPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+            <Dialog open={!!memberToEdit} onOpenChange={(isOpen) => !isOpen && setMemberToEdit(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Invite New Team Member</DialogTitle>
+                        <DialogTitle>Manage Rate for {memberToEdit?.name}</DialogTitle>
                         <DialogDescription>
-                            They will receive an email to join your SanityTrack workspace.
+                            Set a custom hourly rate or use the state minimum wage.
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleInvite} className="space-y-4 py-4">
+                    <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Full Name</Label>
-                            <Input id="name" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} required/>
+                             <Label htmlFor="hourly-rate">Custom Hourly Rate ($)</Label>
+                            <Input
+                                id="hourly-rate"
+                                type="number"
+                                step="0.01"
+                                value={editedRate}
+                                onChange={e => setEditedRate(e.target.value)}
+                                placeholder="e.g., 18.50"
+                            />
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Email Address</Label>
-                            <Input id="email" type="email" value={newMember.email} onChange={e => setNewMember({...newMember, email: e.target.value})} required/>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="role">Role</Label>
-                             <Select value={newMember.role} onValueChange={val => setNewMember({...newMember, role: val as TeamMember['role']})}>
-                                <SelectTrigger id="role">
-                                    <SelectValue placeholder="Select a role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Employee">Employee</SelectItem>
-                                    <SelectItem value="Manager">Manager</SelectItem>
-                                    <SelectItem value="Owner">Owner</SelectItem>
-                                    <SelectItem value="Health Department">Health Department</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <DialogFooter>
-                             <Button type="button" variant="secondary" onClick={() => setIsInviteDialogOpen(false)}>Cancel</Button>
-                            <Button type="submit">Send Invite</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will remove <span className="font-semibold">{memberToDelete?.name}</span> from your workspace. This action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete}>Remove Member</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Permissions for {memberToEdit?.name}</DialogTitle>
-                        <DialogDescription>
-                            Change the role for this team member. This will affect what they can see and do in the app.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="role-edit">Role</Label>
-                            <Select value={editedRole} onValueChange={val => setEditedRole(val as TeamMember['role'])}>
-                                <SelectTrigger id="role-edit">
-                                    <SelectValue placeholder="Select a role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Employee">Employee</SelectItem>
-                                    <SelectItem value="Manager">Manager</SelectItem>
-                                    <SelectItem value="Owner">Owner</SelectItem>
-                                    <SelectItem value="Health Department">Health Department</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <Button variant="secondary" onClick={handleSetToMinWage}>
+                            Use {businessState} Minimum Wage ({formatCurrency(stateLaborLaws[businessState])})
+                        </Button>
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="secondary" onClick={() => setIsPermissionsDialogOpen(false)}>Cancel</Button>
-                        <Button type="button" onClick={handleSavePermissions}>Save Changes</Button>
+                        <Button type="button" variant="outline" onClick={() => setMemberToEdit(null)}>Cancel</Button>
+                        <Button type="button" onClick={handleSaveRate}>Save Rate</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
         </div>
     );
 }

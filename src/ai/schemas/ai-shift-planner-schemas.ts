@@ -3,7 +3,8 @@ import { z } from 'zod';
 export const EmployeeSchema = z.object({
   name: z.string().describe('The name of the employee.'),
   unavailableDates: z.array(z.string()).describe('A list of dates the employee cannot work, in YYYY-MM-DD format.'),
-  hourlyRate: z.number().describe('The employee\'s hourly wage for cost calculation.'),
+  hourlyRate: z.number().describe("The employee's hourly wage for cost calculation."),
+  role: z.string().describe("The employee's job title, e.g., 'Line Cook', 'Server'.").optional(),
 });
 
 export const ShiftSchema = z.object({
@@ -14,7 +15,7 @@ export const ShiftSchema = z.object({
 });
 
 export const GenerateScheduleInputSchema = z.object({
-  employees: z.array(EmployeeSchema).describe('The list of employees and their unavailability.'),
+  employees: z.array(EmployeeSchema).describe('The list of employees, their roles, unavailability, and hourly rates.'),
   shifts: z.array(ShiftSchema).describe('The list of open shifts to be scheduled.'),
 });
 export type GenerateScheduleInput = z.infer<typeof GenerateScheduleInputSchema>;
