@@ -89,7 +89,6 @@ export default function OwnerDashboard() {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  const [isNewUser, setIsNewUser] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
   
   const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(undefined);
@@ -145,24 +144,20 @@ export default function OwnerDashboard() {
   ]);
 
   useEffect(() => {
-    const newUserFlag = sessionStorage.getItem('isNewUser');
-    if (newUserFlag === 'true') {
-        setIsNewUser(true);
-        sessionStorage.removeItem('isNewUser');
-    }
     const storedLocations = JSON.parse(localStorage.getItem('sanity-track-locations') || '[]');
     setLocations(storedLocations);
-    if (storedLocations.length === 0 && newUserFlag !== 'true') {
-        setIsAddLocationDialogOpen(true);
+    if (storedLocations.length > 0) {
+        setSelectedLocation(storedLocations[0]);
+    } else {
+        // If no locations, open the dialog non-blockingly
+        const hasBeenPrompted = sessionStorage.getItem('addLocationPrompted');
+        if (!hasBeenPrompted) {
+            setIsAddLocationDialogOpen(true);
+            sessionStorage.setItem('addLocationPrompted', 'true');
+        }
     }
   }, []);
-
-  useEffect(() => {
-    if (locations.length > 0 && !selectedLocation) {
-        setSelectedLocation(locations[0]);
-    }
-  }, [locations, selectedLocation]);
-
+  
   useEffect(() => {
     if (selectedLocation) {
         handleFetchToastData(selectedLocation.name);
@@ -190,12 +185,6 @@ export default function OwnerDashboard() {
 
     return () => clearInterval(interval);
   }, [selectedLocation]);
-  
-  const handleOnboardingComplete = () => {
-        setIsNewUser(false);
-        setIsAddLocationDialogOpen(true);
-        toast({ title: "Setup Complete!", description: "Welcome to your new dashboard. Please add your first location to begin." });
-  };
     
   const handleAddLocation = (e: FormEvent) => {
       e.preventDefault();
@@ -216,6 +205,9 @@ export default function OwnerDashboard() {
       toast({ title: 'Location Added' });
       setNewLocationData({ name: '', managerName: '', managerEmail: '' });
       setIsAddLocationDialogOpen(false);
+      if (!selectedLocation) {
+          setSelectedLocation(newLoc);
+      }
   };
 
   const handleFetchToastData = async (locationName: string) => {
@@ -333,38 +325,6 @@ export default function OwnerDashboard() {
         setOpportunities(prev => prev.filter(op => op.opportunityId !== id));
     };
 
-    if (isNewUser) return <OnboardingInterview onOnboardingComplete={handleOnboardingComplete} />;
-
-    if (locations.length === 0) {
-        return (
-            <div className="flex items-center justify-center p-4 md:p-8">
-                <Card className="w-full max-w-lg">
-                    <CardHeader>
-                        <CardTitle className="font-headline">Welcome to Leifur.AI!</CardTitle>
-                        <CardDescription>To get started, please add your first business location.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleAddLocation} className="space-y-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="new-loc-name">Location Name</Label>
-                                <Input id="new-loc-name" placeholder="e.g., Downtown Phoenix" value={newLocationData.name} onChange={e => setNewLocationData({...newLocationData, name: e.target.value})} required/>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="manager-name">Manager Name</Label>
-                                <Input id="manager-name" placeholder="e.g., Alex Ray" value={newLocationData.managerName} onChange={e => setNewLocationData({...newLocationData, managerName: e.target.value})} required/>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="manager-email">Manager Email</Label>
-                                <Input id="manager-email" type="email" placeholder="e.g., alex.ray@example.com" value={newLocationData.managerEmail} onChange={e => setNewLocationData({...newLocationData, managerEmail: e.target.value})} required/>
-                            </div>
-                            <Button type="submit" className="w-full">Add Location & Continue</Button>
-                        </form>
-                    </CardContent>
-                </Card>
-            </div>
-        )
-    }
-
   return (
     <div className="space-y-6">
        <Feature name="executiveVitals">
@@ -373,7 +333,7 @@ export default function OwnerDashboard() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <CardTitle className="font-headline">KPI Overview</CardTitle>
-                        <CardDescription>A high-level overview of your enterprise's health for: {selectedLocation?.name}</CardDescription>
+                        <CardDescription>A high-level overview of your enterprise's health for: {selectedLocation?.name || 'All Locations'}</CardDescription>
                     </div>
                     <Select value={selectedLocation?.name} onValueChange={(name) => setSelectedLocation(locations.find(l => l.name === name))}>
                         <SelectTrigger className="w-full md:w-auto md:min-w-[200px]"><SelectValue placeholder="Select location..." /></SelectTrigger>
@@ -758,7 +718,7 @@ export default function OwnerDashboard() {
         <DialogContent>
             <DialogHeader>
                 <DialogTitle className="font-headline">Add New Location</DialogTitle>
-                <DialogDescription>Add a new business location to manage.</DialogDescription>
+                <DialogDescription>Add your first business location to get started.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddLocation} className="space-y-4 py-4">
                 <div className="grid gap-2">
@@ -774,7 +734,7 @@ export default function OwnerDashboard() {
                     <Input id="manager-email" type="email" placeholder="e.g., alex.ray@example.com" value={newLocationData.managerEmail} onChange={e => setNewLocationData({...newLocationData, managerEmail: e.target.value})} required/>
                 </div>
                 <DialogFooter>
-                    <Button type="submit" className="w-full">Add Location</Button>
+                    <Button type="submit" className="w-full">Add Location & Continue</Button>
                 </DialogFooter>
             </form>
         </DialogContent>
