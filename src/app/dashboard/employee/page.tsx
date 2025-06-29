@@ -429,18 +429,40 @@ export default function EmployeeDashboard() {
                         <TabsTrigger value="resources">Resources</TabsTrigger>
                     </TabsList>
                     <TabsContent value="schedule" className="mt-6">
-                        <div className="grid md:grid-cols-2 gap-6">
-                             <Card>
-                                <CardHeader><CardTitle className="font-headline text-lg flex items-center gap-2"><CalendarDays /> My Schedule & Availability</CardTitle><CardDescription>View your upcoming shifts, offer a shift to a colleague, and set your unavailable days.</CardDescription></CardHeader>
-                                <CardContent className="grid md:grid-cols-2 gap-6">
-                                    <div><h3 className="font-semibold mb-2 text-sm">Set Unavailability</h3><div className="rounded-md border"><Calendar mode="multiple" selected={unavailableDays} onSelect={setUnavailableDays} className="p-0"/></div><p className="text-sm text-muted-foreground mt-2">You have marked {unavailableDays?.length || 0} day(s) as unavailable.</p></div>
-                                    <div><h3 className="font-semibold mb-2 text-sm">Upcoming Shifts</h3><div className="border rounded-md p-1 space-y-2 min-h-[290px]">{mySchedule.length > 0 ? (<Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Shift</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>{mySchedule.sort((a,b) => a.date.localeCompare(b.date)).map(shift => (<TableRow key={shift.id} className={shift.status === 'offered' ? 'bg-accent/10' : ''}><TableCell className="font-medium">{format(parseDate(shift.date), "EEE, MMM dd")}</TableCell><TableCell>{shift.startTime} - {shift.endTime}</TableCell><TableCell className="text-right">{shift.status === 'offered' ? (<Badge variant="secondary">Offered</Badge>) : (<Button variant="outline" size="sm" onClick={() => handleOfferShift(shift.id)}>Offer</Button>)}</TableCell></TableRow>))}</TableBody></Table>) : (<div className="flex items-center justify-center h-full"><p className="text-muted-foreground text-center text-sm">Your schedule will appear here once published by the manager.</p></div>)}</div></div>
+                        <div className="grid lg:grid-cols-2 gap-6">
+                            <div className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base font-semibold">Set Unavailability</CardTitle>
+                                        <CardDescription className="text-xs">Click dates to mark them as unavailable.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex flex-col items-center">
+                                        <Calendar mode="multiple" selected={unavailableDays} onSelect={setUnavailableDays} className="p-0 border rounded-md"/>
+                                        <p className="text-sm text-muted-foreground mt-2">You have marked {unavailableDays?.length || 0} day(s) as unavailable.</p>
+                                    </CardContent>
+                                </Card>
+                                 <Card>
+                                    <CardHeader><CardTitle className="font-headline text-lg flex items-center gap-2"><ArrowRightLeft /> Available Shifts</CardTitle><CardDescription>Shifts offered by your colleagues.</CardDescription></CardHeader>
+                                    <CardContent><Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Shift</TableHead><TableHead>Offered By</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>{availableShifts.length > 0 ? (availableShifts.map(shift => (<TableRow key={shift.id}><TableCell>{format(parseDate(shift.date), "EEE, MMM dd")}</TableCell><TableCell>{shift.startTime} - {shift.endTime}</TableCell><TableCell>{shift.assignedTo}</TableCell><TableCell className="text-right"><Button size="sm" onClick={() => handleClaimShift(shift.id)}>Claim Shift</Button></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="text-center h-24 text-muted-foreground">There are no available shifts to claim right now.</TableCell></TableRow>)}</TableBody></Table></CardContent>
+                                </Card>
+                            </div>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base font-semibold">My Upcoming Shifts</CardTitle>
+                                    <CardDescription className="text-xs">Your assigned shifts for the upcoming period.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="border rounded-md">
+                                    {mySchedule.length > 0 ? (
+                                        <Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Shift</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>{mySchedule.sort((a,b) => a.date.localeCompare(b.date)).map(shift => (<TableRow key={shift.id} className={shift.status === 'offered' ? 'bg-accent/10' : ''}><TableCell className="font-medium">{format(parseDate(shift.date), "EEE, MMM dd")}</TableCell><TableCell>{shift.startTime} - {shift.endTime}</TableCell><TableCell className="text-right">{shift.status === 'offered' ? (<Badge variant="secondary">Offered</Badge>) : (<Button variant="outline" size="sm" onClick={() => handleOfferShift(shift.id)}>Offer</Button>)}</TableCell></TableRow>))}</TableBody></Table>
+                                    ) : (
+                                        <div className="flex items-center justify-center h-[280px] p-4">
+                                            <p className="text-muted-foreground text-center text-sm">Your schedule will appear here once published by the manager.</p>
+                                        </div>
+                                    )}
+                                    </div>
                                 </CardContent>
-                              </Card>
-                              <Card>
-                                <CardHeader><CardTitle className="font-headline text-lg flex items-center gap-2"><ArrowRightLeft /> Available Shifts to Claim</CardTitle><CardDescription>Shifts offered by your colleagues. Claiming a shift will automatically add it to your schedule.</CardDescription></CardHeader>
-                                <CardContent><Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Shift</TableHead><TableHead>Offered By</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>{availableShifts.length > 0 ? (availableShifts.map(shift => (<TableRow key={shift.id}><TableCell>{format(parseDate(shift.date), "EEE, MMM dd")}</TableCell><TableCell>{shift.startTime} - {shift.endTime}</TableCell><TableCell>{shift.assignedTo}</TableCell><TableCell className="text-right"><Button size="sm" onClick={() => handleClaimShift(shift.id)}>Claim Shift</Button></TableCell></TableRow>))) : (<TableRow><TableCell colSpan={4} className="text-center h-24 text-muted-foreground">There are no available shifts to claim right now.</TableCell></TableRow>)}</TableBody></Table></CardContent>
-                              </Card>
+                            </Card>
                         </div>
                     </TabsContent>
                     <TabsContent value="reporting" className="mt-6">
