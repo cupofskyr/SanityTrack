@@ -167,6 +167,7 @@ export default function OwnerDashboard() {
     if (selectedLocation) {
         handleFetchToastData(selectedLocation.name);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLocation]);
   
   useEffect(() => {
@@ -261,6 +262,7 @@ export default function OwnerDashboard() {
 
   const handleRunAgent = async () => {
     setIsAgentRunning(true);
+    // In a real app, you'd get the current state from various sources
     const result = await runMasterAgentCycleAction({ rules: [], currentState: {} });
     if (result.data) {
         setAgentActivity(prev => [{ ...result.data!, timestamp: new Date() }, ...prev]);

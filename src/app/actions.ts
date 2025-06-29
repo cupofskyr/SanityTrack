@@ -214,7 +214,25 @@ export async function queryKnowledgeBaseAction(input: { question: string }): Pro
 }
 
 export async function runMasterAgentCycleAction(input: MasterAgentInput): Promise<{ data: MasterAgentOutput | null; error: string | null; }> {
-    return safeRun(runMasterAgentDecision, input, 'runMasterAgentDecision');
+    // This is a placeholder for running the agent with a mock state.
+    // In a real app, this would gather state from various sources (DB, sensors).
+    const mockState: MasterAgentInput['currentState'] = {
+        cameraObservations: ["Spill detected on floor near counter.", "Line at front counter has 5 people."],
+        stockLevels: [{ item: 'Milk', level: 'Critical' }],
+        openTasks: ["Clean fryer #2"],
+    };
+    
+    const allRules = [
+        { id: 'auto-spill-cleaner', name: 'Auto-Tasker for Spills', description: 'IF a camera detects a spill, THEN automatically create a high-priority cleaning task.', isEnabled: true },
+        { id: 'auto-restock-alerter', name: 'Proactive Restock Alerter', description: 'IF inventory of a critical item is low, THEN automatically email the manager.', isEnabled: true },
+    ];
+
+    const agentInput: MasterAgentInput = {
+        rules: allRules,
+        currentState: mockState,
+    };
+
+    return safeRun(runMasterAgentDecision, agentInput, 'runMasterAgentDecision');
 }
 
 export async function generatePermitChecklistAction(input: GeneratePermitChecklistInput): Promise<{ data: GeneratePermitChecklistOutput | null; error: string | null; }> {
