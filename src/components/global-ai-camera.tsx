@@ -145,7 +145,7 @@ export default function GlobalAICamera() {
                 <SidebarMenuItem>
                     <SidebarMenuButton variant="outline" className="w-full justify-start text-muted-foreground hover:text-foreground" tooltip="Universal AI Camera">
                         <Camera />
-                        <span>AI Camera</span>
+                        <span className='group-data-[collapsible=icon]:hidden'>AI Camera</span>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </DialogTrigger>

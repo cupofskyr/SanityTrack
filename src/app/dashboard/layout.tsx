@@ -37,6 +37,7 @@ import {
   Lightbulb,
   BookOpen,
   DollarSign,
+  Camera,
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -419,5 +420,3 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
-
-    

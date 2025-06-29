@@ -154,7 +154,7 @@ export default function PhotoUploader({ readOnly = false, initialPreview, onPhot
             <div className='flex gap-2 w-full max-w-sm'>
                  <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
                     <DialogTrigger asChild>
-                        <Button className="w-full">
+                        <Button type="button" className="w-full">
                             <Camera className="mr-2 h-4 w-4"/>
                             Take Photo
                         </Button>
@@ -176,11 +176,11 @@ export default function PhotoUploader({ readOnly = false, initialPreview, onPhot
                             )}
                         </div>
                         <DialogFooter>
-                            <Button onClick={handleCapture} disabled={!hasCameraPermission}>Capture Photo</Button>
+                            <Button type="button" onClick={handleCapture} disabled={!hasCameraPermission}>Capture Photo</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-                <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
+                <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
                     <UploadCloud className="mr-2 h-4 w-4"/>
                     Upload File
                 </Button>

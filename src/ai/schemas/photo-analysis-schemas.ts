@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const AnalyzePhotoInputSchema = z.object({
