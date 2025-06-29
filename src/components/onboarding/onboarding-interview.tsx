@@ -120,7 +120,7 @@ export default function OnboardingInterview({ onOnboardingComplete }: Onboarding
             <Card className="w-full max-w-3xl h-[80vh] flex flex-col">
                 <CardHeader>
                     <CardTitle className="font-headline text-primary flex items-center gap-2">
-                        <Sparkles /> SanityTrack AI Onboarding
+                        <Sparkles /> Leifur.AI AI Onboarding
                     </CardTitle>
                     <CardDescription>
                         Let's set up your business together. Just answer a few questions.

@@ -51,7 +51,7 @@ export default function BrandingPage() {
                 <CardTitle className="font-headline flex items-center gap-2">
                     <Paintbrush /> Branding & Appearance
                 </CardTitle>
-                <CardDescription>Customize the look and feel of your SanityTrack workspace to match your brand.</CardDescription>
+                <CardDescription>Customize the look and feel of your Leifur.AI workspace to match your brand.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
                 <div className="space-y-4">
