@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import type { ToastPOSData } from '@/ai/schemas/toast-pos-schemas';
+import type { ServiceAlert } from '@/ai/schemas/service-alert-schemas';
 import OwnerServiceAlertWidget from '@/components/owner-service-alert-widget';
 import { Input } from '@/components/ui/input';
 import OnboardingInterview from '@/components/onboarding/onboarding-interview';
@@ -108,6 +109,7 @@ export default function OwnerDashboard() {
   
   const [pendingPOs, setPendingPOs] = useState<PurchaseOrder[]>([]);
   const [inspectorTasks] = useState<DelegatedTask[]>(initialDelegatedTasks);
+  const [pendingAlertCount, setPendingAlertCount] = useState(0);
 
   const [copiedUrlId, setCopiedUrlId] = useState<number | null>(null);
 
@@ -174,13 +176,19 @@ export default function OwnerDashboard() {
         
         const storedPOs = JSON.parse(localStorage.getItem('pendingPurchaseOrders') || '[]');
         setPendingPOs(storedPOs);
+
+        if (selectedLocation) {
+          const storedAlerts = JSON.parse(localStorage.getItem('serviceAlerts') || '[]');
+          const pending = storedAlerts.filter((a: ServiceAlert) => a.status === 'pending_owner_action' && a.locationId === selectedLocation.name);
+          setPendingAlertCount(pending.length);
+        }
     };
 
     checkStorage();
     const interval = setInterval(checkStorage, 2000); 
 
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedLocation]);
   
   const handleOnboardingComplete = () => {
         setIsNewUser(false);
@@ -330,7 +338,7 @@ export default function OwnerDashboard() {
             <div className="flex items-center justify-center p-4 md:p-8">
                 <Card className="w-full max-w-lg">
                     <CardHeader>
-                        <CardTitle className="font-headline">Welcome to SanityTrack!</CardTitle>
+                        <CardTitle className="font-headline">Welcome to Leifur.AI!</CardTitle>
                         <CardDescription>To get started, please add your first business location.</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -361,26 +369,44 @@ export default function OwnerDashboard() {
          <Card>
             <CardHeader>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                      <div>
-                          <CardTitle className="font-headline">Executive Vitals (Simulated Data)</CardTitle>
-                          <CardDescription>A high-level overview of your enterprise's health.</CardDescription>
-                      </div>
-                       <Select value={selectedLocation?.name} onValueChange={(name) => setSelectedLocation(locations.find(l => l.name === name))}>
-                          <SelectTrigger className="w-full md:w-auto md:min-w-[200px]"><SelectValue placeholder="Select location..." /></SelectTrigger>
-                          <SelectContent>{locations.map(loc => <SelectItem key={loc.id} value={loc.name}>{loc.name}</SelectItem>)}</SelectContent>
-                      </Select>
-                  </div>
-            </CardHeader>
-             <CardContent>
-                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Today's Sales</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold flex items-center gap-2">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.liveSalesToday.toLocaleString()}` : <p>No data</p>}<DollarSign className="h-4 w-4 text-muted-foreground"/></div></CardContent></Card>
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Compliance</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold flex items-center gap-2">92.5%<ShieldCheck className="h-4 w-4 text-muted-foreground"/></div></CardContent></Card>
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Cust. Sat.</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold flex items-center gap-2">4.8/5<Smile className="h-4 w-4 text-muted-foreground"/></div></CardContent></Card>
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Labor %</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold flex items-center gap-2">28%<Users className="h-4 w-4 text-muted-foreground"/></div></CardContent></Card>
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Handwash/Hr</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold flex items-center gap-2">12<Handshake className="h-4 w-4 text-muted-foreground"/></div></CardContent></Card>
-                    <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Prep Time</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold flex items-center gap-2">55s<Watch className="h-4 w-4 text-muted-foreground"/></div></CardContent></Card>
+                    <div>
+                        <CardTitle className="font-headline">KPI Overview</CardTitle>
+                        <CardDescription>A high-level overview of your enterprise's health for: {selectedLocation?.name}</CardDescription>
+                    </div>
+                    <Select value={selectedLocation?.name} onValueChange={(name) => setSelectedLocation(locations.find(l => l.name === name))}>
+                        <SelectTrigger className="w-full md:w-auto md:min-w-[200px]"><SelectValue placeholder="Select location..." /></SelectTrigger>
+                        <SelectContent>{locations.map(loc => <SelectItem key={loc.id} value={loc.name}>{loc.name}</SelectItem>)}</SelectContent>
+                    </Select>
                 </div>
-             </CardContent>
+            </CardHeader>
+            <CardContent>
+                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+                    <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Today's Sales</CardTitle></CardHeader>
+                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.liveSalesToday.toLocaleString()}` : <p>N/A</p>}<DollarSign className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Month-to-Date Sales</CardTitle></CardHeader>
+                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.salesThisMonth.toLocaleString()}` : <p>N/A</p>}<DollarSign className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Compliance Score</CardTitle></CardHeader>
+                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">92.5%<ShieldCheck className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Customer Satisfaction</CardTitle></CardHeader>
+                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">4.8/5<Smile className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pending Approvals</CardTitle></CardHeader>
+                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">{hiringRequests.length + pendingPOs.length}<Briefcase className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Open Service Alerts</CardTitle></CardHeader>
+                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">{pendingAlertCount}<AlertTriangle className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                    </Card>
+                </div>
+            </CardContent>
          </Card>
        </Feature>
 
