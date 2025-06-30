@@ -109,8 +109,9 @@ const ownerNav = [
         icon: Eye,
         links: [
             { name: "Approvals & Alerts", href: "/dashboard/owner#high-priority-approvals" },
-            { name: "AI Monitoring Setup", href: "/dashboard/owner/agent-rules" },
-             { name: "Agent Activity Log", href: "/dashboard/owner#agent-activity-log" },
+            { name: "AI Monitoring Setup", href: "/dashboard/owner/monitoring" },
+            { name: "AI Agent Rules", href: "/dashboard/owner/agent-rules" },
+            { name: "Agent Activity Log", href: "/dashboard/owner#agent-activity-log" },
         ]
     },
     {
@@ -135,7 +136,6 @@ const ownerNav = [
         links: [
             { name: "Team & Permissions", href: "/dashboard/owner/team" },
             { name: "Branding", href: "/dashboard/owner/branding" },
-            { name: "AI Agent Rules", href: "/dashboard/owner/agent-rules" },
             { name: "Feature Flags", href: "/dashboard/owner/features" },
         ]
     },
