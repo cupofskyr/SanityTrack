@@ -48,7 +48,7 @@ const prompt = ai.definePrompt({
     model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: z.object({ historyAsString: z.string() }) },
     output: { schema: z.object({ nextStep: OnboardingStateSchema.shape.currentStep }) },
-    prompt: `You are a friendly and efficient onboarding assistant for a software called Leifur.AI. 
+    prompt: `You are a friendly and efficient onboarding assistant for a software called SanityTrack. 
       Your goal is to guide a new user through a setup interview. You have a list of steps to follow.
       Based on the conversation history, determine the NEXT step in the process.
       
