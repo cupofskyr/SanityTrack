@@ -41,6 +41,7 @@ import {
   Package,
   Link as LinkIcon,
   Gift,
+  Component,
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -149,6 +150,7 @@ const ownerNav = [
             { name: "Feature Flags", href: "/dashboard/owner/features" },
             { name: "API Integrations", href: "/dashboard/owner/integrations" },
             { name: "Employee Perks", href: "/dashboard/owner/perks" },
+            { name: "UI Components", href: "/dashboard/components" },
         ]
     },
     {
