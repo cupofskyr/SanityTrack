@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import PhotoUploader from "@/components/photo-uploader";
-import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Timer, Megaphone, Sparkles, Loader2, Languages, ArrowRightLeft, ShieldCheck, BookOpen, Edit, FileText, Video, Zap } from "lucide-react";
+import { CheckCircle, AlertTriangle, ListTodo, PlusCircle, CalendarDays, Clock, AlertCircle, Timer, Megaphone, Sparkles, Loader2, Languages, ArrowRightLeft, ShieldCheck, BookOpen, Edit, FileText, Video, Zap, ThumbsUp } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +22,9 @@ import EmployeeServiceAlertWidget from "@/components/employee-service-alert-widg
 import type { CompareFoodQualityOutput } from "@/ai/schemas/food-quality-schemas";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 
 const initialTasks = [
   { id: 1, name: "Clean kitchen floor", area: "Kitchen", priority: "High", status: "Pending", type: 'regular' },
@@ -81,6 +84,10 @@ export default function EmployeeDashboard() {
   const [briefing, setBriefing] = useState(initialBriefing);
   const [translatedBriefing, setTranslatedBriefing] = useState<{title: string, message: string} | null>(null);
   const [isTranslatingBriefing, setIsTranslatingBriefing] = useState(false);
+  const [briefingLikes, setBriefingLikes] = useState(5);
+  const [isBriefingLiked, setIsBriefingLiked] = useState(false);
+  const [comments, setComments] = useState<string[]>(["Great message, ready for a productive day!"]);
+  const [newComment, setNewComment] = useState("");
   
   const [allShifts, setAllShifts] = useState<Shift[]>([]);
   const [isTaskDialogsOpen, setIsTaskDialogsOpen] = useState<Record<number, boolean>>({});
@@ -220,6 +227,23 @@ export default function EmployeeDashboard() {
     } finally {
         setIsTranslatingBriefing(false);
     }
+  };
+
+  const handleLikeBriefing = () => {
+    if (isBriefingLiked) {
+        setBriefingLikes(l => l - 1);
+    } else {
+        setBriefingLikes(l => l + 1);
+    }
+    setIsBriefingLiked(!isBriefingLiked);
+  };
+
+  const handleAddComment = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (newComment.trim()) {
+          setComments(prev => [...prev, newComment.trim()]);
+          setNewComment("");
+      }
   };
   
   const handleOfferShift = (shiftId: string) => {
@@ -402,17 +426,46 @@ export default function EmployeeDashboard() {
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader className="flex-row items-start justify-between">
-                    <div>
-                        <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Message from the Manager</CardTitle>
-                        <CardDescription>Your manager's daily briefing and focus for the team.</CardDescription>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={handleTranslateBriefing} disabled={isTranslatingBriefing}>{isTranslatingBriefing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}{translatedBriefing ? 'Show Original' : 'Translate'}</Button>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Megaphone /> Message from the Manager</CardTitle>
+                    <CardDescription>Your manager's daily briefing and focus for the team.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Alert><AlertTitle className="font-semibold">{translatedBriefing ? translatedBriefing.title : briefing.title}</AlertTitle><AlertDescription><p className="mb-2">{translatedBriefing ? translatedBriefing.message : briefing.message}</p><p className="font-semibold text-xs mb-1">Today's Focus:</p><ul className="list-disc list-inside text-xs">{briefing.tasks.map((task, i) => <li key={i}>{task}</li>)}</ul></AlertDescription></Alert>
-                    <p className="text-xs text-muted-foreground mt-2 text-center">This is an example briefing. Your manager can post new messages daily.</p>
                 </CardContent>
+                <CardFooter className="flex-col items-start gap-4 pt-4">
+                    <div className="flex items-center gap-4">
+                        <Button variant="outline" size="sm" onClick={handleTranslateBriefing} disabled={isTranslatingBriefing}>
+                            {isTranslatingBriefing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}
+                            {translatedBriefing ? 'Show Original' : 'Translate'}
+                        </Button>
+                        <Button variant={isBriefingLiked ? "default" : "outline"} size="sm" onClick={handleLikeBriefing} className="flex items-center gap-1.5">
+                            <ThumbsUp className={cn("h-4 w-4", isBriefingLiked && "text-white-500 fill-white-500")} />
+                            <span>{briefingLikes}</span>
+                        </Button>
+                    </div>
+                    <div className="w-full space-y-2">
+                        <Label htmlFor="comment-input" className="text-xs font-semibold">Leave a comment</Label>
+                        <form onSubmit={handleAddComment} className="flex gap-2">
+                            <Input id="comment-input" placeholder="Add to the discussion..." value={newComment} onChange={e => setNewComment(e.target.value)} />
+                            <Button type="submit" size="sm">Post</Button>
+                        </form>
+                    </div>
+                    <div className="w-full space-y-3 pt-2">
+                        {comments.map((comment, index) => (
+                            <div key={index} className="text-sm flex items-start gap-2">
+                                <Avatar className="h-6 w-6">
+                                    <AvatarImage src={`https://placehold.co/40x40.png?text=U`} data-ai-hint="user avatar" />
+                                    <AvatarFallback>U</AvatarFallback>
+                                </Avatar>
+                                <div className="bg-muted/50 p-2 rounded-md flex-1">
+                                    <span className="font-semibold text-xs">A Teammate</span>
+                                    <p>{comment}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </CardFooter>
             </Card>
        </div>
 
