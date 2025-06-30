@@ -38,6 +38,8 @@ import {
   BookOpen,
   DollarSign,
   Camera,
+  Package,
+  Link as LinkIcon,
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -109,8 +111,14 @@ const ownerNav = [
         icon: Eye,
         links: [
             { name: "Approvals & Alerts", href: "/dashboard/owner#high-priority-approvals" },
-            { name: "AI Monitoring Setup", href: "/dashboard/owner/monitoring" },
-            { name: "AI Agent Rules", href: "/dashboard/owner/agent-rules" },
+        ]
+    },
+    {
+        category: "AI Engine",
+        icon: BrainCircuit,
+        links: [
+            { name: "Monitoring Setup", href: "/dashboard/owner/monitoring" },
+            { name: "Agent Rules", href: "/dashboard/owner/agent-rules" },
             { name: "Agent Activity Log", href: "/dashboard/owner#agent-activity-log" },
         ]
     },
@@ -137,6 +145,7 @@ const ownerNav = [
             { name: "Team & Permissions", href: "/dashboard/owner/team" },
             { name: "Branding", href: "/dashboard/owner/branding" },
             { name: "Feature Flags", href: "/dashboard/owner/features" },
+            { name: "API Integrations", href: "/dashboard/owner/integrations" },
         ]
     },
     {
