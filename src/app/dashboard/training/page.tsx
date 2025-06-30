@@ -5,7 +5,7 @@ import { useState } from 'react';
 import MenuGame from '@/components/menu-game';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { BookOpen, Video, Upload, Trophy, PlayCircle, Lightbulb, Heart } from 'lucide-react';
+import { BookOpen, Video, Upload, Trophy, PlayCircle, Lightbulb, Heart, Shuffle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
+import SortItOutGame from '@/components/sort-it-out-game';
 
 
 type VideoSubmission = {
@@ -118,7 +119,7 @@ export default function ArcadeZonePage() {
         <div className="space-y-6">
              <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><BookOpen/> Menu Training Game</CardTitle>
+                    <CardTitle className="font-headline flex items-center gap-2"><BookOpen/> Spot the Issue</CardTitle>
                     <CardDescription>Test your knowledge of our menu items, ingredients, and allergens. Good luck!</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -129,6 +130,16 @@ export default function ArcadeZonePage() {
                             Keep practicing! A leaderboard will be added soon to see how you rank against your teammates.
                         </AlertDescription>
                     </Alert>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Shuffle/> Sort It Out!</CardTitle>
+                    <CardDescription>Know your kitchen. Sort each item to the correct station to test your operational flow knowledge.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <SortItOutGame />
                 </CardContent>
             </Card>
 
@@ -272,5 +283,3 @@ export default function ArcadeZonePage() {
         </div>
     );
 }
-
-    

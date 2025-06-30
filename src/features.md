@@ -105,9 +105,12 @@ This section details the primary features of the application, organized by opera
     *   **Location:** Knowledge Base (Manager/Owner), Company Brain (All).
     *   **Functionality:** Managers and Owners can upload documents (PDFs, images) to create a corporate knowledge base. The "Company Brain" is an AI assistant that *only* uses these documents to answer questions, ensuring accurate, context-aware responses (a technique known as Retrieval-Augmented Generation or RAG).
 
-*   **Training Center (All Roles):**
+*   **Arcade Zone (All Roles):**
     *   **Location:** Training Page.
-    *   **Functionality:** Includes a "Menu Game" to test employees on menu knowledge and a "Speed Run Challenge" where they can upload videos of themselves making items to compete on a leaderboard.
+    *   **Functionality:** A gamified training hub.
+        *   **Spot the Issue:** A quiz game where employees identify allergens and proper procedure for various food prep scenarios.
+        *   **Sort It Out!:** A sorting game where employees must assign items (e.g., "Raw Chicken," "Clean Plates") to the correct kitchen station (e.g., "Prep Station," "Serving Line").
+        *   **Speed Run Challenge:** A video-based competition where employees upload videos of themselves making menu items to compete on a time-based leaderboard.
 
 *   **System Administration (Owner):**
     *   **Location:** Owner Dashboard.
