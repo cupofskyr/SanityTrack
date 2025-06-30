@@ -147,10 +147,16 @@ const ownerNav = [
         links: [
             { name: "Team & Permissions", href: "/dashboard/owner/team" },
             { name: "Branding", href: "/dashboard/owner/branding" },
-            { name: "Feature Flags", href: "/dashboard/owner/features" },
             { name: "API Integrations", href: "/dashboard/owner/integrations" },
             { name: "Employee Perks", href: "/dashboard/owner/perks" },
+        ]
+    },
+    {
+        category: "Developer Tools",
+        icon: Component,
+        links: [
             { name: "UI Components", href: "/dashboard/components" },
+            { name: "Feature Flags", href: "/dashboard/owner/features" },
         ]
     },
     {
