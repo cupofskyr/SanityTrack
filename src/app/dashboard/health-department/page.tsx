@@ -16,7 +16,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from '@/components/ui/textarea';
-import { processInspectionReport, generateInquiry, analyzeIssue } from '@/app/actions';
+import { processInspectionReportAction, generateInquiryAction, analyzeIssueAction } from '@/app/actions';
 import type { AnalyzeIssueOutput } from '@/ai/schemas/issue-analysis-schemas';
 import type { ProcessInspectionReportOutput } from '@/ai/schemas/inspection-report-schemas';
 import type { GenerateInquiryOutput } from '@/ai/schemas/inquiry-generation-schemas';
@@ -197,7 +197,7 @@ export default function HealthDeptDashboard() {
         locationName: reportLocation,
         inspectionDate: format(new Date(), 'yyyy-MM-dd'),
       };
-      const result = await processInspectionReport(input);
+      const result = await processInspectionReportAction(input);
       if (result.error || !result.data) {
         throw new Error(result.error || "Failed to process report.");
       }
@@ -240,7 +240,7 @@ export default function HealthDeptDashboard() {
     if (!report.aiAnalysis) {
         setIsAnalyzing(true);
         try {
-            const result = await analyzeIssue({ description: report.issue });
+            const result = await analyzeIssueAction({ description: report.issue });
             if (result.error || !result.data) throw new Error(result.error || 'No data returned from AI.');
             setRecentReports(reports => reports.map(r => 
                 r.id === report.id ? { ...r, aiAnalysis: result.data as AnalyzeIssueOutput } : r
@@ -265,7 +265,7 @@ export default function HealthDeptDashboard() {
     setIsGeneratingMessage(true);
     setAiMessage(null);
     try {
-        const result = await generateInquiry({
+        const result = await generateInquiryAction({
             guestReport: report.issue,
             locationName: report.location,
             ownerName: report.owner,
@@ -469,27 +469,56 @@ export default function HealthDeptDashboard() {
             </Card>
         </TabsContent>
 
-        <TabsContent value="compliance_rules">
+        <TabsContent value="compliance_rules" className="space-y-6">
+           <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">Manager Suggestions Pending Approval</CardTitle>
+                    <CardDescription>Review new recurring tasks suggested by location managers.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader><TableRow><TableHead>Description</TableHead><TableHead>From</TableHead><TableHead>Location</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                            {complianceTasks.filter(t => t.status === 'Pending Approval').length > 0 ? complianceTasks.filter(t => t.status === 'Pending Approval').map(task => (
+                                <TableRow key={task.id} className="bg-primary/5">
+                                    <TableCell className="font-medium">{task.description}</TableCell>
+                                    <TableCell>{task.source}</TableCell>
+                                    <TableCell>{task.location}</TableCell>
+                                    <TableCell className="text-right space-x-2">
+                                        <Button size="sm" onClick={() => handleApproveTask(task.id)}><Check className="mr-2 h-4 w-4" /> Approve</Button>
+                                        <Button size="sm" variant="destructive" onClick={() => handleRejectTask(task.id)}><X className="mr-2 h-4 w-4" /> Reject</Button>
+                                    </TableCell>
+                                </TableRow>
+                            )) : (
+                                <TableRow><TableCell colSpan={4} className="text-center h-24 text-muted-foreground">No pending suggestions from managers.</TableCell></TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+           </Card>
            <Card>
                 <CardHeader className="flex flex-row items-start justify-between">
                     <div>
-                        <CardTitle className="flex items-center gap-2"><FileCheck /> Defined Compliance Tasks</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><FileCheck /> Official Compliance Task List</CardTitle>
                         <CardDescription>This is the master list of all recurring compliance tasks for your jurisdictions.</CardDescription>
                     </div>
                     <Button onClick={() => handleOpenDialog(null)}><PlusCircle className="mr-2 h-4 w-4" /> Add New Task</Button>
                 </CardHeader>
                 <CardContent>
                   <Table>
-                    <TableHeader><TableRow><TableHead className="w-[35%]">Description</TableHead><TableHead>Location</TableHead><TableHead>Frequency</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead className="w-[35%]">Description</TableHead><TableHead>Location</TableHead><TableHead>Frequency</TableHead><TableHead>Source</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
-                      {complianceTasks.length > 0 ? (
-                        complianceTasks.map((task) => (
-                          <TableRow key={task.id} className={task.status === 'Pending Approval' ? 'bg-primary/5' : ''}>
+                      {complianceTasks.filter(t => t.status === 'Approved').length > 0 ? (
+                        complianceTasks.filter(t => t.status === 'Approved').map((task) => (
+                          <TableRow key={task.id}>
                             <TableCell className="font-medium">{task.description}</TableCell>
                             <TableCell>{task.location}</TableCell>
                             <TableCell>{task.frequency}</TableCell>
-                            <TableCell><Badge variant={task.status === 'Approved' ? 'default' : 'secondary'}>{task.status}</Badge></TableCell>
-                            <TableCell className="text-right">{task.status === 'Approved' ? (<><Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}><Pencil className="h-4 w-4" /><span className="sr-only">Edit Task</span></Button><Button variant="ghost" size="icon" onClick={() => handleDeleteClick(task)}><Trash2 className="h-4 w-4" /><span className="sr-only">Remove Task</span></Button></>) : (<div className="flex justify-end gap-2"><Button size="sm" onClick={() => handleApproveTask(task.id)}><Check className="mr-2 h-4 w-4" /> Approve</Button><Button size="sm" variant="destructive" onClick={() => handleRejectTask(task.id)}><X className="mr-2 h-4 w-4" /> Reject</Button></div>)}</TableCell>
+                            <TableCell><Badge variant="outline">{task.source}</Badge></TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}><Pencil className="h-4 w-4" /><span className="sr-only">Edit Task</span></Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(task)}><Trash2 className="h-4 w-4" /><span className="sr-only">Remove Task</span></Button>
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (
