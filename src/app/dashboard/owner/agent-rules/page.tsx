@@ -87,7 +87,7 @@ export default function AgentRulesPage() {
                             Sentinel Agent: Rules of Engagement
                         </CardTitle>
                         <CardDescription>
-                            This is the master control panel for the AI agent. Enable, disable, and create custom rules here.
+                            This is the master control panel for the AI agent for your business. Configure the rules for your specific locations.
                         </CardDescription>
                     </div>
                      <Dialog open={isRuleDialogOpen} onOpenChange={setIsRuleDialogOpen}>
