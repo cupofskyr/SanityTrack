@@ -1,11 +1,11 @@
 
-# SanityTrack: Feature & Engine Guide
+# Leifur AI: Feature & Engine Guide
 
-This document provides a comprehensive overview of the SanityTrack application, its features, user roles, and the underlying AI engine. Use this as a guide for creating documentation and demonstration videos.
+This document provides a comprehensive overview of the Leifur AI application, its features, user roles, and the underlying AI engine. Use this as a guide for creating documentation and demonstration videos.
 
 ## 1. Application Overview
 
-**SanityTrack is an AI-powered operating system for restaurants.** It's designed to automate tedious tasks, provide proactive insights, and empower every member of the team, from the owner to the kitchen staff. It consolidates operations, compliance, team management, and quality control into a single, intelligent platform.
+**Leifur AI is an AI-powered operating system for restaurants.** It's designed to automate tedious tasks, provide proactive insights, and empower every member of the team, from the owner to the kitchen staff. It consolidates operations, compliance, team management, and quality control into a single, intelligent platform.
 
 ---
 
@@ -117,7 +117,7 @@ This section details the primary features of the application, organized by opera
 
 ## 4. The "Engine" - How the AI Works
 
-SanityTrack's intelligence is powered by **Google's Gemini models** accessed through the **Genkit** framework.
+Leifur AI's intelligence is powered by **Google's Gemini models** accessed through the **Genkit** framework.
 
 *   **AI Flows (`src/ai/flows/*.ts`):** These are the core backend AI logic files. Each file defines a specific capability (e.g., `analyzeIssueFlow`, `generateScheduleFlow`). They contain the main prompt that instructs the AI, defines the expected input/output format using Zod schemas, and calls the AI model.
 
@@ -166,4 +166,4 @@ SanityTrack's intelligence is powered by **Google's Gemini models** accessed thr
     *   Go back to the **Owner** dashboard. Show the `pendingPurchaseOrders` that the Manager submitted. Approve one.
     *   This shows how actions by one role create tasks or approvals for another, demonstrating a cohesive system.
 
-By following this script, you can create a clear and compelling video that showcases the full power and intelligence of the SanityTrack application.
+By following this script, you can create a clear and compelling video that showcases the full power and intelligence of the Leifur AI application.

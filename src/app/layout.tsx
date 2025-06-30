@@ -18,7 +18,7 @@ const playfair = Playfair({
 });
 
 export const metadata: Metadata = {
-  title: 'SanityTrack 2.0',
+  title: 'Leifur AI',
   description: 'The AI-Powered OS for Your Work Place.',
 };
 
@@ -45,5 +45,4 @@ export default function RootLayout({
     </html>
   );
 }
-
     
