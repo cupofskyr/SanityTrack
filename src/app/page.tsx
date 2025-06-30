@@ -34,7 +34,7 @@ export default function AppFrontDoorPage() {
           <div className="max-w-lg">
             <div className="flex items-center gap-3 mb-6">
                <Logo className="h-10 w-10 text-primary" />
-               <h1 className="text-3xl font-bold font-headline">Leifur.AI</h1>
+               <h1 className="text-3xl font-bold font-headline">SanityTrack</h1>
             </div>
             <h2 className="text-4xl font-bold font-headline tracking-tight text-primary lg:text-5xl">
               The AI-Powered OS for Your Work Place.
@@ -61,7 +61,7 @@ export default function AppFrontDoorPage() {
           <div className="w-full max-w-sm space-y-6">
             <div className="text-center md:hidden">
                 <Logo className="h-12 w-12 text-primary mx-auto mb-2" />
-                <h1 className="text-3xl font-bold font-headline">Leifur.AI</h1>
+                <h1 className="text-3xl font-bold font-headline">SanityTrack</h1>
             </div>
             
             <AuthForm />
@@ -86,3 +86,5 @@ export default function AppFrontDoorPage() {
     </main>
   );
 }
+
+    

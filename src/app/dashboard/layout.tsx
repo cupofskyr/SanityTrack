@@ -310,7 +310,7 @@ export default function DashboardLayout({
           <div className="flex items-center gap-2">
             <Logo className="h-7 w-7 text-primary" />
             <span className="text-lg font-semibold text-primary font-headline group-data-[collapsible=icon]:hidden">
-              Leifur.AI
+              SanityTrack
             </span>
           </div>
         </SidebarHeader>
@@ -392,13 +392,13 @@ export default function DashboardLayout({
                   <DialogHeader>
                     <DialogTitle className="font-headline text-2xl">Terms of Use & AI Notice</DialogTitle>
                     <DialogDescription>
-                      Before using Leifur.AI, please read and agree to the following terms.
+                      Before using SanityTrack, please read and agree to the following terms.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto text-sm text-muted-foreground pr-2">
-                    <p>Welcome to Leifur.AI. This is a powerful operational tool designed to improve safety, efficiency, and compliance.</p>
+                    <p>Welcome to SanityTrack. This is a powerful operational tool designed to improve safety, efficiency, and compliance.</p>
                     <h4 className="font-semibold text-foreground">AI & Camera Usage</h4>
-                    <p>By using this application, you acknowledge and agree that Leifur.AI utilizes Artificial Intelligence (AI) and camera-based monitoring for operational purposes. This includes, but is not limited to:</p>
+                    <p>By using this application, you acknowledge and agree that SanityTrack utilizes Artificial Intelligence (AI) and camera-based monitoring for operational purposes. This includes, but is not limited to:</p>
                     <ul className="list-disc list-inside space-y-1 pl-2">
                         <li>Analyzing camera feeds to detect potential safety hazards (e.g., spills), assess quality standards, and monitor operational efficiency (e.g., wait times).</li>
                         <li>Generating tasks, reports, and communications based on AI analysis of data you provide or data collected through application features.</li>
@@ -407,7 +407,7 @@ export default function DashboardLayout({
                     <h4 className="font-semibold text-foreground">Data & Privacy</h4>
                     <p>All data, including images and text you provide, is processed to power the application's features. We are committed to handling your data responsibly. This is a demonstration application; do not upload sensitive personal or business information.</p>
                      <h4 className="font-semibold text-foreground">User Agreement</h4>
-                    <p>You agree to use Leifur.AI responsibly and in accordance with all applicable laws and company policies. You understand that this tool is used for operational management and compliance monitoring.</p>
+                    <p>You agree to use SanityTrack responsibly and in accordance with all applicable laws and company policies. You understand that this tool is used for operational management and compliance monitoring.</p>
                   </div>
                    <div className="flex items-center space-x-2 pt-4 border-t">
                       <Checkbox id="terms" checked={isPolicyAccepted} onCheckedChange={(checked) => setIsPolicyAccepted(checked as boolean)} />
@@ -429,3 +429,5 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
+
+    
