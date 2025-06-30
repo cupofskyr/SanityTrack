@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileText, Component, Flag, Shield, Settings, Users, Database } from 'lucide-react'
+import { FileText, Component, Flag, Shield, Settings, Users, Database, Bot } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminPage() {
@@ -29,31 +29,16 @@ export default function AdminPage() {
                 </Link>
             </Card>
             <Card className="hover:border-primary transition-colors">
-                <Link href="#" className="block h-full">
+                <Link href="/admin/agent-rules" className="block h-full">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Users className="text-primary"/>
-                            User Management
+                            <Bot className="text-primary"/>
+                            AI Agent Rules
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">
-                           View, edit, and manage all users and their assigned roles across the system. (Coming Soon)
-                        </p>
-                    </CardContent>
-                </Link>
-            </Card>
-            <Card className="hover:border-primary transition-colors">
-                <Link href="#" className="block h-full">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Settings className="text-primary"/>
-                            System Settings
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground">
-                           Configure global settings, API keys, and third-party integrations for the entire application. (Coming Soon)
+                            View and manage the default set of rules that govern the AI's autonomous behavior.
                         </p>
                     </CardContent>
                 </Link>
@@ -68,7 +53,7 @@ export default function AdminPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">
-                            View the complete guide to the application, its features, user roles, and the underlying AI engine.
+                            The official blueprint for the app's features, AI logic, and code structure.
                         </p>
                     </CardContent>
                 </Link>
@@ -83,7 +68,22 @@ export default function AdminPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">
-                           Browse and test the available ShadCN UI components used to build the application's interface.
+                           Browse and test the available UI components used to build the application's interface.
+                        </p>
+                    </CardContent>
+                </Link>
+            </Card>
+             <Card className="hover:border-primary transition-colors">
+                <Link href="#" className="block h-full">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Users className="text-primary"/>
+                            User Management
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                           View, edit, and manage all users and their assigned roles across the system. (Coming Soon)
                         </p>
                     </CardContent>
                 </Link>

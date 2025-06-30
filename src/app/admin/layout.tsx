@@ -21,7 +21,8 @@ import {
   Component,
   FileText,
   Flag,
-  Home
+  Home,
+  Bot
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const adminNav = [
     { name: "System Handbook", href: "/admin/documentation", icon: FileText },
     { name: "UI Components", href: "/admin/components", icon: Component },
     { name: "Feature Flags", href: "/admin/features", icon: Flag },
+    { name: "AI Agent Rules", href: "/admin/agent-rules", icon: Bot },
 ];
 
 export default function AdminLayout({
