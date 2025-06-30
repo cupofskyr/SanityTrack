@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileText, Component, Flag, Shield, Settings, Users, Database, Bot } from 'lucide-react'
+import { FileText, Component, Flag, Shield, Settings, Users, Database, Bot, BrainCircuit } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminPage() {
@@ -47,13 +47,13 @@ export default function AdminPage() {
                 <Link href="/admin/documentation" className="block h-full">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <FileText className="text-primary"/>
-                            System Handbook
+                            <BrainCircuit className="text-primary"/>
+                            System Handbook (Master AI Brain)
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">
-                            The official blueprint for the app's features, AI logic, and code structure.
+                            The official documentation for the AI's core logic, features, and knowledge ingestion protocol.
                         </p>
                     </CardContent>
                 </Link>
