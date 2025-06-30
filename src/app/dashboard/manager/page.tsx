@@ -486,7 +486,7 @@ export default function ManagerDashboard() {
                     <CardTitle className="font-headline flex items-center gap-2"><Thermometer/> Live Temperature Monitoring (Simulated)</CardTitle>
                     <CardDescription>Real-time data from your connected equipment. Alerts are triggered for out-of-range temperatures.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     {Object.entries(tempData).map(([name, temp]) => {
                         const isAlert = name.includes('Cooler') && temp > 41 || name.includes('Freezer') && temp > 0;
                         return (
@@ -619,7 +619,7 @@ export default function ManagerDashboard() {
             <Tooltip><TooltipTrigger asChild>
                     <Card className="lg:col-span-3" id="time-clock-feed">
                         <CardHeader><CardTitle className="font-headline flex items-center gap-2"><Clock /> Live Time Clock Feed</CardTitle></CardHeader>
-                        <CardContent><Table><TableHeader><TableRow><TableHead>Employee</TableHead><TableHead>Event</TableHead><TableHead>Time</TableHead><TableHead>Deviation</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
+                        <CardContent><Table><TableHeader><TableRow><TableHead>Employee</TableHead><TableHead>Event</TableHead><TableHead>Time</TableHead><TableHead className="hidden md:table-cell">Deviation</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
                                 <TableBody>
                                     {timeClockLogs.length > 0 ? timeClockLogs.map(log => {
                                         const deviation = calculateDeviation(log);
@@ -628,7 +628,7 @@ export default function ManagerDashboard() {
                                                 <TableCell className="font-medium">{log.employeeName}</TableCell>
                                                 <TableCell><Badge variant={log.type === 'in' ? 'default' : 'secondary'}>Clocked {log.type === 'in' ? 'In' : 'Out'}</Badge></TableCell>
                                                 <TableCell>{format(new Date(log.timestamp), 'p')}</TableCell>
-                                                <TableCell className={cn(deviation.isLate && "font-semibold text-destructive")}>{deviation.text}</TableCell>
+                                                <TableCell className={cn("hidden md:table-cell", deviation.isLate && "font-semibold text-destructive")}>{deviation.text}</TableCell>
                                                 <TableCell className="text-right space-x-1"><Button size="sm" variant="outline"><Phone className="mr-2 h-4 w-4" /> Call</Button>
                                                     {deviation.isLate && (<Button size="sm" variant="destructive" onClick={() => handleGenerateWarning(log, deviation.details)}><MailWarning className="mr-2 h-4 w-4" /> AI Warning</Button>)}
                                                 </TableCell>

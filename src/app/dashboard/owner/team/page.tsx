@@ -129,7 +129,7 @@ export default function TeamPage() {
                             <TableRow>
                                 <TableHead>User</TableHead>
                                 <TableHead>Role Title</TableHead>
-                                <TableHead>Hourly Rate</TableHead>
+                                <TableHead className="hidden sm:table-cell">Hourly Rate</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -151,7 +151,7 @@ export default function TeamPage() {
                                     <TableCell>
                                         <Badge variant="outline">{member.roleTitle}</Badge>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="hidden sm:table-cell">
                                         {formatCurrency(member.hourlyRate)}
                                     </TableCell>
                                     <TableCell className="text-right">
