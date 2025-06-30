@@ -51,6 +51,8 @@ import type {
   GenerateShiftSuggestionsInput,
   GenerateShiftSuggestionsOutput,
 } from '@/ai/schemas/shift-suggestion-schemas';
+import { suggestManualChecks } from '@/ai/flows/suggest-manual-checks-flow';
+import type { ManualCheckSuggestionOutput } from '@/ai/schemas/manual-check-schemas';
 
 
 const db = getFirestore(app);
@@ -393,4 +395,8 @@ export async function generateShiftSuggestionsAction(
   input: GenerateShiftSuggestionsInput
 ): Promise<{ data: GenerateShiftSuggestionsOutput | null; error: string | null }> {
   return safeRun(generateShiftSuggestions, input, 'generateShiftSuggestions');
+}
+
+export async function suggestManualChecksAction(): Promise<{ data: ManualCheckSuggestionOutput | null; error: string | null; }> {
+    return safeRun(() => suggestManualChecks(), {}, 'suggestManualChecks');
 }

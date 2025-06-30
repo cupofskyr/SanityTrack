@@ -8,12 +8,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, PlusCircle, Trash2, Video, Sparkles, Loader2, Link as LinkIcon, AlertCircle, Terminal } from 'lucide-react';
-import { analyzeCameraImageAction } from '@/app/actions';
+import { Camera, PlusCircle, Trash2, Video, Sparkles, Loader2, Link as LinkIcon, AlertCircle, Terminal, CheckCircle } from 'lucide-react';
+import { analyzeCameraImageAction, suggestManualChecksAction } from '@/app/actions';
 import type { CameraAnalysisOutput } from '@/ai/flows/camera-analysis-schemas';
+import type { ManualCheckTask } from '@/ai/schemas/manual-check-schemas';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Textarea } from './ui/textarea';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Badge } from './ui/badge';
 
 type VirtualCamera = {
   id: number;
@@ -44,6 +47,10 @@ export default function AIMonitoringSetup() {
     const [analysisPrompts, setAnalysisPrompts] = useState<Record<number, string>>({});
     const [isLoading, setIsLoading] = useState<number | null>(null);
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+
+    // Manual mode state
+    const [isSuggesting, setIsSuggesting] = useState(false);
+    const [suggestedManualTasks, setSuggestedManualTasks] = useState<ManualCheckTask[] | null>(null);
 
     const handleAddCamera = (e: FormEvent) => {
         e.preventDefault();
@@ -114,6 +121,33 @@ export default function AIMonitoringSetup() {
         } finally {
             setIsLoading(null);
         }
+    };
+    
+    const handleSuggestManualChecks = async () => {
+        setIsSuggesting(true);
+        setSuggestedManualTasks(null);
+        try {
+            const result = await suggestManualChecksAction();
+            if (result.error || !result.data) {
+                throw new Error(result.error || 'Could not get AI suggestions.');
+            }
+            setSuggestedManualTasks(result.data.tasks);
+            toast({ title: "AI Suggestions Ready!", description: "Review the suggested manual checks below." });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'AI Error', description: error.message });
+        } finally {
+            setIsSuggesting(false);
+        }
+    };
+
+    const handleAddManualTask = (task: ManualCheckTask) => {
+        // In a real app, this would write to a central task database.
+        // For this demo, we'll just show a success toast.
+        toast({
+            title: "Task Added (Simulated)",
+            description: `"${task.description}" has been added to the Master Task List.`
+        });
+        setSuggestedManualTasks(prev => prev ? prev.filter(t => t.description !== task.description) : null);
     };
 
 
@@ -248,13 +282,37 @@ export default function AIMonitoringSetup() {
                         )}
                     </div>
                 ) : (
-                    <Alert>
-                        <Terminal className="h-4 w-4" />
-                        <AlertTitle>Manual Mode Active</AlertTitle>
-                        <AlertDescription>
-                            To implement manual checks, please instruct your managers to create recurring tasks in the "Master Task List". Employees will be required to upload a photo as proof of completion for each manual check.
-                        </AlertDescription>
-                    </Alert>
+                    <Card className="bg-muted/50">
+                        <CardHeader>
+                            <CardTitle>Configure Manual Verification Tasks</CardTitle>
+                            <CardDescription>In this mode, the AI relies on human-in-the-loop photo verification. Use the AI to suggest a baseline set of manual checks for your team.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             <Button onClick={handleSuggestManualChecks} disabled={isSuggesting}>
+                                {isSuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                Use AI to Suggest Manual Checks
+                            </Button>
+                            {suggestedManualTasks && (
+                                <div className="pt-4">
+                                     <h4 className="font-semibold mb-2">AI Suggestions</h4>
+                                     <Table>
+                                         <TableHeader><TableRow><TableHead>Task</TableHead><TableHead>Frequency</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
+                                         <TableBody>
+                                             {suggestedManualTasks.map((task, i) => (
+                                                 <TableRow key={i}>
+                                                     <TableCell>{task.description}</TableCell>
+                                                     <TableCell><Badge variant="secondary">{task.frequency}</Badge></TableCell>
+                                                     <TableCell className="text-right">
+                                                         <Button size="sm" onClick={() => handleAddManualTask(task)}><PlusCircle className="mr-2 h-4 w-4"/> Add to List</Button>
+                                                     </TableCell>
+                                                 </TableRow>
+                                             ))}
+                                         </TableBody>
+                                     </Table>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 )}
             </CardContent>
         </Card>
