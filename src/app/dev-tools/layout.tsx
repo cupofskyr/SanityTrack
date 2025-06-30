@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 
 const devNav = [
     { name: "Developer Home", href: "/dev-tools", icon: Code, exact: true },
-    { name: "System Documentation", href: "/dev-tools/documentation", icon: FileText },
+    { name: "System Handbook", href: "/dev-tools/documentation", icon: FileText },
     { name: "UI Components", href: "/dev-tools/components", icon: Component },
     { name: "Feature Flags", href: "/dev-tools/features", icon: Flag },
 ];
