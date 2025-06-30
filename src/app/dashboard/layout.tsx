@@ -40,6 +40,7 @@ import {
   Camera,
   Package,
   Link as LinkIcon,
+  Gift,
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,7 @@ const managerNav = [
       { name: "Arcade Zone", href: "/dashboard/training" },
       { name: "Arcade Zone Setup", href: "/dashboard/training/setup"},
       { name: "Knowledge Base", href: "/dashboard/manager/knowledge" },
+      { name: "Employee Perks", href: "/dashboard/perks" },
     ]
   },
   {
@@ -146,6 +148,7 @@ const ownerNav = [
             { name: "Branding", href: "/dashboard/owner/branding" },
             { name: "Feature Flags", href: "/dashboard/owner/features" },
             { name: "API Integrations", href: "/dashboard/owner/integrations" },
+            { name: "Employee Perks", href: "/dashboard/owner/perks" },
         ]
     },
     {
@@ -161,6 +164,7 @@ const ownerNav = [
 const employeeNav = [
     { name: "Dashboard", href: "/dashboard/employee", icon: LayoutDashboard },
     { name: "Arcade Zone", href: "/dashboard/training", icon: BookOpen },
+    { name: "Company Perks", href: "/dashboard/perks", icon: Gift },
     { name: "Ask the Brain", href: "/dashboard/brain", icon: BrainCircuit },
 ];
 
@@ -180,7 +184,7 @@ export default function DashboardLayout({
   const [isPolicyAccepted, setIsPolicyAccepted] = React.useState(false);
 
   React.useEffect(() => {
-    const policyAccepted = sessionStorage.getItem('sanity-track-policy-accepted');
+    const policyAccepted = sessionStorage.getItem('leifur-ai-policy-accepted');
     if (!loading && user && policyAccepted !== 'true') {
       setIsPolicyModalOpen(true);
     }
@@ -212,7 +216,7 @@ export default function DashboardLayout({
 
   const handleAcceptPolicy = () => {
     if (isPolicyAccepted) {
-      sessionStorage.setItem('sanity-track-policy-accepted', 'true');
+      sessionStorage.setItem('leifur-ai-policy-accepted', 'true');
       setIsPolicyModalOpen(false);
     }
   };
