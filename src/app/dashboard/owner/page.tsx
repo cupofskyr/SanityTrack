@@ -13,7 +13,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch, Megaphone, Lightbulb, TrendingUp, AlertTriangle, Trophy, Package } from 'lucide-react';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch, Megaphone, Lightbulb, TrendingUp, AlertTriangle, Trophy, Package, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -149,7 +149,6 @@ export default function OwnerDashboard() {
     if (storedLocations.length > 0) {
         setSelectedLocation(storedLocations[0]);
     } else {
-        // If no locations, open the dialog non-blockingly
         const hasBeenPrompted = sessionStorage.getItem('addLocationPrompted');
         if (!hasBeenPrompted) {
             setIsAddLocationDialogOpen(true);
@@ -254,7 +253,6 @@ export default function OwnerDashboard() {
 
   const handleRunAgent = async () => {
     setIsAgentRunning(true);
-    // In a real app, you'd get the current state from various sources
     const result = await runMasterAgentCycleAction({ rules: [], currentState: {} });
     if (result.data) {
         setAgentActivity(prev => [{ ...result.data!, timestamp: new Date() }, ...prev]);
@@ -683,6 +681,7 @@ export default function OwnerDashboard() {
                                      <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/agent-rules"><Bot className="mr-2"/>AI Agent Rules</Link></Button>
                                      <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/documents"><FileText className="mr-2"/>Document Storage</Link></Button>
                                      <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/billing"><DollarSign className="mr-2"/>Billing</Link></Button>
+                                     <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/integrations"><LinkIcon className="mr-2"/>API Integrations</Link></Button>
                                      <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/features"><Sparkles className="mr-2"/>Feature Flags</Link></Button>
                                 </div>
                             </AccordionContent>
