@@ -345,27 +345,27 @@ export default function OwnerDashboard() {
                 <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
                     <Card>
                         <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Today's Sales</CardTitle></CardHeader>
-                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.liveSalesToday.toLocaleString()}` : <p>N/A</p>}<DollarSign className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                        <CardContent><div className="text-xl font-bold flex items-center gap-2">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.liveSalesToday.toLocaleString()}` : <p>N/A</p>}<DollarSign className="h-4 w-4 text-muted-foreground"/></div></CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Month-to-Date Sales</CardTitle></CardHeader>
-                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.salesThisMonth.toLocaleString()}` : <p>N/A</p>}<DollarSign className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                        <CardContent><div className="text-xl font-bold flex items-center gap-2">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.salesThisMonth.toLocaleString()}` : <p>N/A</p>}<DollarSign className="h-4 w-4 text-muted-foreground"/></div></CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Compliance Score</CardTitle></CardHeader>
-                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">92.5%<ShieldCheck className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                        <CardContent><div className="text-xl font-bold flex items-center gap-2">92.5%<ShieldCheck className="h-4 w-4 text-muted-foreground"/></div></CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Customer Satisfaction</CardTitle></CardHeader>
-                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">4.8/5<Smile className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                        <CardContent><div className="text-xl font-bold flex items-center gap-2">4.8/5<Smile className="h-4 w-4 text-muted-foreground"/></div></CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pending Approvals</CardTitle></CardHeader>
-                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">{hiringRequests.length + pendingPOs.length}<Briefcase className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                        <CardContent><div className="text-xl font-bold flex items-center gap-2">{hiringRequests.length + pendingPOs.length}<Briefcase className="h-4 w-4 text-muted-foreground"/></div></CardContent>
                     </Card>
                     <Card>
                         <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Open Service Alerts</CardTitle></CardHeader>
-                        <CardContent><div className="text-2xl font-bold flex items-center gap-2">{pendingAlertCount}<AlertTriangle className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                        <CardContent><div className="text-xl font-bold flex items-center gap-2">{pendingAlertCount}<AlertTriangle className="h-4 w-4 text-muted-foreground"/></div></CardContent>
                     </Card>
                 </div>
             </CardContent>
