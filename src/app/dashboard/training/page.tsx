@@ -5,7 +5,7 @@ import { useState } from 'react';
 import MenuGame from '@/components/menu-game';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { BookOpen, Video, Upload, Trophy, PlayCircle, Lightbulb } from 'lucide-react';
+import { BookOpen, Video, Upload, Trophy, PlayCircle, Lightbulb, Heart } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 
 type VideoSubmission = {
@@ -28,11 +29,19 @@ type VideoSubmission = {
     time: number;
     videoUrl: string;
     location: string;
+    likes: number;
+    likedByUser: boolean;
 };
+
+const initialSubmissions: VideoSubmission[] = [
+    { id: 1, user: 'Sam Wilson', item: 'Fish & Chips', time: 38, videoUrl: '', location: 'Downtown', likes: 12, likedByUser: false },
+    { id: 2, user: 'John Doe', item: 'Classic Burger', time: 45, videoUrl: '', location: 'Downtown', likes: 5, likedByUser: true },
+    { id: 3, user: 'Jane Smith', item: 'Vegan Burger', time: 52, videoUrl: '', location: 'Uptown', likes: 2, likedByUser: false },
+];
 
 export default function TrainingPage() {
     const { toast } = useToast();
-    const [videos, setVideos] = useState<VideoSubmission[]>([]);
+    const [videos, setVideos] = useState<VideoSubmission[]>(initialSubmissions);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     
     const [newVideoFile, setNewVideoFile] = useState<File | null>(null);
@@ -74,6 +83,8 @@ export default function TrainingPage() {
                 time: parseInt(newTime, 10),
                 videoUrl: event.target?.result as string,
                 location: 'Downtown', // In a real app, this would be tied to the user's assigned location
+                likes: 0,
+                likedByUser: false,
             };
             setVideos(prev => [newVideo, ...prev]);
             setIsUploadDialogOpen(false);
@@ -86,6 +97,20 @@ export default function TrainingPage() {
             toast({ title: 'Video Uploaded!', description: 'Your speed run has been submitted to the challenge.' });
         };
         reader.readAsDataURL(newVideoFile);
+    };
+
+    const handleLike = (videoId: number) => {
+        setVideos(prev =>
+            prev.map(video =>
+                video.id === videoId
+                    ? {
+                        ...video,
+                        likes: video.likedByUser ? video.likes - 1 : video.likes + 1,
+                        likedByUser: !video.likedByUser,
+                      }
+                    : video
+            )
+        );
     };
 
 
@@ -210,14 +235,26 @@ export default function TrainingPage() {
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {videos.map(video => (
                                 <Card key={video.id} className="overflow-hidden">
-                                    <div className="aspect-video bg-black">
-                                        <video src={video.videoUrl} controls className="w-full h-full object-cover" />
-                                    </div>
+                                    {video.videoUrl ? (
+                                        <div className="aspect-video bg-black">
+                                            <video src={video.videoUrl} controls className="w-full h-full object-cover" />
+                                        </div>
+                                    ) : (
+                                        <div className="aspect-video bg-black flex items-center justify-center">
+                                            <PlayCircle className="h-12 w-12 text-white/50" />
+                                        </div>
+                                    )}
                                     <CardContent className="p-4">
                                         <p className="font-semibold">{video.item}</p>
                                         <div className="text-sm text-muted-foreground flex justify-between items-center">
-                                            <span>By: {video.user} at {video.location}</span>
-                                            <span className="font-bold text-base text-foreground">{video.time}s</span>
+                                            <span>By: {video.user}</span>
+                                            <div className="flex items-center gap-4">
+                                                <span className="font-bold text-base text-foreground">{video.time}s</span>
+                                                <Button variant="ghost" size="sm" className="flex items-center gap-1.5" onClick={() => handleLike(video.id)}>
+                                                    <Heart className={cn("h-5 w-5 transition-colors", video.likedByUser && "text-red-500 fill-red-500")} />
+                                                    <span className="font-normal text-sm">{video.likes}</span>
+                                                </Button>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
