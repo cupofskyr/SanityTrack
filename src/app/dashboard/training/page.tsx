@@ -39,7 +39,7 @@ const initialSubmissions: VideoSubmission[] = [
     { id: 3, user: 'Jane Smith', item: 'Vegan Burger', time: 52, videoUrl: '', location: 'Uptown', likes: 2, likedByUser: false },
 ];
 
-export default function TrainingPage() {
+export default function ArcadeZonePage() {
     const { toast } = useToast();
     const [videos, setVideos] = useState<VideoSubmission[]>(initialSubmissions);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);

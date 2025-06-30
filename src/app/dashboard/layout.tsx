@@ -83,8 +83,8 @@ const managerNav = [
     category: "Team & Quality",
     icon: Users,
     links: [
-      { name: "Training Center", href: "/dashboard/training" },
-      { name: "Training Setup", href: "/dashboard/training/setup"},
+      { name: "Arcade Zone", href: "/dashboard/training" },
+      { name: "Arcade Zone Setup", href: "/dashboard/training/setup"},
       { name: "Knowledge Base", href: "/dashboard/manager/knowledge" },
     ]
   },
@@ -160,7 +160,7 @@ const ownerNav = [
 
 const employeeNav = [
     { name: "Dashboard", href: "/dashboard/employee", icon: LayoutDashboard },
-    { name: "Training Center", href: "/dashboard/training", icon: BookOpen },
+    { name: "Arcade Zone", href: "/dashboard/training", icon: BookOpen },
     { name: "Ask the Brain", href: "/dashboard/brain", icon: BrainCircuit },
 ];
 
