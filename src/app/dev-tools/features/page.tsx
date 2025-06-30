@@ -12,8 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, Save, Flag } from 'lucide-react';
+import { Loader2, Save, Flag, Info } from 'lucide-react';
 import { saveFeatureFlagsAction } from '@/app/actions';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const db = getFirestore(app);
 
@@ -121,7 +122,6 @@ export default function FeatureManagementPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (user) {
       const docRef = doc(db, 'appConfig', 'features');
       getDoc(docRef).then(docSnap => {
         if (docSnap.exists()) {
@@ -137,8 +137,7 @@ export default function FeatureManagementPage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Could not load feature flags.' });
         setLoading(false);
       });
-    }
-  }, [user, toast]);
+  }, [toast]);
 
   const handleToggle = (featureName: keyof Features) => {
     if (features) {
@@ -197,6 +196,15 @@ export default function FeatureManagementPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!user && (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Read-Only Mode</AlertTitle>
+            <AlertDescription>
+              You are viewing this page without being logged in. You can toggle features, but you must be signed in as an Owner to save changes.
+            </AlertDescription>
+          </Alert>
+        )}
         {features && Object.entries(features).map(([key, feature]) => (
           <div key={key} className="flex items-center space-x-4 rounded-lg border p-4">
             <div className="flex-1 space-y-1">
@@ -216,7 +224,7 @@ export default function FeatureManagementPage() {
         ))}
       </CardContent>
       <CardFooter>
-        <Button onClick={handleSaveChanges} disabled={isSaving}>
+        <Button onClick={handleSaveChanges} disabled={isSaving || !user}>
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4"/>}
             Save Changes
         </Button>

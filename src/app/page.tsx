@@ -4,7 +4,7 @@
 import { Logo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShieldCheck, Sparkles, Users, Megaphone } from 'lucide-react';
+import { ShieldCheck, Sparkles, Users, Code } from 'lucide-react';
 import Link from 'next/link';
 import AuthForm from '@/components/auth-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -78,6 +78,9 @@ export default function AppFrontDoorPage() {
                 <Button asChild size="sm" variant="outline"><Link href="/dashboard/manager">Manager</Link></Button>
                 <Button asChild size="sm" variant="outline"><Link href="/dashboard/employee">Employee</Link></Button>
                 <Button asChild size="sm" variant="outline"><Link href="/dashboard/health-department">Inspector</Link></Button>
+            </div>
+             <div className="grid grid-cols-1 gap-2">
+                 <Button asChild size="sm" variant="secondary"><Link href="/dev-tools"><Code className="mr-2"/>Developer Tools</Link></Button>
             </div>
 
           </div>
