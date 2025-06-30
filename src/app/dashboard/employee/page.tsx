@@ -423,7 +423,7 @@ export default function EmployeeDashboard() {
             </CardHeader>
             <CardContent>
                  <Tabs defaultValue="schedule">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
                         <TabsTrigger value="schedule">Schedule</TabsTrigger>
                         <TabsTrigger value="reporting">Reporting</TabsTrigger>
                         <TabsTrigger value="resources">Resources</TabsTrigger>

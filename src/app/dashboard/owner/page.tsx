@@ -380,7 +380,7 @@ export default function OwnerDashboard() {
              </CardHeader>
              <CardContent>
                   <Tabs defaultValue="approvals">
-                      <TabsList className="grid w-full grid-cols-4">
+                      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
                           <Feature name="hiringApprovals"><TabsTrigger value="approvals">Approvals</TabsTrigger></Feature>
                           <Feature name="serviceAlerts"><TabsTrigger value="alerts">Alerts</TabsTrigger></Feature>
                            <Feature name="inspectorMandates"><TabsTrigger value="mandates">Mandates</TabsTrigger></Feature>

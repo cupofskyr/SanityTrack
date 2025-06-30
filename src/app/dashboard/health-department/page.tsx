@@ -341,7 +341,7 @@ export default function HealthDeptDashboard() {
   return (
     <TooltipProvider>
       <Tabs defaultValue="triage" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="triage">Triage Queue</TabsTrigger>
           <TabsTrigger value="ai_tools">AI Tools</TabsTrigger>
           <TabsTrigger value="compliance_rules">Compliance Rules</TabsTrigger>
