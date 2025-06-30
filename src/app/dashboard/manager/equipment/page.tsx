@@ -10,15 +10,17 @@ import { Badge } from '@/components/ui/badge';
 import { ListTodo, PlusCircle, X, Sparkles, Trash2, Pencil, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 
 type Task = {
     description: string;
     frequency: string;
 };
+
+// Add a temporary ID to suggested tasks for editing purposes
+type SuggestedTask = Task & { id: number };
 
 type ManagedTask = Task & {
     id: number;
@@ -28,42 +30,46 @@ type ManagedTask = Task & {
 export default function EquipmentPage() {
     const { toast } = useToast();
     const [managedTasks, setManagedTasks] = useState<ManagedTask[]>([]);
-    const [suggestedTasks, setSuggestedTasks] = useState<Task[] | null>(null);
+    const [suggestedTasks, setSuggestedTasks] = useState<SuggestedTask[] | null>(null);
 
     const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
-    const [currentTask, setCurrentTask] = useState<{ id: number | null; description: string; frequency: string }>({
+    const [currentTask, setCurrentTask] = useState<{ id: number | null; description: string; frequency: string; isSuggestion?: boolean }>({
         id: null,
         description: '',
         frequency: '',
+        isSuggestion: false,
     });
     
     const handleTasksSuggested = (tasks: Task[]) => {
-        setSuggestedTasks(tasks);
+        // Assign temporary unique IDs to suggestions for editing
+        const suggestionsWithIds = tasks.map((task, index) => ({ ...task, id: Date.now() + index }));
+        setSuggestedTasks(suggestionsWithIds);
         toast({
             title: "AI Suggestions Ready!",
             description: `The AI has suggested ${tasks.length} tasks. Please review them below.`,
         });
     };
 
-    const handleAddTask = (taskToAdd: Task) => {
+    const handleAddTask = (taskToAdd: SuggestedTask) => {
         if (managedTasks.some(task => task.description === taskToAdd.description)) {
             toast({
                 variant: 'secondary',
                 title: "Duplicate Task",
                 description: "This task is already in the master list.",
             });
-            setSuggestedTasks(prev => prev ? prev.filter(t => t.description !== taskToAdd.description) : null);
+            setSuggestedTasks(prev => prev ? prev.filter(t => t.id !== taskToAdd.id) : null);
             return;
         }
 
         const newManagedTask: ManagedTask = {
-            ...taskToAdd,
+            description: taskToAdd.description,
+            frequency: taskToAdd.frequency,
             id: (managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) : 0) + 1,
             status: 'Local',
         };
 
         setManagedTasks(prevTasks => [...prevTasks, newManagedTask]);
-        setSuggestedTasks(prev => prev ? prev.filter(t => t.description !== taskToAdd.description) : null);
+        setSuggestedTasks(prev => prev ? prev.filter(t => t.id !== taskToAdd.id) : null);
 
         toast({
             title: "Task Added!",
@@ -92,11 +98,11 @@ export default function EquipmentPage() {
         });
     }
 
-    const handleOpenDialog = (task: ManagedTask | null) => {
+    const handleOpenDialog = (task: SuggestedTask | ManagedTask | null, isSuggestion: boolean = false) => {
         if (task) {
-            setCurrentTask({ id: task.id, description: task.description, frequency: task.frequency });
+            setCurrentTask({ id: task.id, description: task.description, frequency: task.frequency, isSuggestion });
         } else {
-            setCurrentTask({ id: null, description: '', frequency: '' });
+            setCurrentTask({ id: null, description: '', frequency: '', isSuggestion: false });
         }
         setIsTaskDialogOpen(true);
     };
@@ -111,13 +117,26 @@ export default function EquipmentPage() {
             return;
         }
 
-        if (currentTask.id) { // Editing existing task
+        if (currentTask.isSuggestion) {
+            const newManagedTask: ManagedTask = {
+                id: (managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) : 0) + 1,
+                description: currentTask.description,
+                frequency: currentTask.frequency,
+                status: 'Local',
+            };
+            setManagedTasks(prevTasks => [...prevTasks, newManagedTask]);
+            setSuggestedTasks(prev => prev ? prev.filter(t => t.id !== currentTask.id) : null);
+            toast({
+                title: "Task Added",
+                description: `"${currentTask.description}" has been added to the master list.`,
+            });
+        } else if (currentTask.id) { // Editing existing managed task
             setManagedTasks(managedTasks.map(t => t.id === currentTask.id ? { ...t, description: currentTask.description, frequency: currentTask.frequency } : t));
             toast({
                 title: "Task Updated",
                 description: `"${currentTask.description}" has been updated.`,
             });
-        } else { // Adding new task
+        } else { // Adding new manual task
             const newManagedTask: ManagedTask = {
                 id: (managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) : 0) + 1,
                 description: currentTask.description,
@@ -150,7 +169,7 @@ export default function EquipmentPage() {
                     <CardHeader>
                         <CardTitle className="font-headline flex items-center gap-2"><Sparkles className="text-primary" /> Review AI-Suggested Tasks</CardTitle>
                         <CardDescription>
-                            Review the tasks generated by the AI. Add them to your master list individually or clear all suggestions.
+                            Review the tasks generated by the AI. Add them to your master list or edit them first.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -169,7 +188,11 @@ export default function EquipmentPage() {
                                     <TableCell>
                                         <Badge variant="secondary">{task.frequency}</Badge>
                                     </TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-right space-x-2">
+                                        <Button size="sm" variant="outline" onClick={() => handleOpenDialog(task, true)}>
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Edit & Add
+                                        </Button>
                                         <Button size="sm" onClick={() => handleAddTask(task)}>
                                             <PlusCircle className="mr-2 h-4 w-4" />
                                             Add to List
@@ -267,9 +290,11 @@ export default function EquipmentPage() {
             <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="font-headline">{currentTask.id ? 'Edit Task' : 'Add Manual Task'}</DialogTitle>
+                        <DialogTitle className="font-headline">
+                            {currentTask.isSuggestion ? 'Edit & Add AI Suggestion' : currentTask.id ? 'Edit Task' : 'Add Manual Task'}
+                        </DialogTitle>
                         <DialogDescription>
-                            {currentTask.id ? 'Modify the details of this task.' : 'Add a new task to the master list.'}
+                            Refine the details of this recurring task.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -301,10 +326,12 @@ export default function EquipmentPage() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button onClick={handleSaveTask}>Save Task</Button>
+                        <Button variant="outline" onClick={() => setIsTaskDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSaveTask}>
+                            {currentTask.isSuggestion ? 'Add to Master List' : 'Save Task'}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
     );
-}
