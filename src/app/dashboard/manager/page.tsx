@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -226,7 +225,7 @@ export default function ManagerDashboard() {
                         <TableHeader><TableRow><TableHead>Employee</TableHead><TableHead>Time</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
                         <TableBody>
                         {timeClockLogs.map(log => {
-                            const isLate = log.status.includes('Late');
+                            const isLate = log.status?.includes('Late');
                             return (
                                 <TableRow key={log.timestamp}>
                                     <TableCell className="font-medium">{log.employeeName}</TableCell>
@@ -234,7 +233,7 @@ export default function ManagerDashboard() {
                                     <TableCell><Badge variant={isLate ? 'destructive' : 'default'}>{log.status}</Badge></TableCell>
                                     <TableCell className="text-right">
                                         {isLate && (
-                                            <Button variant="outline" size="sm" onClick={() => handleGenerateWarning(log, log.status)}>
+                                            <Button variant="outline" size="sm" onClick={() => handleGenerateWarning(log, log.status || 'Late')}>
                                                 <MailWarning className="mr-2 h-4 w-4" /> AI Warning
                                             </Button>
                                         )}
