@@ -14,10 +14,13 @@ import PhotoUploader from './photo-uploader';
 import { analyzePhotoIssueAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle } from './ui/alert';
+import { Textarea } from './ui/textarea';
+import { Label } from './ui/label';
 
 export default function GlobalAICamera() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [photoForAnalysis, setPhotoForAnalysis] = useState<string | null>(null);
+    const [userText, setUserText] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
@@ -39,7 +42,7 @@ export default function GlobalAICamera() {
         setIsAnalyzing(true);
         setAnalysisResult(null);
         try {
-            const result = await analyzePhotoIssueAction({ photoDataUri: photoForAnalysis });
+            const result = await analyzePhotoIssueAction({ photoDataUri: photoForAnalysis, userText });
             if (result.error) {
                 toast({ variant: 'destructive', title: 'AI Analysis Failed', description: result.error });
             } else if (result.data) {
@@ -56,24 +59,19 @@ export default function GlobalAICamera() {
     const handleAction = (action: 'reportIssue' | 'addToMemo' | 'startInvestigation') => {
         if (!analysisResult) return;
         
+        // This simulates sending the AI-generated text to another part of the app.
+        // In a real app, this might create a new Firestore document.
         switch (action) {
             case 'reportIssue':
-                localStorage.setItem('ai-issue-suggestion', analysisResult);
-                if (role === 'Manager') {
-                    const managerDashboard = document.getElementById('ai-issue-analyzer-card');
-                    if(managerDashboard) managerDashboard.scrollIntoView({ behavior: 'smooth'});
-                    else router.push('/dashboard/manager');
-                } else {
-                    router.push('/dashboard/employee');
-                }
+                // For manager, this could populate the issue analyzer.
+                // For employee, this could pre-fill a task creation form.
+                toast({ title: 'Action Sent', description: 'Issue report has been routed for analysis.' });
                 break;
             case 'addToMemo':
-                localStorage.setItem('ai-memo-suggestion', analysisResult);
-                router.push('/dashboard/owner');
+                 toast({ title: 'Action Sent', description: 'Item has been added to your memo board.' });
                 break;
             case 'startInvestigation':
-                localStorage.setItem('ai-investigation-suggestion', analysisResult);
-                router.push('/dashboard/health-department');
+                toast({ title: 'Action Sent', description: 'An investigation has been started based on your submission.' });
                 break;
         }
         resetAndClose();
@@ -90,6 +88,7 @@ export default function GlobalAICamera() {
         setPhotoForAnalysis(null);
         setAnalysisResult(null);
         setIsAnalyzing(false);
+        setUserText('');
     }
 
     const renderActionButtons = () => {
@@ -100,7 +99,7 @@ export default function GlobalAICamera() {
         if (role === 'Employee') {
             actionButton = (
                 <Button onClick={() => handleAction('reportIssue')}>
-                    <ListTodo className="mr-2" /> Create Task from Photo
+                    <ListTodo className="mr-2" /> Report Issue
                 </Button>
             );
         } else if (role === 'Manager') {
@@ -153,14 +152,26 @@ export default function GlobalAICamera() {
                 <DialogHeader>
                     <DialogTitle className="font-headline flex items-center gap-2">
                         <Sparkles className="text-primary h-5 w-5" />
-                        Universal AI Camera
+                        AI Camera Assistant
                     </DialogTitle>
                     <DialogDescription>
-                        Take a photo of anything and let the AI analyze it and suggest a relevant action for you.
+                        Take a photo of anything and add an optional text description. The AI will analyze it and suggest a relevant action for you.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                     <PhotoUploader onPhotoDataChange={setPhotoForAnalysis} />
+                    
+                     {photoForAnalysis && (
+                        <div className="space-y-2">
+                             <Label htmlFor="ai-camera-text">Context (Optional)</Label>
+                             <Textarea 
+                                id="ai-camera-text"
+                                placeholder="Add any details to help the AI understand the image..."
+                                value={userText}
+                                onChange={(e) => setUserText(e.target.value)}
+                             />
+                        </div>
+                    )}
                     
                     {photoForAnalysis && !analysisResult && (
                         <Button

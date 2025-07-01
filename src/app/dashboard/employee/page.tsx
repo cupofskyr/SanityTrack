@@ -11,17 +11,16 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-
-
-import { Check, Clock, ListTodo, ShieldCheck, Sparkles, Trophy, Zap, MessageSquare, Briefcase, BarChart, BookOpen, AlertCircle, Award, CalendarDays } from "lucide-react";
-
-
+import { Check, Clock, ListTodo, ShieldCheck, Sparkles, Trophy, Zap, MessageSquare, Briefcase, BarChart, BookOpen, AlertCircle, Award, CalendarDays, Loader2, Camera } from "lucide-react";
 import LiveTeamFeed from '@/components/dashboard/employee/LiveTeamFeed';
 import WhosOnShift from '@/components/dashboard/employee/WhosOnShift';
 import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
 import PerformanceCard from '@/components/dashboard/employee/PerformanceCard';
 import TeamLeaderboard from '@/components/dashboard/employee/TeamLeaderboard';
 import ShiftRecapDialog from '@/components/dashboard/employee/ShiftRecapDialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import PhotoUploader from '@/components/photo-uploader';
+import { verifyTaskProofAction } from '@/app/actions';
 
 const initialTasks = [
   { id: 1, name: "Clean kitchen floor", area: "Kitchen", priority: "High", status: 'Pending', type: 'regular', xp: 50 },
@@ -40,25 +39,27 @@ export default function EmployeeDashboardV2() {
     const { toast } = useToast();
     const { width, height } = useWindowSize();
     
-    
     const [tasks, setTasks] = useState<(Task | QaTask)[]>(initialTasks);
     const [completedCount, setCompletedCount] = useState(0);
     const [showConfetti, setShowConfetti] = useState(false);
     
-    
     const [isClockedIn, setIsClockedIn] = useState(false);
     const [lastClockIn, setLastClockIn] = useState<Date | null>(null);
     const [isShiftRecapOpen, setIsShiftRecapOpen] = useState(false);
-
     
     const [storeVibe, setStoreVibe] = useState<'good' | 'warning' | 'urgent'>('good');
     const [vibeMessage, setVibeMessage] = useState('All systems normal.');
+
+    // State for proof submission
+    const [isProofDialogOpen, setIsProofDialogOpen] = useState(false);
+    const [taskForProof, setTaskForProof] = useState<(Task|QaTask)|null>(null);
+    const [proofPhoto, setProofPhoto] = useState<string|null>(null);
+    const [isVerifying, setIsVerifying] = useState(false);
 
     const totalTasks = useMemo(() => initialTasks.length + initialQaTasks.length, []);
     const progressPercentage = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
     const xpEarned = completedCount * 50; 
 
-    
     useEffect(() => {
         const interval = setInterval(() => {
             const agentStatus = localStorage.getItem('sentinel-agent-status');
@@ -76,16 +77,55 @@ export default function EmployeeDashboardV2() {
         return () => clearInterval(interval);
     }, []);
 
-    const handleCompleteTask = (taskId: number) => {
+    const handleTaskCompletion = (taskId: number) => {
         setTasks(prev => prev.filter(task => task.id !== taskId));
         setCompletedCount(prev => prev + 1);
         setShowConfetti(true);
-        toast({
-            title: "Mission Complete! ✨",
-            description: "Great job! +50XP earned.",
-        });
         setTimeout(() => setShowConfetti(false), 5000); 
     };
+
+    const handleOpenProofDialog = (task: Task | QaTask) => {
+        setTaskForProof(task);
+        setIsProofDialogOpen(true);
+    };
+    
+    const handleCloseProofDialog = () => {
+        setIsProofDialogOpen(false);
+        setTaskForProof(null);
+        setProofPhoto(null);
+        setIsVerifying(false);
+    }
+
+    const handleSubmitProof = async () => {
+        if (!proofPhoto || !taskForProof) {
+            toast({ variant: 'destructive', title: 'No photo provided.' });
+            return;
+        }
+        setIsVerifying(true);
+        try {
+            const result = await verifyTaskProofAction({
+                photoDataUri: proofPhoto,
+                taskDescription: taskForProof.type === 'regular' ? taskForProof.name : taskForProof.description,
+            });
+
+            if (result.error || !result.data) {
+                throw new Error(result.error || "Verification failed.");
+            }
+
+            toast({ title: "AI Verification", description: result.data.feedback });
+
+            if (result.data.isApproved) {
+                handleTaskCompletion(taskForProof.id);
+                handleCloseProofDialog();
+            }
+
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: error.message });
+        } finally {
+            setIsVerifying(false);
+        }
+    };
+
 
     const handleClockIn = () => {
         setIsClockedIn(true);
@@ -131,7 +171,7 @@ export default function EmployeeDashboardV2() {
                     <Card id="tasks-checklists">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2"><ListTodo /> My Mission</CardTitle>
-                            <CardDescription>Complete these tasks to keep our store running smoothly.</CardDescription>
+                            <CardDescription>Complete these tasks to keep our store running smoothly. Photo proof is required for all tasks.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-center gap-4 mb-4">
@@ -151,7 +191,7 @@ export default function EmployeeDashboardV2() {
                                         <Badge variant={task.type === 'qa' || (task as Task).priority === "High" ? "destructive" : "secondary"}>
                                             {task.type === 'qa' ? 'High Priority' : (task as Task).priority}
                                         </Badge>
-                                        <Button size="sm" onClick={() => handleCompleteTask(task.id)}>
+                                        <Button size="sm" onClick={() => handleOpenProofDialog(task)}>
                                             <Check className="mr-2 h-4 w-4" /> Done
                                         </Button>
                                     </div>
@@ -194,6 +234,27 @@ export default function EmployeeDashboardV2() {
                     <TeamLeaderboard />
                 </div>
             </div>
+
+            <Dialog open={isProofDialogOpen} onOpenChange={handleCloseProofDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className='font-headline'>Submit Proof of Completion</DialogTitle>
+                        <DialogDescription>
+                            Take a photo to verify completion of the task: <span className="font-semibold">{taskForProof?.type === 'regular' ? taskForProof.name : taskForProof?.description}</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <PhotoUploader onPhotoDataChange={setProofPhoto} />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={handleCloseProofDialog}>Cancel</Button>
+                        <Button onClick={handleSubmitProof} disabled={isVerifying || !proofPhoto}>
+                            {isVerifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+                            Submit Proof for AI Verification
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

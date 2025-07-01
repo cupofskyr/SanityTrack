@@ -7,6 +7,7 @@ export const AnalyzePhotoInputSchema = z.object({
     .describe(
       "A photo of a potential issue, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  userText: z.string().optional().describe('Optional text provided by the user to give context to the photo.')
 });
 export type AnalyzePhotoInput = z.infer<typeof AnalyzePhotoInputSchema>;
 

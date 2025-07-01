@@ -53,6 +53,8 @@ import type {
 } from '@/ai/schemas/shift-suggestion-schemas';
 import { suggestManualChecks } from '@/ai/flows/suggest-manual-checks-flow';
 import type { ManualCheckSuggestionOutput } from '@/ai/schemas/manual-check-schemas';
+import { verifyTaskProof } from '@/ai/flows/verify-task-proof-flow';
+import type { VerifyTaskProofInput, VerifyTaskProofOutput } from '@/ai/schemas/task-proof-schemas';
 
 
 const db = getFirestore(app);
@@ -275,6 +277,9 @@ export async function generateBusinessReportAction(input: {
     return safeRun(generateBusinessReport, flowInput, 'generateBusinessReport');
 }
 
+export async function verifyTaskProofAction(input: VerifyTaskProofInput): Promise<{ data: VerifyTaskProofOutput | null; error: string | null; }> {
+    return safeRun(verifyTaskProof, input, 'verifyTaskProof');
+}
 
 // These actions don't call an AI flow, so they don't need the safeRun wrapper.
 // They simulate database interactions. In a real app, you would use Firestore here.

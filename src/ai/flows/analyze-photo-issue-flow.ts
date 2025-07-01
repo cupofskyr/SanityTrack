@@ -1,5 +1,4 @@
 
-
 /**
  * @fileOverview An AI flow for analyzing a photo to suggest a maintenance or cleaning issue.
  *
@@ -24,7 +23,7 @@ const prompt = ai.definePrompt({
     model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: AnalyzePhotoInputSchema },
     output: { schema: AnalyzePhotoOutputSchema },
-    prompt: `You are an AI assistant for a facility management application. Your task is to analyze the provided photo and generate a short, clear, and actionable description of the maintenance or sanitation issue it depicts.
+    prompt: `You are an AI assistant for a facility management application. Your task is to analyze the provided photo and any user-provided text to generate a short, clear, and actionable description of the maintenance or sanitation issue it depicts.
 
 Focus on what needs to be done. Be direct.
 
@@ -37,6 +36,11 @@ Good examples:
 
 Analyze this image:
 {{media url=photoDataUri}}
+
+{{#if userText}}
+The user provided this additional context: "{{userText}}"
+Incorporate this context into your final suggestion.
+{{/if}}
 `,
 });
 
