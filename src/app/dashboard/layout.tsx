@@ -85,6 +85,7 @@ const managerNav = [
           { name: "Live Time Clock", href: "/dashboard/manager#time-clock-feed" },
           { name: "Quality Control", href: "/dashboard/manager/quality-control" },
           { name: "Master Task List", href: "/dashboard/manager/equipment" },
+          { name: "AI Photo Review", href: "/dashboard/manager/ai-review" },
         ]
     },
     { 
