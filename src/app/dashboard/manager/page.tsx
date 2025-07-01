@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -8,22 +9,36 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Thermometer, AlertTriangle, Printer, Info, Clock, MailWarning, Phone, Send, CheckCircle, MessageSquare, Megaphone, Utensils, Sigma, Loader2 } from "lucide-react";
+import { Thermometer, AlertTriangle, Printer, Info, Clock, MailWarning, Phone, Send, CheckCircle, MessageSquare, Megaphone, Utensils, Sigma, Loader2, Wifi, Camera } from "lucide-react";
 import { format, formatDistanceToNow } from 'date-fns';
 import type { TimeClockLog } from '@/lib/types';
 import { generateWarningLetterAction } from '@/app/actions';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
 import ComplianceChart from '@/components/compliance-chart';
 import type { CameraAnalysisOutput } from '@/ai/schemas/camera-analysis-schemas';
 import Image from 'next/image';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
-const initialTempData = {
-    'Walk-in Cooler': 38,
-    'Prep Cooler 1': 40,
-    'Freezer': -2,
-    'Holding Cabinet': 145,
+type TempReading = {
+    value: number;
+    source: 'sensor' | 'manual';
+    timestamp?: Date;
+    submittedBy?: string;
+};
+
+type TempData = {
+    [key: string]: TempReading;
+};
+
+const initialTempData: TempData = {
+    'Walk-in Cooler': { value: 38, source: 'sensor' },
+    'Prep Cooler 1': { value: 40, source: 'sensor' },
+    'Freezer': { value: -2, source: 'manual', timestamp: new Date(Date.now() - 30 * 60 * 1000), submittedBy: 'John Doe' },
+    'Holding Cabinet': { value: 145, source: 'sensor' },
 };
 
 const complianceData = [
@@ -34,8 +49,6 @@ const complianceData = [
   { month: "May", score: 96 },
   { month: "Jun", score: 94 },
 ];
-
-type TempData = typeof initialTempData;
 
 type AiCameraReport = {
     reportId: string;
@@ -54,16 +67,27 @@ export default function ManagerDashboard() {
     const [aiReport, setAiReport] = useState<AiCameraReport | null>(null);
     const [managerComment, setManagerComment] = useState('');
 
+    // State for manual temperature submission
+    const [isManualTempOpen, setIsManualTempOpen] = useState(false);
+    const [manualTempForm, setManualTempForm] = useState({ equipment: '', temperature: '' });
+
     useEffect(() => {
-        // Simulate real-time temperature fluctuations
+        // Simulate real-time temperature fluctuations for sensor-based equipment
         const tempInterval = setInterval(() => {
             setTempData(prevData => {
-                const newCoolerTemp = prevData['Walk-in Cooler'] > 41 ? 45 : prevData['Walk-in Cooler'] + (Math.random() > 0.8 ? 1 : -0.2);
-                return {
-                    ...prevData,
-                    'Walk-in Cooler': parseFloat(newCoolerTemp.toFixed(1)),
-                    'Prep Cooler 1': parseFloat((prevData['Prep Cooler 1'] + (Math.random() - 0.5)).toFixed(1)),
+                const newData = { ...prevData };
+                for (const key in newData) {
+                    if (newData[key].source === 'sensor') {
+                        let newTempValue = newData[key].value;
+                        if (key.includes('Cooler')) {
+                            newTempValue = newData[key].value > 41 ? 45 : newData[key].value + (Math.random() > 0.8 ? 1 : -0.2);
+                        } else {
+                            newTempValue = newData[key].value + (Math.random() - 0.5);
+                        }
+                        newData[key] = { ...newData[key], value: parseFloat(newTempValue.toFixed(1)) };
+                    }
                 }
+                return newData;
             });
         }, 3000);
 
@@ -122,6 +146,29 @@ export default function ManagerDashboard() {
         setManagerComment('');
     };
 
+    const handleManualTempSubmit = (e: FormEvent) => {
+        e.preventDefault();
+        const { equipment, temperature } = manualTempForm;
+        if (!equipment || !temperature) {
+            toast({ variant: 'destructive', title: 'Missing fields', description: 'Please select equipment and enter a temperature.' });
+            return;
+        }
+
+        setTempData(prev => ({
+            ...prev,
+            [equipment]: {
+                value: parseFloat(temperature),
+                source: 'manual',
+                timestamp: new Date(),
+                submittedBy: 'Casey Lee' // Manager simulating an employee entry
+            }
+        }));
+
+        toast({ title: "Manual Log Submitted", description: `Temperature for ${equipment} has been updated.` });
+        setIsManualTempOpen(false);
+        setManualTempForm({ equipment: '', temperature: '' });
+    };
+
     return (
         <div className="space-y-6">
              {aiReport && (
@@ -169,19 +216,30 @@ export default function ManagerDashboard() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                  <Card className="lg:col-span-3">
                     <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2"><Thermometer/> Live Temperature Monitoring (Simulated)</CardTitle>
-                        <CardDescription>Real-time data from your connected equipment. Alerts are triggered for out-of-range temperatures.</CardDescription>
+                        <CardTitle className="font-headline flex items-center gap-2"><Thermometer/> Live Temperature Monitoring</CardTitle>
+                        <CardDescription>Real-time data from sensors and manual checks. Alerts are triggered for out-of-range temperatures.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                         {Object.entries(tempData).map(([name, temp]) => {
-                            const isAlert = name.includes('Cooler') && temp > 41 || name.includes('Freezer') && temp > 0;
+                            const { value, source, timestamp, submittedBy } = temp;
+                            const isAlert = name.includes('Cooler') && value > 41 || name.includes('Freezer') && value > 0;
                             return (
                                 <Card key={name} className={cn(isAlert && "bg-destructive/10 border-destructive")}>
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                         <CardTitle className="text-sm font-medium">{name}</CardTitle>
                                         {isAlert && <AlertTriangle className="h-4 w-4 text-destructive"/>}
                                     </CardHeader>
-                                    <CardContent><div className="text-2xl font-bold">{temp}°F</div></CardContent>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">{value}°F</div>
+                                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                            {source === 'sensor' ? <Wifi className="h-3 w-3" /> : <Camera className="h-3 w-3" />}
+                                            <span>
+                                                {source === 'sensor' 
+                                                    ? 'Live Sensor' 
+                                                    : `by ${submittedBy} ${timestamp ? formatDistanceToNow(timestamp, { addSuffix: true }) : ''}`}
+                                            </span>
+                                        </div>
+                                    </CardContent>
                                 </Card>
                             )
                         })}
@@ -199,20 +257,67 @@ export default function ManagerDashboard() {
                         <ComplianceChart data={complianceData} />
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2"><Printer /> Monthly Reporting</CardTitle>
-                        <CardDescription>Generate a printable report of this month's activities.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button className="w-full" onClick={() => setIsReportDialogOpen(true)}><Printer className="mr-2 h-4 w-4" /> Generate Report</Button>
-                        <Alert className="mt-4">
-                            <Info className="h-4 w-4" />
-                            <AlertTitle>For Your Records</AlertTitle>
-                            <AlertDescription>In a production app, this report could be automatically generated and emailed to you and the owner monthly.</AlertDescription>
-                        </Alert>
-                    </CardContent>
-                </Card>
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><Printer /> Monthly Reporting</CardTitle>
+                            <CardDescription>Generate a printable report of this month's activities.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button className="w-full" onClick={() => setIsReportDialogOpen(true)}><Printer className="mr-2 h-4 w-4" /> Generate Report</Button>
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline">Manual Temperature Log</CardTitle>
+                            <CardDescription>Simulate an employee submitting a manual temperature check.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Dialog open={isManualTempOpen} onOpenChange={setIsManualTempOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="w-full" variant="secondary">Log Manual Temperature</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Log Manual Temperature Check</DialogTitle>
+                                        <DialogDescription>
+                                            This action simulates an employee completing a scheduled temperature check task.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <form onSubmit={handleManualTempSubmit}>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="equipment-select">Equipment</Label>
+                                                <Select value={manualTempForm.equipment} onValueChange={(value) => setManualTempForm({...manualTempForm, equipment: value})}>
+                                                    <SelectTrigger id="equipment-select">
+                                                        <SelectValue placeholder="Select equipment..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {Object.keys(tempData).map(key => <SelectItem key={key} value={key}>{key}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="temperature-input">Temperature (°F)</Label>
+                                                <Input
+                                                    id="temperature-input"
+                                                    type="number"
+                                                    value={manualTempForm.temperature}
+                                                    onChange={(e) => setManualTempForm({...manualTempForm, temperature: e.target.value})}
+                                                    placeholder="e.g., 39"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button type="submit">Submit Log</Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
 
             <Card id="time-clock-feed" className="lg:col-span-3">
