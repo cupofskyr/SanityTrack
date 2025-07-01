@@ -1,8 +1,7 @@
-
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import useWindowSize from 'react-use/lib/useWindowSize';
+import { useWindowSize } from 'react-use';
 import Confetti from 'react-confetti';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
