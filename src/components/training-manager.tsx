@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -349,7 +348,7 @@ export default function TrainingManager() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the {itemToDelete?.type === 'menu' ? 'menu item' : 'submission from'} <span className="font-semibold">"{itemToDelete?.name}"</span>.
+                        This will permanently delete the {itemToDelete?.type === 'menu' ? 'menu item' : 'submission from'} <span className="font-semibold">"{itemToDelete?.name}"</span>.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
