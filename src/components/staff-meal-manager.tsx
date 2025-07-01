@@ -67,7 +67,7 @@ export default function StaffMealManager() {
     };
 
     return (
-        <Card className="lg:col-span-3">
+        <Card>
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2"><Utensils /> Manage Approved Staff Meals</CardTitle>
                 <CardDescription>Define the list of items employees are permitted to log as their staff meal. The policy allows for 2 items per shift. This list is for policy and does not affect inventory counts.</CardDescription>

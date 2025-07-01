@@ -335,18 +335,16 @@ const SidebarContent = React.forwardRef<
   React.ComponentProps<"div">
 >(({ className, children, ...props }, ref) => {
   return (
-    <div
+    <ScrollArea
       ref={ref}
       data-sidebar="content"
-      className={cn("flex flex-1 flex-col", className)}
+      className={cn("flex-1", className)}
       {...props}
     >
-       <ScrollArea className="h-full">
-            <div className="p-2">
-                {children}
-            </div>
-        </ScrollArea>
-    </div>
+      <div className="h-full">
+          {children}
+      </div>
+    </ScrollArea>
   )
 })
 SidebarContent.displayName = "SidebarContent"

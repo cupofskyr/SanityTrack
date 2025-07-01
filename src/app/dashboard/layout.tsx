@@ -51,7 +51,10 @@ import {
   Award,
   MessageSquare,
   Megaphone,
-  Briefcase
+  Briefcase,
+  HardHat,
+  Gamepad2,
+  Sandwich
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -84,13 +87,13 @@ const managerNav = [
         ]
     },
     { 
-        category: "Planning & Inventory",
+        category: "Planning & Prep",
         icon: Calendar,
         links: [
           { name: "Shift Planner", href: "/dashboard/manager/shifts" },
           { name: "Inventory", href: "/dashboard/manager/inventory" },
           { name: "Ordering", href: "/dashboard/manager/ordering" },
-          { name: "Food Prep & Labeling", href: "/dashboard/manager/prep" },
+          { name: "Prep & Labeling", href: "/dashboard/manager/prep" },
         ]
     },
     { 
@@ -119,6 +122,7 @@ const ownerNav = [
         icon: BarChart3,
         links: [
             { name: "Executive Dashboard", href: "/dashboard/owner", exact: true },
+            { name: "Live Operations", href: "/dashboard/owner/live-operations" },
             { name: "KPI Overview", href: "/dashboard/owner#kpi-overview" },
         ]
     },
@@ -127,17 +131,15 @@ const ownerNav = [
         icon: Eye,
         links: [
             { name: "Strategic Command", href: "/dashboard/owner#strategic-command" },
-            { name: "AI Engine", href: "/dashboard/owner/agent-rules" },
             { name: "Monitoring Setup", href: "/dashboard/owner/monitoring" },
             { name: "Agent Rules", href: "/dashboard/owner/agent-rules" },
-            { name: "Agent Activity Log", href: "/dashboard/owner#agent-activity-log" },
+            { name: "Agent Alerts", href: "/dashboard/owner#sentinel-alerts" },
         ]
     },
     {
         category: "Growth & Compliance",
         icon: Lightbulb,
         links: [
-            { name: "Records & Compliance", href: "/dashboard/owner/documents" },
             { name: "Permit Applications", href: "/dashboard/owner/permits" },
             { name: "Document Storage", href: "/dashboard/owner/documents" },
         ]
@@ -149,7 +151,6 @@ const ownerNav = [
             { name: "Team & Permissions", href: "/dashboard/owner/team" },
             { name: "Branding", href: "/dashboard/owner/branding" },
             { name: "API Integrations", href: "/dashboard/owner/integrations" },
-            { name: "Employee Perks", href: "/dashboard/owner/perks" },
             { name: "Feature Flags", href: "/dashboard/owner/features" },
         ]
     },
@@ -158,6 +159,7 @@ const ownerNav = [
         icon: DollarSign,
         links: [
             { name: "Financial Overview", href: "/dashboard/owner/financials" },
+            { name: "Billing", href: "/dashboard/owner/billing"},
         ]
     }
 ];
@@ -291,8 +293,8 @@ export default function DashboardLayout({
             <SidebarMenu>
                 {inspectorNav.map((item) => (
                     <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
-                            <Link href={item.href}><item.icon /><span>{item.label}</span></Link>
+                        <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.name}>
+                            <Link href={item.href}><item.icon /><span>{item.name}</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 ))}
@@ -352,7 +354,7 @@ export default function DashboardLayout({
             </span>
           </div>
         </SidebarHeader>
-        <SidebarContent className="p-2">
+        <SidebarContent>
             {renderNav()}
         </SidebarContent>
         <SidebarFooter>
