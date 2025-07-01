@@ -7,19 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { Thermometer, AlertTriangle, Printer, Info, Clock, MailWarning, Phone, Send, CheckCircle, MessageSquare, Megaphone, Utensils, Sigma } from "lucide-react";
-import { format } from 'date-fns';
+import { Thermometer, AlertTriangle, Printer, Info, Clock, MailWarning, Phone, Send, CheckCircle, MessageSquare, Megaphone, Utensils, Sigma, Loader2 } from "lucide-react";
+import { format, formatDistanceToNow } from 'date-fns';
 import type { TimeClockLog } from '@/lib/types';
 import { generateWarningLetterAction } from '@/app/actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
-import { Loader2 } from 'lucide-react';
 import ComplianceChart from '@/components/compliance-chart';
 import type { CameraAnalysisOutput } from '@/ai/schemas/camera-analysis-schemas';
+import Image from 'next/image';
+import { Textarea } from '@/components/ui/textarea';
 
 const initialTempData = {
     'Walk-in Cooler': 38,
@@ -39,12 +38,6 @@ const complianceData = [
 
 type TempData = typeof initialTempData;
 
-type RejectedRequest = {
-    id: number;
-    role: string;
-    ownerComment: string;
-};
-
 type AiCameraReport = {
     reportId: string;
     timestamp: string;
@@ -54,7 +47,6 @@ export default function ManagerDashboard() {
     const { toast } = useToast();
     const [tempData, setTempData] = useState<TempData>(initialTempData);
     const [timeClockLogs, setTimeClockLogs] = useState<TimeClockLog[]>([]);
-    const [rejectedRequests, setRejectedRequests] = useState<RejectedRequest[]>([]);
     const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
     const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
     const [warningContent, setWarningContent] = useState<GenerateWarningLetterOutput | null>(null);
@@ -78,9 +70,6 @@ export default function ManagerDashboard() {
 
         // Simulate fetching logs and requests from storage
         const checkStorage = () => {
-            const storedRejected = localStorage.getItem('rejectedHiringRequests');
-            if (storedRejected) setRejectedRequests(JSON.parse(storedRejected));
-            
             const logs = JSON.parse(localStorage.getItem('timeClockLogs') || '[]');
             setTimeClockLogs(logs.sort((a:TimeClockLog, b:TimeClockLog) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
 
@@ -129,8 +118,6 @@ export default function ManagerDashboard() {
             title: "Report Posted!",
             description: "The AI Camera report and your comments are now visible to the team."
         });
-        // In a real app, this would be written to a shared team feed in Firestore
-        // For demo, we just clear it from view.
         localStorage.removeItem('sentinel-report-for-manager');
         setAiReport(null);
         setManagerComment('');
@@ -229,6 +216,37 @@ export default function ManagerDashboard() {
                 </Card>
             </div>
 
+            <Card id="time-clock-feed" className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Clock/> Live Time Clock Feed</CardTitle>
+                    <CardDescription>A real-time log of employee clock-ins and outs. AI can draft punctuality warnings.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader><TableRow><TableHead>Employee</TableHead><TableHead>Time</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                        {timeClockLogs.map(log => {
+                            const isLate = log.status.includes('Late');
+                            return (
+                                <TableRow key={log.timestamp}>
+                                    <TableCell className="font-medium">{log.employeeName}</TableCell>
+                                    <TableCell>{format(new Date(log.timestamp), 'p')} ({formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })})</TableCell>
+                                    <TableCell><Badge variant={isLate ? 'destructive' : 'default'}>{log.status}</Badge></TableCell>
+                                    <TableCell className="text-right">
+                                        {isLate && (
+                                            <Button variant="outline" size="sm" onClick={() => handleGenerateWarning(log, log.status)}>
+                                                <MailWarning className="mr-2 h-4 w-4" /> AI Warning
+                                            </Button>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
             <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
                 <DialogContent className="max-w-4xl">
                     <DialogHeader>
@@ -236,7 +254,6 @@ export default function ManagerDashboard() {
                         <DialogDescription>Summary for {format(new Date(), 'MMMM yyyy')}</DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-6 max-h-[70vh] overflow-y-auto pr-4">
-                        {/* Report content would be dynamically generated here */}
                         <p className="text-muted-foreground">This is a placeholder for the full, printable monthly report content.</p>
                     </div>
                     <DialogFooter>

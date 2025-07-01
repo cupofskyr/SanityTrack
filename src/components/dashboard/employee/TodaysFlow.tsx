@@ -1,13 +1,15 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, Send, ThumbsUp } from "lucide-react";
+import { MessageSquare, Send, ThumbsUp, Sparkles, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { analyzeChatMessageAction } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 type FlowMessage = {
     user: string;
@@ -15,37 +17,106 @@ type FlowMessage = {
     message: string;
     isShoutout?: boolean;
     target?: string;
+    isAiResponse?: boolean;
 };
 
+const CHAT_STORAGE_KEY = 'todays-flow-chat';
+const initialMessage: FlowMessage = { user: "Casey Lee (Manager)", avatar: "CL", message: "Hey team, let's focus on table turn times today during the lunch rush!", isShoutout: false };
+
 export default function TodaysFlow() {
-    const [messages, setMessages] = useState<FlowMessage[]>([
-        { user: "Casey Lee", avatar: "CL", message: "Hey team, let's focus on table turn times today during the lunch rush!", isShoutout: false },
-    ]);
+    const { toast } = useToast();
+    const [messages, setMessages] = useState<FlowMessage[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [isShoutout, setIsShoutout] = useState(false);
     const [shoutoutTarget, setShoutoutTarget] = useState("");
+    const [isThinking, setIsThinking] = useState(false);
 
-    const handleSendMessage = (e: React.FormEvent) => {
+    useEffect(() => {
+        const loadMessages = () => {
+            const storedMessages = localStorage.getItem(CHAT_STORAGE_KEY);
+            if (storedMessages) {
+                setMessages(JSON.parse(storedMessages));
+            } else {
+                setMessages([initialMessage]);
+            }
+        };
+        loadMessages();
+    
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === CHAT_STORAGE_KEY && event.newValue) {
+                setMessages(JSON.parse(event.newValue));
+            }
+        };
+    
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
+    const updateMessages = (newMessages: FlowMessage[]) => {
+        setMessages(newMessages);
+        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(newMessages));
+        // Manually dispatch a storage event so other tabs using this component update
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: CHAT_STORAGE_KEY,
+            newValue: JSON.stringify(newMessages),
+        }));
+    };
+
+    const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
-        const message: FlowMessage = {
-            user: "John Doe", // Current user
+
+        const employeeName = "John Doe";
+        
+        const userMessage: FlowMessage = {
+            user: employeeName,
             avatar: "JD",
             message: newMessage,
             isShoutout,
             target: shoutoutTarget
         };
-        setMessages([...messages, message]);
+        
+        const currentMessages = [...messages, userMessage];
+        updateMessages(currentMessages);
+
         setNewMessage("");
         setIsShoutout(false);
         setShoutoutTarget("");
+        setIsThinking(true);
+
+        try {
+            const result = await analyzeChatMessageAction({ message: userMessage.message, employeeName });
+
+            if (result.error || !result.data) {
+                throw new Error(result.error || 'Failed to analyze message.');
+            }
+
+            if (result.data.actionTaken) {
+                const aiResponseMessage: FlowMessage = {
+                    user: "Leifur AI",
+                    avatar: "AI",
+                    message: result.data.summary,
+                    isAiResponse: true,
+                };
+                updateMessages([...currentMessages, aiResponseMessage]);
+            }
+
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'AI Error',
+                description: error.message
+            });
+        } finally {
+            setIsThinking(false);
+        }
     };
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><MessageSquare /> Today's Flow</CardTitle>
-                <CardDescription>A daily micro-thread for shift notes and shoutouts.</CardDescription>
+                <CardDescription>A daily micro-thread for shift notes and shoutouts. The AI will monitor this chat for urgent requests.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ScrollArea className="h-48 w-full pr-4">
@@ -53,8 +124,16 @@ export default function TodaysFlow() {
                         {messages.map((msg, index) => (
                             <div key={index} className="flex items-start gap-2 text-sm">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={`https://placehold.co/40x40.png?text=${msg.avatar}`} data-ai-hint="user avatar" />
-                                    <AvatarFallback>{msg.avatar}</AvatarFallback>
+                                    {msg.isAiResponse ? (
+                                        <div className="flex h-full w-full items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                            <Sparkles className="h-5 w-5"/>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <AvatarImage src={`https://placehold.co/40x40.png?text=${msg.avatar}`} data-ai-hint="user avatar" />
+                                            <AvatarFallback>{msg.avatar}</AvatarFallback>
+                                        </>
+                                    )}
                                 </Avatar>
                                 <div>
                                     <p className="font-semibold">{msg.user}</p>
@@ -65,6 +144,19 @@ export default function TodaysFlow() {
                                 </div>
                             </div>
                         ))}
+                         {isThinking && (
+                            <div className="flex items-start gap-2 text-sm">
+                                <Avatar className="h-8 w-8">
+                                    <div className="flex h-full w-full items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                        <Sparkles className="h-5 w-5"/>
+                                    </div>
+                                </Avatar>
+                                <div className="flex items-center gap-2 text-muted-foreground italic">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span>analyzing...</span>
+                                </div>
+                            </div>
+                         )}
                     </div>
                 </ScrollArea>
                 <form onSubmit={handleSendMessage} className="mt-4 space-y-2">
@@ -83,7 +175,7 @@ export default function TodaysFlow() {
                             value={newMessage}
                             onChange={e => setNewMessage(e.target.value)}
                         />
-                        <Button type="submit" size="icon" variant="ghost"><Send className="h-5 w-5"/></Button>
+                        <Button type="submit" size="icon" variant="ghost" disabled={isThinking}><Send className="h-5 w-5"/></Button>
                     </div>
                     <Button type="button" variant="link" size="sm" className="p-0 h-auto" onClick={() => setIsShoutout(!isShoutout)}>
                         {isShoutout ? "Cancel Shoutout" : "Give a Shoutout"}
