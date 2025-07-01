@@ -21,6 +21,7 @@ import ShiftRecapDialog from '@/components/dashboard/employee/ShiftRecapDialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import PhotoUploader from '@/components/photo-uploader';
 import { verifyTaskProofAction } from '@/app/actions';
+import FloatingCamera from '@/components/FloatingCamera';
 
 const initialTasks = [
   { id: 1, name: "Clean kitchen floor", area: "Kitchen", priority: "High", status: 'Pending', type: 'regular', xp: 50 },
@@ -289,6 +290,9 @@ export default function EmployeeDashboardV2() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <FloatingCamera />
         </div>
     );
 }
+    
