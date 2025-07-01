@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, PlusCircle, Trash2, Video, Sparkles, Loader2, Link as LinkIcon, AlertCircle, Terminal, CheckCircle } from 'lucide-react';
+import { Camera, PlusCircle, Trash2, Video, Sparkles, Loader2, Link as LinkIcon, AlertCircle } from 'lucide-react';
 import { analyzeCameraImageAction, suggestManualChecksAction } from '@/app/actions';
 import type { CameraAnalysisOutput } from '@/ai/flows/camera-analysis-schemas';
 import type { ManualCheckTask } from '@/ai/schemas/manual-check-schemas';
@@ -154,7 +154,7 @@ export default function AIMonitoringSetup() {
     return (
         <Card className="lg:col-span-3" id="ai-monitoring">
             <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><Video /> Monitoring & Automation</CardTitle>
+                <CardTitle className="font-headline flex items-center gap-2"><Video /> Monitoring &amp; Automation</CardTitle>
                 <CardDescription>Choose your monitoring method and configure your AI assistant.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
