@@ -33,9 +33,7 @@ import {
   Eye,
   Settings,
   BrainCircuit,
-  FileText as FileTextIcon,
   Lightbulb,
-  BookOpen,
   DollarSign,
   Camera,
   Package,
@@ -52,10 +50,12 @@ import {
   MessageSquare,
   Megaphone,
   Briefcase,
-  HardHat,
-  Gamepad2,
-  Sandwich,
-  Bot
+  Bot,
+  TrendingUp,
+  FileText,
+  Handshake,
+  Heart,
+  CalendarCheck2
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -88,13 +88,13 @@ const managerNav = [
         ]
     },
     { 
-        category: "Planning & Prep",
+        category: "Planning & Inventory",
         icon: Calendar,
         links: [
           { name: "Shift Planner", href: "/dashboard/manager/shifts" },
           { name: "Inventory", href: "/dashboard/manager/inventory" },
           { name: "Ordering", href: "/dashboard/manager/ordering" },
-          { name: "Prep & Labeling", href: "/dashboard/manager/prep" },
+          { name: "Food Prep & Labeling", href: "/dashboard/manager/prep" },
         ]
     },
     { 
@@ -179,32 +179,38 @@ const employeeNav = [
         category: "My Day",
         icon: LayoutDashboard,
         links: [
-            { name: "Dashboard", href: "/dashboard/employee", exact: true },
-            { name: "Tasks & Checklists", href: "/dashboard/employee#tasks-checklists" },
-            { name: "Clock In / Clock Out", href: "/dashboard/employee#clock-in-out" },
+            { name: "Dashboard", href: "/dashboard/employee", exact: true, icon: LayoutDashboard },
+            { name: "My Schedule", href: "/dashboard/employee/schedule", icon: CalendarCheck2 },
+            { name: "Tasks & Checklists", href: "/dashboard/employee#tasks-checklists", icon: ListTodo },
+            { name: "Clock In / Clock Out", href: "/dashboard/employee#clock-in-out", icon: Clock },
         ]
     },
     {
         category: "Learn & Grow",
         icon: Award,
         links: [
-            { name: "Arcade Zone", href: "/dashboard/training" },
-            { name: "My Performance", href: "/dashboard/employee#performance-card" },
+            { name: "Arcade Zone", href: "/dashboard/training", icon: Sparkles },
+            { name: "Training Progress", href: "/dashboard/employee#performance-card", icon: TrendingUp },
+            { name: "Knowledge Base", href: "/dashboard/brain", icon: BrainCircuit },
+            { name: "Feedback Center", href: "/dashboard/employee", icon: Handshake },
         ]
     },
     {
         category: "Company Info",
         icon: Briefcase,
         links: [
-            { name: "Company Perks", href: "/dashboard/perks" },
-            { name: "Announcements", href: "/dashboard/employee" }, // Link to top of dashboard
+            { name: "Company Perks", href: "/dashboard/perks", icon: Gift },
+            { name: "Store Announcements", href: "/dashboard/employee", icon: Megaphone },
+            { name: "Team Directory", href: "/dashboard/employee#whos-on-shift", icon: Users },
+            { name: "Service Contacts", href: "/dashboard/employee", icon: FileText },
         ]
     },
     {
         category: "Ask the Brain",
         icon: BrainCircuit,
         links: [
-            { name: "Chat with Assistant", href: "/dashboard/brain" },
+            { name: "Chat with Assistant", href: "/dashboard/brain", icon: MessageSquare },
+            { name: "My Questions History", href: "/dashboard/brain", icon: Heart },
         ]
     }
 ];
@@ -228,7 +234,7 @@ export default function DashboardLayout({
   const { toast } = useToast();
 
   React.useEffect(() => {
-    // Check for policy acceptance on mount. Use sessionStorage for session-only persistence.
+    
     const policyAccepted = sessionStorage.getItem('leifur-ai-policy-accepted');
     if (!loading && user && policyAccepted !== 'true') {
       setIsPolicyModalOpen(true);
@@ -237,7 +243,7 @@ export default function DashboardLayout({
 
 
   React.useEffect(() => {
-    // On initial load in the browser, try to get the role from session storage
+    
     const savedRole = sessionStorage.getItem('userRole');
     if (savedRole) {
       setRole(savedRole);
@@ -245,14 +251,14 @@ export default function DashboardLayout({
   }, []);
 
   React.useEffect(() => {
-    // When the path changes, detect if it's a role-specific page
+    
     let detectedRole = "";
     if (pathname.includes("/owner")) detectedRole = "Owner";
     else if (pathname.includes("/manager")) detectedRole = "Manager";
     else if (pathname.includes("/employee")) detectedRole = "Employee";
     else if (pathname.includes("/health-department")) detectedRole = "Health Department";
     
-    // If a role page is detected, update the role and save it to session storage
+    
     if (detectedRole) {
         sessionStorage.setItem('userRole', detectedRole);
         setRole(detectedRole);
@@ -364,7 +370,7 @@ export default function DashboardLayout({
             </span>
           </div>
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className="p-2">
             {renderNav()}
         </SidebarContent>
         <SidebarFooter>

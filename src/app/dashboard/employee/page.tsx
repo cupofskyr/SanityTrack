@@ -6,16 +6,16 @@ import useWindowSize from 'react-use/lib/useWindowSize';
 import Confetti from 'react-confetti';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
-// Icons
-import { Check, Clock, ListTodo, ShieldCheck, Sparkles, Star, ThumbsUp, Trophy, Zap, MessageSquare, Briefcase, BarChart, BookOpen, AlertCircle, Award } from "lucide-react";
 
-// New modular components
+import { Check, Clock, ListTodo, ShieldCheck, Sparkles, Trophy, Zap, MessageSquare, Briefcase, BarChart, BookOpen, AlertCircle, Award, CalendarDays } from "lucide-react";
+
+
 import LiveTeamFeed from '@/components/dashboard/employee/LiveTeamFeed';
 import WhosOnShift from '@/components/dashboard/employee/WhosOnShift';
 import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
@@ -40,25 +40,25 @@ export default function EmployeeDashboardV2() {
     const { toast } = useToast();
     const { width, height } = useWindowSize();
     
-    // State for tasks and progress
+    
     const [tasks, setTasks] = useState<(Task | QaTask)[]>(initialTasks);
     const [completedCount, setCompletedCount] = useState(0);
     const [showConfetti, setShowConfetti] = useState(false);
     
-    // State for shift management
+    
     const [isClockedIn, setIsClockedIn] = useState(false);
     const [lastClockIn, setLastClockIn] = useState<Date | null>(null);
     const [isShiftRecapOpen, setIsShiftRecapOpen] = useState(false);
 
-    // State for Store Vibe
+    
     const [storeVibe, setStoreVibe] = useState<'good' | 'warning' | 'urgent'>('good');
     const [vibeMessage, setVibeMessage] = useState('All systems normal.');
 
     const totalTasks = useMemo(() => initialTasks.length + initialQaTasks.length, []);
     const progressPercentage = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
-    const xpEarned = completedCount * 50; // Simple XP calculation for demo
+    const xpEarned = completedCount * 50; 
 
-    // Simulate listening to the Sentinel Agent's status
+    
     useEffect(() => {
         const interval = setInterval(() => {
             const agentStatus = localStorage.getItem('sentinel-agent-status');
@@ -84,7 +84,7 @@ export default function EmployeeDashboardV2() {
             title: "Mission Complete! ✨",
             description: "Great job! +50XP earned.",
         });
-        setTimeout(() => setShowConfetti(false), 5000); // Confetti lasts for 5 seconds
+        setTimeout(() => setShowConfetti(false), 5000); 
     };
 
     const handleClockIn = () => {
@@ -126,7 +126,7 @@ export default function EmployeeDashboardV2() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column */}
+                
                 <div className="lg:col-span-2 space-y-6">
                     <Card id="tasks-checklists">
                         <CardHeader>
@@ -163,7 +163,7 @@ export default function EmployeeDashboardV2() {
                     <LiveTeamFeed />
                 </div>
 
-                {/* Right Column */}
+                
                 <div className="space-y-6">
                     <Card id="clock-in-out">
                         <CardHeader><CardTitle className="flex items-center gap-2"><Clock /> Time Clock</CardTitle></CardHeader>
@@ -173,6 +173,18 @@ export default function EmployeeDashboardV2() {
                                 <Button onClick={handleClockIn} disabled={isClockedIn} className="w-full">Clock In</Button>
                                 <Button onClick={handleClockOut} disabled={!isClockedIn} variant="destructive" className="w-full">Clock Out</Button>
                             </div>
+                        </CardContent>
+                    </Card>
+                    
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><CalendarDays /> My Schedule</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-muted-foreground mb-4">Your next shift is on Tuesday at 9:00 AM.</p>
+                            <Button asChild className="w-full" variant="outline">
+                                <Link href="/dashboard/employee/schedule">View Full Schedule & Set Preferences</Link>
+                            </Button>
                         </CardContent>
                     </Card>
 

@@ -6,6 +6,7 @@ export const EmployeeSchema = z.object({
   hourlyRate: z.number().describe("The employee's hourly wage for cost calculation."),
   role: z.string().describe("The employee's job title, e.g., 'Line Cook', 'Server'.").optional(),
   transactionsPerHour: z.number().describe("The number of transactions this employee can handle per hour."),
+  preferredShiftTimes: z.array(z.string()).optional().describe('A list of preferred shift times, e.g., "Morning", "Evening".'),
 });
 
 export const ShiftSchema = z.object({
