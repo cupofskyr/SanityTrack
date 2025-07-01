@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Camera, Sparkles, Loader2, Clipboard, AlertTriangle, FilePen, Edit } from 'lucide-react';
+import { Camera, Sparkles, Loader2, Clipboard, AlertTriangle, FilePen, Edit, ListTodo } from 'lucide-react';
 import PhotoUploader from './photo-uploader';
 import { analyzePhotoIssueAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -59,10 +59,10 @@ export default function GlobalAICamera() {
         switch (action) {
             case 'reportIssue':
                 localStorage.setItem('ai-issue-suggestion', analysisResult);
-                // Managers have a more complex issue analyzer, employees have a simple report dialog.
-                // Let's send managers to their dashboard and employees to theirs.
                 if (role === 'Manager') {
-                    router.push('/dashboard/manager');
+                    const managerDashboard = document.getElementById('ai-issue-analyzer-card');
+                    if(managerDashboard) managerDashboard.scrollIntoView({ behavior: 'smooth'});
+                    else router.push('/dashboard/manager');
                 } else {
                     router.push('/dashboard/employee');
                 }
@@ -100,7 +100,7 @@ export default function GlobalAICamera() {
         if (role === 'Employee') {
             actionButton = (
                 <Button onClick={() => handleAction('reportIssue')}>
-                    <AlertTriangle className="mr-2" /> Create Issue Report
+                    <ListTodo className="mr-2" /> Create Task from Photo
                 </Button>
             );
         } else if (role === 'Manager') {
