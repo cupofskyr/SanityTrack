@@ -54,7 +54,8 @@ import {
   Briefcase,
   HardHat,
   Gamepad2,
-  Sandwich
+  Sandwich,
+  Bot
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -134,6 +135,15 @@ const ownerNav = [
             { name: "Monitoring Setup", href: "/dashboard/owner/monitoring" },
             { name: "Agent Rules", href: "/dashboard/owner/agent-rules" },
             { name: "Agent Alerts", href: "/dashboard/owner#sentinel-alerts" },
+        ]
+    },
+    {
+        category: "AI Agents",
+        icon: Bot,
+        links: [
+            { name: "Agent Dashboard", href: "/dashboard/owner/agents" },
+            { name: "Create Agent", href: "/dashboard/owner/agents/new" },
+            { name: "Agent Templates", href: "/dashboard/owner/agents/templates" },
         ]
     },
     {
