@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useCallback } from 'react';
@@ -109,11 +110,12 @@ export default function QualityControlPage() {
             source: 'Manager Assignment',
             status: 'Pending',
             itemToAudit: selectedItem.name,
-            standardImageUrl: selectedItem.imageUrl,
-            type: 'qa'
+            type: 'qa',
+            xp: 100,
         };
 
         // In a real app you'd write to a shared DB. Here we use localStorage.
+        // The image data is intentionally omitted to avoid exceeding localStorage quota.
         localStorage.setItem('qa-employee-task', JSON.stringify(qaTask));
 
         toast({

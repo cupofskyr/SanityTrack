@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -28,17 +29,17 @@ const initialTasks = [
 ];
 
 const initialQaTasks = [
-  { id: 4, description: `Perform QA check for: Classic Burger`, source: 'Manager Assignment', status: 'Pending', itemToAudit: 'Classic Burger', standardImageUrl: '', type: 'qa', xp: 100 }
+  { id: 4, description: `Perform QA check for: Classic Burger`, source: 'Manager Assignment', status: 'Pending', itemToAudit: 'Classic Burger', type: 'qa', xp: 100 }
 ];
 
 type Task = { id: number; name: string; area: string; priority: string; status: 'Pending' | 'In Progress'; type: 'regular'; xp: number };
-type QaTask = { id: number; description: string; source: string; status: 'Pending' | 'In Progress'; itemToAudit: string; standardImageUrl: string; type: 'qa'; xp: number };
+type QaTask = { id: number; description: string; source: string; status: 'Pending' | 'In Progress'; itemToAudit: string; standardImageUrl?: string; type: 'qa'; xp: number };
 
 export default function EmployeeDashboardV2() {
     const { toast } = useToast();
     const { width, height } = useWindowSize();
     
-    const [tasks, setTasks] = useState<(Task | QaTask)[]>(initialTasks);
+    const [tasks, setTasks] = useState<(Task | QaTask)[]>([...initialTasks, ...initialQaTasks]);
     const [completedCount, setCompletedCount] = useState(0);
     const [showConfetti, setShowConfetti] = useState(false);
     
@@ -55,7 +56,7 @@ export default function EmployeeDashboardV2() {
     const [proofPhoto, setProofPhoto] = useState<string|null>(null);
     const [isVerifying, setIsVerifying] = useState(false);
 
-    const totalTasks = useMemo(() => initialTasks.length + initialQaTasks.length, []);
+    const totalTasks = useMemo(() => tasks.length, [tasks]);
     const progressPercentage = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
     const xpEarned = completedCount * 50; 
 
@@ -75,6 +76,40 @@ export default function EmployeeDashboardV2() {
         }, 3000);
         return () => clearInterval(interval);
     }, []);
+
+    // Effect to listen for new QA tasks assigned by a manager
+    useEffect(() => {
+        const handleQaTaskUpdate = () => {
+            const storedTask = localStorage.getItem('qa-employee-task');
+            if (storedTask) {
+                try {
+                    const newTask = JSON.parse(storedTask);
+                    setTasks(prevTasks => {
+                        if (!prevTasks.some(task => task.id === newTask.id)) {
+                            toast({ title: 'New QA Task Assigned!', description: newTask.description });
+                            return [...prevTasks, newTask];
+                        }
+                        return prevTasks;
+                    });
+                } catch (e) {
+                    console.error("Failed to parse task from localStorage", e);
+                }
+            }
+        };
+
+        const handleStorageEvent = (event: StorageEvent) => {
+            if (event.key === 'qa-employee-task') {
+                handleQaTaskUpdate();
+            }
+        };
+        
+        handleQaTaskUpdate(); // Check on component mount
+        window.addEventListener('storage', handleStorageEvent);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageEvent);
+        };
+    }, [toast]);
 
     const handleTaskCompletion = (taskId: number) => {
         setTasks(prev => prev.filter(task => task.id !== taskId));
@@ -184,8 +219,8 @@ export default function EmployeeDashboardV2() {
                                             {task.type === 'qa' ? <ShieldCheck className="h-5 w-5" /> : <Zap className="h-5 w-5" />}
                                         </div>
                                         <div className="flex-1">
-                                            <p className="font-medium">{task.type === 'qa' ? task.description : task.name}</p>
-                                            <p className="text-xs text-muted-foreground">{task.type === 'qa' ? task.source : task.area}</p>
+                                            <p className="font-medium">{task.type === 'qa' ? task.description : (task as Task).name}</p>
+                                            <p className="text-xs text-muted-foreground">{task.type === 'qa' ? task.source : (task as Task).area}</p>
                                         </div>
                                         <Badge variant={task.type === 'qa' || (task as Task).priority === "High" ? "destructive" : "secondary"}>
                                             {task.type === 'qa' ? 'High Priority' : (task as Task).priority}
@@ -239,7 +274,7 @@ export default function EmployeeDashboardV2() {
                     <DialogHeader>
                         <DialogTitle className='font-headline'>Submit Proof of Completion</DialogTitle>
                         <DialogDescription>
-                            Take a photo to verify completion of the task: <span className="font-semibold">{taskForProof?.type === 'regular' ? taskForProof.name : taskForProof?.description}</span>
+                            Take a photo to verify completion of the task: <span className="font-semibold">{taskForProof?.type === 'regular' ? (taskForProof as Task).name : taskForProof?.description}</span>
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
