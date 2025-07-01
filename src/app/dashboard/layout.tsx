@@ -43,7 +43,15 @@ import {
   Gift,
   Flag,
   CookingPot,
-  Printer
+  Printer,
+  ShieldAlert,
+  ListTodo,
+  Clock,
+  Sparkles,
+  Award,
+  MessageSquare,
+  Megaphone,
+  Briefcase
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -65,88 +73,77 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 const managerNav = [
-  { 
-    category: "Live Operations",
-    icon: Activity,
-    links: [
-      { name: "Dashboard", href: "/dashboard/manager", exact: true },
-      { name: "Live Time Clock", href: "/dashboard/manager#time-clock-feed" },
-      { name: "Quality Control", href: "/dashboard/manager/quality-control" },
-    ]
-  },
-  { 
-    category: "Planning & Prep",
-    icon: Calendar,
-    links: [
-      { name: "Shift Planner", href: "/dashboard/manager/shifts" },
-      { name: "Inventory", href: "/dashboard/manager/inventory" },
-      { name: "Ordering", href: "/dashboard/manager/ordering" },
-      { name: "Food Prep & Labeling", href: "/dashboard/manager/prep" },
-      { name: "Hiring Requests", href: "/dashboard/manager#hiring-request" },
-    ]
-  },
-   { 
-    category: "Team & Quality",
-    icon: Users,
-    links: [
-      { name: "Arcade Zone", href: "/dashboard/training" },
-      { name: "Arcade Zone Setup", href: "/dashboard/training/setup"},
-      { name: "Knowledge Base", href: "/dashboard/manager/knowledge" },
-      { name: "Employee Perks", href: "/dashboard/perks" },
-    ]
-  },
-  {
-    category: "Store Setup",
-    icon: Wrench,
-    links: [
-        { name: "Master Task List", href: "/dashboard/manager/equipment" },
-        { name: "Service Contacts", href: "/dashboard/manager#service-contacts" },
-    ]
-  },
+    { 
+        category: "Daily Operations",
+        icon: Activity,
+        links: [
+          { name: "Dashboard", href: "/dashboard/manager", exact: true },
+          { name: "Live Time Clock", href: "/dashboard/manager#time-clock-feed" },
+          { name: "Quality Control", href: "/dashboard/manager/quality-control" },
+          { name: "Master Task List", href: "/dashboard/manager/equipment" },
+        ]
+    },
+    { 
+        category: "Planning & Inventory",
+        icon: Calendar,
+        links: [
+          { name: "Shift Planner", href: "/dashboard/manager/shifts" },
+          { name: "Inventory", href: "/dashboard/manager/inventory" },
+          { name: "Ordering", href: "/dashboard/manager/ordering" },
+          { name: "Food Prep & Labeling", href: "/dashboard/manager/prep" },
+        ]
+    },
+    { 
+        category: "Team & Training",
+        icon: Users,
+        links: [
+          { name: "Arcade Zone", href: "/dashboard/training" },
+          { name: "Arcade Zone Setup", href: "/dashboard/training/setup"},
+          { name: "Knowledge Base", href: "/dashboard/manager/knowledge" },
+          { name: "Hiring Requests", href: "/dashboard/manager#hiring-request" },
+          { name: "Employee Perks", href: "/dashboard/perks" },
+        ]
+    },
+    {
+        category: "Store Tools",
+        icon: Wrench,
+        links: [
+            { name: "Service Contacts", href: "/dashboard/manager#service-contacts" },
+        ]
+    },
 ];
 
 const ownerNav = [
     {
-        category: "Executive Dashboard",
+        category: "Executive",
         icon: BarChart3,
         links: [
-            { name: "KPI Overview", href: "/dashboard/owner", exact: true },
+            { name: "Executive Dashboard", href: "/dashboard/owner", exact: true },
+            { name: "KPI Overview", href: "/dashboard/owner#kpi-overview" },
         ]
     },
     {
-        category: "Strategic Command",
+        category: "Strategy & Ops",
         icon: Eye,
         links: [
-            { name: "Approvals & Alerts", href: "/dashboard/owner#high-priority-approvals" },
-        ]
-    },
-    {
-        category: "AI Engine",
-        icon: BrainCircuit,
-        links: [
+            { name: "Strategic Command", href: "/dashboard/owner#strategic-command" },
+            { name: "AI Engine", href: "/dashboard/owner/agent-rules" },
             { name: "Monitoring Setup", href: "/dashboard/owner/monitoring" },
             { name: "Agent Rules", href: "/dashboard/owner/agent-rules" },
             { name: "Agent Activity Log", href: "/dashboard/owner#agent-activity-log" },
         ]
     },
     {
-        category: "Growth & Innovation",
+        category: "Growth & Compliance",
         icon: Lightbulb,
         links: [
-            { name: "Marketing Hub", href: "/dashboard/owner#marketing" },
-            { name: "Menu Innovation Lab", href: "/dashboard/owner#marketing" },
-        ]
-    },
-     {
-        category: "Records & Compliance",
-        icon: FileTextIcon,
-        links: [
+            { name: "Records & Compliance", href: "/dashboard/owner/documents" },
             { name: "Permit Applications", href: "/dashboard/owner/permits" },
             { name: "Document Storage", href: "/dashboard/owner/documents" },
         ]
     },
-    {
-        category: "System Administration",
+     {
+        category: "System Admin",
         icon: Settings,
         links: [
             { name: "Team & Permissions", href: "/dashboard/owner/team" },
@@ -160,18 +157,46 @@ const ownerNav = [
         category: "Financials",
         icon: DollarSign,
         links: [
-            { name: "Expense Management", href: "/dashboard/owner/financials" },
-            { name: "Billing", href: "/dashboard/owner/billing" },
+            { name: "Financial Overview", href: "/dashboard/owner/financials" },
         ]
     }
 ];
 
 const employeeNav = [
-    { name: "Dashboard", href: "/dashboard/employee", icon: LayoutDashboard },
-    { name: "Arcade Zone", href: "/dashboard/training", icon: BookOpen },
-    { name: "Company Perks", href: "/dashboard/perks", icon: Gift },
-    { name: "Ask the Brain", href: "/dashboard/brain", icon: BrainCircuit },
+    {
+        category: "My Day",
+        icon: LayoutDashboard,
+        links: [
+            { name: "Dashboard", href: "/dashboard/employee", exact: true },
+            { name: "Tasks & Checklists", href: "/dashboard/employee#tasks-checklists" },
+            { name: "Clock In / Clock Out", href: "/dashboard/employee#clock-in-out" },
+        ]
+    },
+    {
+        category: "Learn & Grow",
+        icon: Award,
+        links: [
+            { name: "Arcade Zone", href: "/dashboard/training" },
+            { name: "My Performance", href: "/dashboard/employee#performance-card" },
+        ]
+    },
+    {
+        category: "Company Info",
+        icon: Briefcase,
+        links: [
+            { name: "Company Perks", href: "/dashboard/perks" },
+            { name: "Announcements", href: "/dashboard/employee" }, // Link to top of dashboard
+        ]
+    },
+    {
+        category: "Ask the Brain",
+        icon: BrainCircuit,
+        links: [
+            { name: "Chat with Assistant", href: "/dashboard/brain" },
+        ]
+    }
 ];
+
 
 const inspectorNav = [
     { name: "Dashboard", href: "/dashboard/health-department", icon: LayoutDashboard },
@@ -183,6 +208,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, loading, logout } = useAuth();
   const [role, setRole] = React.useState("User");
   const [isPolicyModalOpen, setIsPolicyModalOpen] = React.useState(false);
@@ -190,13 +216,16 @@ export default function DashboardLayout({
   const { toast } = useToast();
 
   React.useEffect(() => {
+    // Check for policy acceptance on mount. Use sessionStorage for session-only persistence.
     const policyAccepted = sessionStorage.getItem('leifur-ai-policy-accepted');
     if (!loading && user && policyAccepted !== 'true') {
       setIsPolicyModalOpen(true);
     }
   }, [loading, user]);
 
+
   React.useEffect(() => {
+    // On initial load in the browser, try to get the role from session storage
     const savedRole = sessionStorage.getItem('userRole');
     if (savedRole) {
       setRole(savedRole);
@@ -204,12 +233,14 @@ export default function DashboardLayout({
   }, []);
 
   React.useEffect(() => {
+    // When the path changes, detect if it's a role-specific page
     let detectedRole = "";
     if (pathname.includes("/owner")) detectedRole = "Owner";
     else if (pathname.includes("/manager")) detectedRole = "Manager";
     else if (pathname.includes("/employee")) detectedRole = "Employee";
     else if (pathname.includes("/health-department")) detectedRole = "Health Department";
     
+    // If a role page is detected, update the role and save it to session storage
     if (detectedRole) {
         sessionStorage.setItem('userRole', detectedRole);
         setRole(detectedRole);
@@ -252,71 +283,61 @@ export default function DashboardLayout({
       case "Manager":
         navItems = managerNav;
         break;
-      case "Health Department":
-        navItems = inspectorNav;
-        break;
       case "Employee":
+        navItems = employeeNav;
+        break;
+      case "Health Department":
+        return (
+            <SidebarMenu>
+                {inspectorNav.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
+                            <Link href={item.href}><item.icon /><span>{item.label}</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+        );
       default:
         navItems = employeeNav;
     }
 
-    if (role === 'Manager' || role === 'Owner') {
-        const defaultActive = (navItems as any[]).findIndex(category => 
-            category.links.some((link: any) => pathname.startsWith(link.href.split('#')[0]))
-        );
+    const defaultActive = (navItems as any[]).findIndex(category => 
+        category.links.some((link: any) => pathname.startsWith(link.href.split('#')[0]))
+    );
 
-        const isLinkActive = (href: string, exact: boolean = false) => {
-            const cleanPath = href.split('#')[0];
-            if (exact) {
-              return pathname === cleanPath;
-            }
-            return pathname.startsWith(cleanPath);
-        };
-
-        return (
-            <Accordion type="multiple" defaultValue={[`item-${defaultActive}`]} className="w-full">
-                {(navItems as any[]).map((category, index) => (
-                    <AccordionItem value={`item-${index}`} key={index} className="border-b-0">
-                        <AccordionTrigger className="py-2 px-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground rounded-md hover:no-underline [&[data-state=open]]:bg-accent [&[data-state=open]]:text-accent-foreground">
-                           <div className="flex items-center gap-2">
-                             <category.icon className="h-4 w-4" />
-                             <span className="group-data-[collapsible=icon]:hidden">{category.category}</span>
-                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="pt-1 pb-0">
-                            <SidebarMenu className="pl-4 border-l ml-4">
-                                {category.links.map((link: any) => (
-                                    <SidebarMenuItem key={link.href}>
-                                        <SidebarMenuButton asChild isActive={isLinkActive(link.href, link.exact)} size="sm">
-                                            <Link href={link.href}>{link.name}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-                            </SidebarMenu>
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
-        );
-    }
+    const isLinkActive = (href: string, exact: boolean = false) => {
+        const cleanPath = href.split('#')[0];
+        if (exact) {
+          return pathname === cleanPath;
+        }
+        return pathname.startsWith(cleanPath);
+    };
 
     return (
-        <SidebarMenu>
-            {(navItems as any[]).map((item) => (
-            <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-                tooltip={item.name}
-                >
-                <Link href={item.href}>
-                    <item.icon />
-                    <span>{item.name}</span>
-                </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+        <Accordion type="multiple" defaultValue={[`item-${defaultActive}`]} className="w-full">
+            {(navItems as any[]).map((category, index) => (
+                <AccordionItem value={`item-${index}`} key={index} className="border-b-0">
+                    <AccordionTrigger className="py-2 px-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground rounded-md hover:no-underline [&[data-state=open]]:bg-accent [&[data-state=open]]:text-accent-foreground">
+                       <div className="flex items-center gap-2">
+                         <category.icon className="h-4 w-4" />
+                         <span className="group-data-[collapsible=icon]:hidden">{category.category}</span>
+                       </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-1 pb-0">
+                        <SidebarMenu className="pl-4 border-l ml-4">
+                            {category.links.map((link: any) => (
+                                <SidebarMenuItem key={link.href}>
+                                    <SidebarMenuButton asChild isActive={isLinkActive(link.href, link.exact)} size="sm">
+                                        <Link href={link.href}>{link.name}</Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                        </SidebarMenu>
+                    </AccordionContent>
+                </AccordionItem>
             ))}
-      </SidebarMenu>
+        </Accordion>
     );
   };
 

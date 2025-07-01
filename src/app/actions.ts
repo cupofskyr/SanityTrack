@@ -216,48 +216,7 @@ export async function queryKnowledgeBaseAction(input: { question: string }): Pro
 }
 
 export async function runMasterAgentCycleAction(input: MasterAgentInput): Promise<{ data: MasterAgentOutput | null; error: string | null; }> {
-    // To make the demo more interesting, we'll create a dynamic state.
-    const possibleObservations = [
-        "Spill detected on floor near counter.",
-        "Line at front counter has 5 people.",
-        "Employee seems to be idle for over 3 minutes.",
-        "Trash can near the entrance is overflowing.",
-    ];
-    const possibleStockLevels = [
-        { item: 'Milk', level: 'Critical' as const },
-        { item: 'Coffee Beans', level: 'Low' as const },
-    ];
-    
-    // Randomly select one or two states to simulate
-    const dynamicState: MasterAgentInput['currentState'] = {
-        cameraObservations: [],
-        stockLevels: [],
-        openTasks: [],
-    };
-    
-    if (Math.random() > 0.3) { // 70% chance of a camera observation
-        dynamicState.cameraObservations.push(possibleObservations[Math.floor(Math.random() * possibleObservations.length)]);
-    }
-     if (Math.random() > 0.5) { // 50% chance of a stock level issue
-        dynamicState.stockLevels.push(possibleStockLevels[Math.floor(Math.random() * possibleStockLevels.length)]);
-    }
-
-    // Add a default state if nothing was randomly selected, to ensure there's always something to analyze
-    if (dynamicState.cameraObservations.length === 0 && dynamicState.stockLevels.length === 0) {
-        dynamicState.openTasks.push("Clean fryer #2");
-    }
-
-    const allRules = [
-        { id: 'auto-spill-cleaner', name: 'Auto-Tasker for Spills', description: 'IF a camera detects a spill, THEN automatically create a high-priority cleaning task.', isEnabled: true },
-        { id: 'auto-restock-alerter', name: 'Proactive Restock Alerter', description: 'IF inventory of a critical item is low, THEN automatically email the manager.', isEnabled: true },
-    ];
-
-    const agentInput: MasterAgentInput = {
-        rules: allRules,
-        currentState: dynamicState,
-    };
-
-    return safeRun(runMasterAgentDecision, agentInput, 'runMasterAgentDecision');
+    return safeRun(runMasterAgentDecision, input, 'runMasterAgentDecision');
 }
 
 export async function generatePermitChecklistAction(input: GeneratePermitChecklistInput): Promise<{ data: GeneratePermitChecklistOutput | null; error: string | null; }> {

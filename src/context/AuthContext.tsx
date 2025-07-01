@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.setItem('userRole', role);
     if (isNewUser) {
         sessionStorage.setItem('isNewUser', 'true');
+        // Do not automatically show the policy modal here, let the layout handle it
         toast({
             title: "Account Created!",
             description: "Welcome! Let's get you set up.",
@@ -52,6 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             description: `Welcome back, ${user.displayName}!`,
         });
     }
+
+    // Always clear the policy acceptance on a new sign-in/sign-up
+    sessionStorage.removeItem('leifur-ai-policy-accepted');
 
     if (role === 'Business Owner') {
         router.push('/dashboard/owner');
