@@ -1,6 +1,7 @@
 
 "use client";
 
+import React, { useState, useEffect } from 'react';
 import { Logo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import Link from 'next/link';
 import AuthForm from '@/components/auth-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import React from 'react';
+import PasswordProtect from '@/components/password-protect';
 
 
 const Feature = ({ icon, title, children }: { icon: React.ElementType, title: string, children: React.ReactNode }) => (
@@ -24,10 +25,8 @@ const Feature = ({ icon, title, children }: { icon: React.ElementType, title: st
     </div>
 );
 
-export default function AppFrontDoorPage() {
-  return (
-    <main className="flex min-h-screen w-full items-center bg-gradient-to-br from-background to-muted/50">
-      <div className="grid w-full grid-cols-1 md:grid-cols-2 container mx-auto gap-8">
+const MainContent = () => (
+    <div className="grid w-full grid-cols-1 md:grid-cols-2 container mx-auto gap-8">
         
         {/* Left Column: Value Proposition */}
         <div className="hidden flex-col justify-center p-4 lg:p-10 md:flex">
@@ -86,6 +85,26 @@ export default function AppFrontDoorPage() {
           </div>
         </div>
       </div>
-    </main>
-  );
+);
+
+export default function AppFrontDoorPage() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        // This check runs only on the client-side
+        if (sessionStorage.getItem('demo_authenticated') === 'true') {
+            setIsAuthenticated(true);
+        }
+    }, []);
+
+    const handleSuccess = () => {
+        sessionStorage.setItem('demo_authenticated', 'true');
+        setIsAuthenticated(true);
+    };
+
+    return (
+        <main className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-background to-muted/50">
+           {isAuthenticated ? <MainContent /> : <PasswordProtect onSuccess={handleSuccess} />}
+        </main>
+    );
 }
