@@ -286,35 +286,6 @@ export async function analyzeChatMessageAction(input: AnalyzeChatInput): Promise
     return safeRun(analyzeChatMessage, input, 'analyzeChatMessage');
 }
 
-// These actions don't call an AI flow, so they don't need the safeRun wrapper.
-// They simulate database interactions. In a real app, you would use Firestore here.
-
-export async function authorizeRecoveryAction(input: { alertId: string; action: 'one_10_dollar_card' | 'dismiss' }): Promise<{ success: boolean; code?: string; }> {
-    console.log(`Authorizing recovery for alert ${input.alertId} with action: ${input.action}`);
-    
-    if (input.action === 'dismiss') {
-        console.log(`Alert ${input.alertId} dismissed.`);
-        // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({ status: 'dismissed' });
-        return { success: true };
-    }
-  
-    const generatedCode = `RECOVERY-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-    // Simplified: always assign to John Doe for the demo
-    const assignedEmployeeId = 'John Doe';
-  
-    console.log(`Action dispatched to ${assignedEmployeeId} with code ${generatedCode}`);
-    // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({...});
-
-    return { success: true, code: generatedCode };
-}
-
-export async function resolveServiceAlertAction(input: { alertId: string }): Promise<{ success: boolean }> {
-    console.log(`Resolving service alert ${input.alertId}`);
-    // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({ status: 'resolved', resolvedAt: new Date() });
-    return { success: true };
-}
-
-
 export async function saveBrandGuidelinesAction(input: { data: BrandGuidelinesData, userId: string }): Promise<{ success: boolean; error: string | null }> {
     try {
         const { data, userId } = input;
@@ -346,7 +317,6 @@ export async function saveBrandGuidelinesAction(input: { data: BrandGuidelinesDa
     }
 }
 
-// Action to get brand guidelines
 export async function getBrandGuidelinesAction(userId: string): Promise<{ data: BrandGuidelinesData | null; error: string | null; }> {
     try {
         const brandRef = doc(db, 'brandGuidelines', userId);
@@ -458,4 +428,32 @@ export async function submitFeedbackAction(input: { category: string; feedback: 
         console.error("Feedback submission failed:", error);
         return { success: false, error: "Your feedback could not be submitted." };
     }
+}
+
+// These actions don't call an AI flow, so they don't need the safeRun wrapper.
+// They simulate database interactions. In a real app, you would use Firestore here.
+
+export async function authorizeRecoveryAction(input: { alertId: string; action: 'one_10_dollar_card' | 'dismiss' }): Promise<{ success: boolean; code?: string; }> {
+    console.log(`Authorizing recovery for alert ${input.alertId} with action: ${input.action}`);
+    
+    if (input.action === 'dismiss') {
+        console.log(`Alert ${input.alertId} dismissed.`);
+        // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({ status: 'dismissed' });
+        return { success: true };
+    }
+  
+    const generatedCode = `RECOVERY-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    // Simplified: always assign to John Doe for the demo
+    const assignedEmployeeId = 'John Doe';
+  
+    console.log(`Action dispatched to ${assignedEmployeeId} with code ${generatedCode}`);
+    // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({...});
+
+    return { success: true, code: generatedCode };
+}
+
+export async function resolveServiceAlertAction(input: { alertId: string }): Promise<{ success: boolean }> {
+    console.log(`Resolving service alert ${input.alertId}`);
+    // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({ status: 'resolved', resolvedAt: new Date() });
+    return { success: true };
 }

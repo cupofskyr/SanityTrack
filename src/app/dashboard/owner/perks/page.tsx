@@ -11,11 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Gift, Trash2, Loader2, DollarSign, Ban, ShieldCheck } from 'lucide-react';
-import { getFirestore, collection, onSnapshot, query, where, getFunctions, httpsCallable } from "firebase/firestore";
+import { getFirestore, collection, onSnapshot, query, where } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from '@/lib/firebase';
 import { useAuth, AppUser } from '@/context/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const db = getFirestore(app);
 const functions = getFunctions(app);
@@ -203,7 +203,7 @@ export default function PerksManagementPage() {
                                     <TableCell>{perk.category}</TableCell>
                                     {user?.role === 'owner' && (
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => handleRemovePerk(perk.id)}>
+                                            <Button variant="ghost" size="icon" onClick={() => handleRemovePerk(perk.id)} aria-label={`Delete perk ${perk.name}`}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </TableCell>
