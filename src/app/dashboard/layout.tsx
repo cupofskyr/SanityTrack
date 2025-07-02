@@ -116,7 +116,6 @@ const ownerNav = [
         icon: Lightbulb,
         links: [
             { name: "Permit Applications", href: "/dashboard/owner/permits" },
-            { name: "Knowledge Base", href: "/dashboard/owner/documents" },
         ]
     },
      {
@@ -125,7 +124,6 @@ const ownerNav = [
         links: [
             { name: "Team & Payroll", href: "/dashboard/owner/team" },
             { name: "Branding", href: "/dashboard/owner/branding" },
-            { name: "Billing", href: "/dashboard/owner/billing"},
         ]
     },
 ];
@@ -386,9 +384,9 @@ export default function DashboardLayout({
                 <span>Permissions</span>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/owner/billing">
+                <Link href="/dashboard/owner/team">
                     <DollarSign className="mr-2 h-4 w-4" />
-                    <span>Billing</span>
+                    <span>Payroll</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

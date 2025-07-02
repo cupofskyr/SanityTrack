@@ -99,7 +99,7 @@ export default function MicroOrderingTool() {
                                             <TableCell className="font-medium">{item.name}</TableCell>
                                             <TableCell>{item.quantity}</TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)}>
+                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} aria-label="Remove item">
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </TableCell>

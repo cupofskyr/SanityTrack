@@ -135,7 +135,7 @@ export default function KnowledgeBaseManager() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => setItemToDelete(doc)}>
+                                            <Button variant="ghost" size="icon" onClick={() => setItemToDelete(doc)} aria-label={`Delete ${doc.name}`}>
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </TableCell>
@@ -164,7 +164,7 @@ export default function KnowledgeBaseManager() {
             <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete <span className="font-semibold">"{itemToDelete?.name}"</span> and remove it from the AI's knowledge base. This action cannot be undone.
                         </AlertDialogDescription>

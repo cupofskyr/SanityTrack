@@ -86,8 +86,6 @@ export default function AIShiftScheduler() {
     const [isPublished, setIsPublished] = useState(false);
     const { toast } = useToast();
 
-    const [suggestedShifts, setSuggestedShifts] = useState<ShiftSuggestion[] | null>(null);
-    const [isSuggesting, setIsSuggesting] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
 
     useEffect(() => {
@@ -215,23 +213,6 @@ export default function AIShiftScheduler() {
         toast({ title: "Shift Claimed!", description: `You have been assigned to the shift.` });
     }
 
-    const handleSuggestShifts = async () => {
-        setIsSuggesting(true);
-        setSuggestedShifts(null);
-        try {
-            const result = await generateShiftSuggestionsAction({});
-            if (result.error || !result.data) {
-                throw new Error(result.error || "Failed to get suggestions.");
-            }
-            setSuggestedShifts(result.data.suggestions);
-            toast({ title: "AI Suggestions Ready", description: "Click a suggestion to use its times." });
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'AI Error', description: error.message });
-        } finally {
-            setIsSuggesting(false);
-        }
-    };
-
     const handleGenerateSchedule = async () => {
         if (shifts.length === 0) {
              toast({ variant: "destructive", title: "No Shifts", description: "Please create shifts before generating a schedule." });
@@ -282,7 +263,6 @@ export default function AIShiftScheduler() {
         setShifts([]);
         setResult(null);
         setIsPublished(false);
-        setSuggestedShifts(null);
         localStorage.removeItem('published-schedule');
         toast({
             title: "Roster Cleared",
@@ -446,7 +426,7 @@ export default function AIShiftScheduler() {
                                     <div className="grid gap-2 flex-grow"><Label htmlFor={`name-${template.id}`}>Shift Name</Label><Input id={`name-${template.id}`} value={template.name} onChange={e => handleTemplateChange(template.id, 'name', e.target.value)} disabled={isPublished}/></div>
                                     <div className="grid gap-2"><Label htmlFor={`start-${template.id}`}>Start Time</Label><Input id={`start-${template.id}`} type="time" value={template.startTime} onChange={e => handleTemplateChange(template.id, 'startTime', e.target.value)} disabled={isPublished}/></div>
                                     <div className="grid gap-2"><Label htmlFor={`end-${template.id}`}>End Time</Label><Input id={`end-${template.id}`} type="time" value={template.endTime} onChange={e => handleTemplateChange(template.id, 'endTime', e.target.value)} disabled={isPublished}/></div>
-                                    <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveTemplate(template.id)} disabled={isPublished || shiftTemplates.length <= 1}><Trash2 className="h-4 w-4"/></Button>
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveTemplate(template.id)} disabled={isPublished || shiftTemplates.length <= 1} aria-label="Remove shift template"><Trash2 className="h-4 w-4"/></Button>
                                 </div>
                             ))}
                             <div className="flex gap-2">
@@ -603,9 +583,8 @@ export default function AIShiftScheduler() {
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteShift(shift.id)} disabled={isPublished}>
+                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteShift(shift.id)} disabled={isPublished} aria-label="Delete shift">
                                             <Trash2 className="h-4 w-4" />
-                                            <span className="sr-only">Delete shift</span>
                                         </Button>
                                     </TableCell>
                                 </TableRow>
