@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -179,13 +180,11 @@ export default function TrainingManager() {
                                     <TableCell className="font-semibold">{item.name}</TableCell>
                                     <TableCell className="text-sm text-muted-foreground truncate max-w-sm">{item.description}</TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon" onClick={() => openMenuDialog(item)}>
+                                        <Button variant="ghost" size="icon" onClick={() => openMenuDialog(item)} aria-label={`Edit ${item.name}`}>
                                             <Pencil className="h-4 w-4" />
-                                            <span className="sr-only">Edit</span>
                                         </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => openDeleteDialog('menu', item.id, item.name)}>
+                                        <Button variant="ghost" size="icon" onClick={() => openDeleteDialog('menu', item.id, item.name)} aria-label={`Delete ${item.name}`}>
                                             <Trash2 className="h-4 w-4 text-destructive" />
-                                            <span className="sr-only">Delete</span>
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -244,13 +243,11 @@ export default function TrainingManager() {
                                         <TableCell>{submission.item}</TableCell>
                                         <TableCell>{submission.time}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => openEditVideoDialog(submission)}>
+                                            <Button variant="ghost" size="icon" onClick={() => openEditVideoDialog(submission)} aria-label={`Edit time for ${submission.user}`}>
                                                 <Pencil className="h-4 w-4" />
-                                                <span className="sr-only">Edit Submission</span>
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={() => openDeleteDialog('video', submission.id, submission.user)}>
+                                            <Button variant="ghost" size="icon" onClick={() => openDeleteDialog('video', submission.id, submission.user)} aria-label={`Delete submission from ${submission.user}`}>
                                                 <Trash2 className="h-4 w-4 text-destructive" />
-                                                <span className="sr-only">Delete Submission</span>
                                             </Button>
                                         </TableCell>
                                     </TableRow>

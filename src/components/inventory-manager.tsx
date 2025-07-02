@@ -184,7 +184,7 @@ export default function InventoryManager() {
             }
 
             const processedItems = result.data.scannedItems.map(scanned => ({
-                name: scanned.itemName,
+                itemName: scanned.itemName,
                 quantity: scanned.quantity,
                 matched: knownItems.some(known => known.toLowerCase().includes(scanned.itemName.toLowerCase()) || scanned.itemName.toLowerCase().includes(known.toLowerCase()))
             }));

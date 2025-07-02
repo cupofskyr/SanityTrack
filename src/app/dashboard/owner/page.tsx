@@ -17,6 +17,7 @@ import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle,
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { Textarea } from '@/components/ui/textarea';
 import type { ToastPOSData } from '@/ai/schemas/toast-pos-schemas';
 import type { ServiceAlert } from '@/ai/schemas/service-alert-schemas';
@@ -33,6 +34,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useAuth } from '@/context/AuthContext';
 import Feature from '@/components/feature-flag';
 import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
+import ComplianceChart from '@/components/compliance-chart';
 
 type Location = {
   id: number;
@@ -83,6 +85,15 @@ type MarketingOpportunity = {
 const initialDelegatedTasks: DelegatedTask[] = [
     { id: 2, description: "Monthly deep clean and sanitization of all ice machines.", source: "State Regulation 5.11a", status: 'Pending' },
     { id: 3, description: "Clear blockage from back storage area hand-washing sink.", source: "Health Inspector Report (2024-07-01)", status: 'Pending' },
+];
+
+const mockComplianceData = [
+  { month: "Jan", score: 92 },
+  { month: "Feb", score: 95 },
+  { month: "Mar", score: 88 },
+  { month: "Apr", score: 91 },
+  { month: "May", score: 96 },
+  { month: "Jun", score: 94 },
 ];
 
 export default function OwnerDashboard() {
@@ -332,19 +343,9 @@ export default function OwnerDashboard() {
             </CardHeader>
             <CardContent>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <Card>
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between"><CardTitle className="text-sm font-medium">Today's Sales</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader>
-                        <CardContent><div className="text-2xl font-bold flex items-center">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.liveSalesToday.toLocaleString()}` : <p>N/A</p>}</div></CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between"><CardTitle className="text-sm font-medium">Month-to-Date Sales</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader>
-                        <CardContent><div className="text-2xl font-bold flex items-center">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.salesThisMonth.toLocaleString()}` : <p>N/A</p>}</div></CardContent>
-                    </Card>
-                     <Card>
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between"><CardTitle className="text-sm font-medium">Pending Approvals</CardTitle><Briefcase className="h-4 w-4 text-muted-foreground"/></CardHeader>
-                        <CardContent><div className="text-2xl font-bold">{hiringRequests.length + pendingPOs.length}</div></CardContent>
-                    </Card>
-                    
+                    <Sheet><SheetTrigger asChild><Card className="cursor-pointer hover:border-primary"><CardHeader className="pb-2 flex flex-row items-center justify-between"><CardTitle className="text-sm font-medium">Today's Sales</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold flex items-center">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.liveSalesToday.toLocaleString()}` : <p>N/A</p>}</div></CardContent></Card></SheetTrigger><SheetContent><SheetHeader><SheetTitle>Today's Sales Drilldown</SheetTitle><SheetDescription>Detailed breakdown of sales performance.</SheetDescription></SheetHeader><div className="py-4">Chart goes here</div></SheetContent></Sheet>
+                    <Sheet><SheetTrigger asChild><Card className="cursor-pointer hover:border-primary"><CardHeader className="pb-2 flex flex-row items-center justify-between"><CardTitle className="text-sm font-medium">Month-to-Date Sales</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold flex items-center">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.salesThisMonth.toLocaleString()}` : <p>N/A</p>}</div></CardContent></Card></SheetTrigger><SheetContent><SheetHeader><SheetTitle>Month-to-Date Sales Drilldown</SheetTitle><SheetDescription>Detailed breakdown of sales performance.</SheetDescription></SheetHeader><div className="py-4">Chart goes here</div></SheetContent></Sheet>
+                    <Sheet><SheetTrigger asChild><Card className="cursor-pointer hover:border-primary"><CardHeader className="pb-2 flex flex-row items-center justify-between"><CardTitle className="text-sm font-medium">Compliance Score</CardTitle><Check className="h-4 w-4 text-muted-foreground"/></CardHeader><CardContent><div className="text-2xl font-bold">94%</div></CardContent></Card></SheetTrigger><SheetContent><SheetHeader><SheetTitle>Compliance Score Drilldown</SheetTitle><SheetDescription>Detailed breakdown of compliance performance.</SheetDescription></SheetHeader><div className="py-4"><ComplianceChart data={mockComplianceData}/></div></SheetContent></Sheet>
                 </div>
             </CardContent>
          </Card>
@@ -647,7 +648,7 @@ export default function OwnerDashboard() {
                                     </p>
                                     <Button asChild variant="outline">
                                         <Link href="/admin">
-                                            <Shield className="mr-2" /> Go to Admin Panel
+                                            <Briefcase className="mr-2" /> Go to Admin Panel
                                         </Link>
                                     </Button>
                                 </AccordionContent>

@@ -253,13 +253,11 @@ export default function EquipmentPage() {
                                     <TableCell className="text-right">
                                         {task.status === 'Local' && (
                                             <div className="flex gap-2 justify-end">
-                                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)}>
+                                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(task)} aria-label="Edit Task">
                                                     <Pencil className="h-4 w-4" />
-                                                    <span className="sr-only">Edit Task</span>
                                                 </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveTask(task.id)}>
+                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveTask(task.id)} aria-label="Remove Task">
                                                     <Trash2 className="h-4 w-4" />
-                                                    <span className="sr-only">Remove Task</span>
                                                 </Button>
                                                  <Button size="sm" onClick={() => handleSubmitForApproval(task.id)}>
                                                     <Send className="mr-2 h-4 w-4"/> Submit

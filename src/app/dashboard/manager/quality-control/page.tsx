@@ -106,7 +106,8 @@ export default function QualityControlPage() {
 
         const qaTask = {
             id: Date.now(),
-            description: `Perform mandatory QA check for: ${selectedItem.name}`,
+            name: `Perform mandatory QA check for: ${selectedItem.name}`,
+            description: `Audit a newly made "${selectedItem.name}" against its golden standard photo.`,
             source: 'Manager Assignment',
             status: 'Pending',
             itemToAudit: selectedItem.name,
@@ -151,8 +152,12 @@ export default function QualityControlPage() {
                                 <TableRow key={item.id}>
                                     <TableCell className="font-medium">{item.name}</TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon" onClick={() => openMenuDialog(item)}><Pencil className="h-4 w-4"/></Button>
-                                        <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(item)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                                        <Button variant="ghost" size="icon" onClick={() => openMenuDialog(item)} aria-label={`Edit ${item.name}`}>
+                                            <Pencil className="h-4 w-4"/>
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(item)} aria-label={`Delete ${item.name}`}>
+                                            <Trash2 className="h-4 w-4 text-destructive"/>
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                                 ))

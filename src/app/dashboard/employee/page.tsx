@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Check, Clock, ListTodo, ShieldCheck, Camera, Loader2, Lightbulb } from "lucide-react";
+import { Check, Clock, ListTodo, ShieldCheck, Camera, Loader2, Lightbulb, HelpCircle, Sparkles } from "lucide-react";
 import LiveTeamFeed from '@/components/dashboard/employee/LiveTeamFeed';
 import WhosOnShift from '@/components/dashboard/employee/WhosOnShift';
 import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
@@ -19,21 +19,23 @@ import TeamLeaderboard from '@/components/dashboard/employee/TeamLeaderboard';
 import ShiftRecapDialog from '@/components/dashboard/employee/ShiftRecapDialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import PhotoUploader from '@/components/photo-uploader';
-import { verifyTaskProofAction } from '@/app/actions';
+import { verifyTaskProofAction, explainTaskImportanceAction } from '@/app/actions';
 import EmployeeServiceAlertWidget from '@/components/employee-service-alert-widget';
+import type { VerifyTaskProofOutput } from '@/ai/schemas/task-proof-schemas';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const initialTasks = [
-  { id: 1, name: "Clean kitchen floor", area: "Kitchen", priority: "High", status: 'Pending', type: 'regular' },
-  { id: 2, name: "Restock restroom supplies", area: "Restroom", priority: "Medium", status: 'Pending', type: 'regular' },
-  { id: 3, name: "Sanitize all door handles", area: "All Areas", priority: "High", status: 'In Progress', type: 'regular' },
+  { id: 1, name: "Clean kitchen floor", description: "Mop the entire kitchen floor, including under the prep tables.", area: "Kitchen", priority: "High", status: 'Pending', type: 'regular' },
+  { id: 2, name: "Restock restroom supplies", description: "Check and refill all soap dispensers, paper towel holders, and toilet paper in both restrooms.", area: "Restroom", priority: "Medium", status: 'Pending', type: 'regular' },
+  { id: 3, name: "Sanitize all door handles", description: "Use approved sanitizer to wipe down all door handles, including entry, exit, and restroom doors.", area: "All Areas", priority: "High", status: 'In Progress', type: 'regular' },
 ];
 
 const initialQaTasks = [
-  { id: 4, description: `Perform QA check for: Classic Burger`, source: 'Manager Assignment', status: 'Pending', itemToAudit: 'Classic Burger', type: 'qa' }
+  { id: 4, name: `Perform QA check for: Classic Burger`, description: 'Audit a newly made "Classic Burger" against its golden standard photo.', source: 'Manager Assignment', status: 'Pending', itemToAudit: 'Classic Burger', type: 'qa' }
 ];
 
-type Task = { id: number; name: string; area: string; priority: string; status: 'Pending' | 'In Progress'; type: 'regular' };
-type QaTask = { id: number; description: string; source: string; status: 'Pending' | 'In Progress'; itemToAudit: string; standardImageUrl?: string; type: 'qa' };
+type Task = { id: number; name: string; description: string; area: string; priority: string; status: 'Pending' | 'In Progress'; type: 'regular' };
+type QaTask = { id: number; name: string; description: string; source: string; status: 'Pending' | 'In Progress'; itemToAudit: string; standardImageUrl?: string; type: 'qa' };
 
 export default function EmployeeDashboardV2() {
     const { toast } = useToast();
@@ -55,6 +57,14 @@ export default function EmployeeDashboardV2() {
     const [taskForProof, setTaskForProof] = useState<(Task|QaTask)|null>(null);
     const [proofPhoto, setProofPhoto] = useState<string|null>(null);
     const [isVerifying, setIsVerifying] = useState(false);
+    const [verificationResult, setVerificationResult] = useState<VerifyTaskProofOutput | null>(null);
+
+    // State for "Explain Why" dialog
+    const [isExplainDialogOpen, setIsExplainDialogOpen] = useState(false);
+    const [taskToExplain, setTaskToExplain] = useState<(Task | QaTask) | null>(null);
+    const [explanation, setExplanation] = useState<string | null>(null);
+    const [isExplaining, setIsExplaining] = useState(false);
+
 
     const totalTasks = useMemo(() => tasks.length, [tasks]);
     const progressPercentage = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
@@ -86,7 +96,7 @@ export default function EmployeeDashboardV2() {
                     const newTask = JSON.parse(storedTask);
                     setTasks(prevTasks => {
                         if (!prevTasks.some(task => task.id === newTask.id)) {
-                            toast({ title: 'New QA Task Assigned!', description: newTask.description });
+                            toast({ title: 'New QA Task Assigned!', description: newTask.name });
                             return [...prevTasks, newTask];
                         }
                         return prevTasks;
@@ -121,6 +131,7 @@ export default function EmployeeDashboardV2() {
     const handleOpenProofDialog = (task: Task | QaTask) => {
         setTaskForProof(task);
         setIsProofDialogOpen(true);
+        setVerificationResult(null);
     };
     
     const handleCloseProofDialog = () => {
@@ -128,6 +139,7 @@ export default function EmployeeDashboardV2() {
         setTaskForProof(null);
         setProofPhoto(null);
         setIsVerifying(false);
+        setVerificationResult(null);
     }
 
     const handleSubmitProof = async () => {
@@ -136,27 +148,51 @@ export default function EmployeeDashboardV2() {
             return;
         }
         setIsVerifying(true);
+        setVerificationResult(null);
         try {
             const result = await verifyTaskProofAction({
                 photoDataUri: proofPhoto,
-                taskDescription: taskForProof.type === 'regular' ? taskForProof.name : taskForProof.description,
+                taskDescription: taskForProof.name,
             });
 
             if (result.error || !result.data) {
                 throw new Error(result.error || "Verification failed.");
             }
-
-            toast({ title: "AI Verification", description: result.data.feedback });
+            
+            setVerificationResult(result.data);
 
             if (result.data.isApproved) {
-                handleTaskCompletion(taskForProof.id);
-                handleCloseProofDialog();
+                setTimeout(() => {
+                    handleTaskCompletion(taskForProof.id);
+                    handleCloseProofDialog();
+                }, 1500); // Give user time to read the message
             }
 
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
             setIsVerifying(false);
+        }
+    };
+    
+    const handleOpenExplainDialog = async (task: Task | QaTask) => {
+        setTaskToExplain(task);
+        setIsExplainDialogOpen(true);
+        setIsExplaining(true);
+        setExplanation(null);
+        try {
+            const { data, error } = await explainTaskImportanceAction({
+                taskTitle: task.name,
+                taskDescription: task.description,
+            });
+            if (error || !data) {
+                throw new Error(error || 'Failed to get explanation.');
+            }
+            setExplanation(data.explanation);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'AI Error', description: error.message });
+        } finally {
+            setIsExplaining(false);
         }
     };
 
@@ -226,14 +262,18 @@ export default function EmployeeDashboardV2() {
                                 <TableBody>
                                     {tasks.length > 0 ? tasks.map(task => (
                                         <TableRow key={task.id}>
-                                            <TableCell className="font-medium">{task.type === 'qa' ? task.description : (task as Task).name}</TableCell>
+                                            <TableCell className="font-medium">{task.name}</TableCell>
                                             <TableCell className="text-muted-foreground">{task.type === 'qa' ? task.source : (task as Task).area}</TableCell>
                                             <TableCell>
                                                 <Badge variant={task.type === 'qa' || (task as Task).priority === "High" ? "destructive" : "secondary"}>
                                                     {task.type === 'qa' ? 'High Priority' : (task as Task).priority}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-right">
+                                            <TableCell className="text-right space-x-1">
+                                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleOpenExplainDialog(task)}>
+                                                    <HelpCircle className="h-4 w-4" />
+                                                    <span className="sr-only">Why is this important?</span>
+                                                </Button>
                                                 <Button size="sm" onClick={() => handleOpenProofDialog(task)}>
                                                     <Check className="mr-2 h-4 w-4" /> Done
                                                 </Button>
@@ -286,19 +326,50 @@ export default function EmployeeDashboardV2() {
                     <DialogHeader>
                         <DialogTitle className='font-headline'>Submit Proof of Completion</DialogTitle>
                         <DialogDescription>
-                            Take a photo to verify completion of the task: <span className="font-semibold">{taskForProof?.type === 'regular' ? (taskForProof as Task).name : taskForProof?.description}</span>
+                            Take a photo to verify completion of the task: <span className="font-semibold">{taskForProof?.name}</span>
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
                         <PhotoUploader onPhotoDataChange={setProofPhoto} />
+                        {verificationResult && (
+                             <Alert variant={verificationResult.isApproved ? 'default' : 'destructive'}>
+                                <Sparkles className="h-4 w-4" />
+                                <AlertTitle>AI Verification Feedback</AlertTitle>
+                                <AlertDescription>{verificationResult.feedback}</AlertDescription>
+                            </Alert>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button variant="secondary" onClick={handleCloseProofDialog}>Cancel</Button>
-                        <Button onClick={handleSubmitProof} disabled={isVerifying || !proofPhoto}>
+                        <Button onClick={handleSubmitProof} disabled={isVerifying || !proofPhoto || !!verificationResult}>
                             {isVerifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
-                            Submit Proof for AI Verification
+                            Submit for AI Verification
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={isExplainDialogOpen} onOpenChange={setIsExplainDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                         <DialogTitle className="font-headline flex items-center gap-2">
+                            <Sparkles className="h-5 w-5 text-primary" /> Why is this important?
+                        </DialogTitle>
+                        <DialogDescription>
+                           AI-generated explanation for task: <span className="font-semibold">{taskToExplain?.name}</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                     <div className="py-4 space-y-4">
+                        {isExplaining ? (
+                            <div className="flex items-center justify-center p-8 space-x-2">
+                                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                <p className="text-muted-foreground">AI is generating an explanation...</p>
+                            </div>
+                        ) : (
+                            <Alert>
+                                <AlertDescription>{explanation || "Sorry, I could not generate an explanation."}</AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
