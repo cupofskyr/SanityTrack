@@ -27,8 +27,6 @@ import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
 import { useAuth } from '@/context/AuthContext';
 import AISetupAssistant from '@/components/ai-setup-assistant';
 import { ManagedTask } from '@/lib/types';
-import { toast as sonnerToast } from "sonner"
-
 
 type TempReading = {
     value: number;
@@ -357,7 +355,7 @@ export default function ManagerDashboard() {
                             status: 'Local',
                         }));
                         setManagedTasks(prev => [...prev, ...newManagedTasks]);
-                        sonnerToast.success("AI tasks have been added to your Master Task List page.");
+                        toast({ title: "AI Suggestions Added", description: "New tasks have been added to your Master Task List page." });
                     }} />
                 </Card>
             </div>

@@ -222,4 +222,3 @@ export default function FinancialWizard({ onClose }: { onClose: () => void }) {
         </div>
     );
 }
-
