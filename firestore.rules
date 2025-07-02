@@ -1,82 +1,75 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function getUserData() {
+      // Check if the user is authenticated before trying to access their data
+      return request.auth != null ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data : null;
+    }
+    
     function isManager() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager';
-    }
-    function isOwner() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
-    }
-    function isManagerOfLocation(locationId) {
-        let userData = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-        return userData.role == 'manager' && userData.locationId == locationId;
+        return getUserData() != null && getUserData().role == 'manager';
     }
 
+    function isOwner() {
+        return getUserData() != null && getUserData().role == 'owner';
+    }
+
+    // users: Can only read/write their own document
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // employees: Role-based access
     match /employees/{employeeId} {
+      // Read access for self, owners, or managers of the same location
       allow get: if request.auth != null &&
                    (request.auth.uid == employeeId ||
                     isOwner() ||
-                    isManagerOfLocation(resource.data.locationId));
+                    (isManager() && getUserData().locationId == resource.data.locationId));
+                    
+      // List access for managers and owners
       allow list: if request.auth != null && (isOwner() || isManager());
-      allow write: if false; // All writes must go through Cloud Functions
+
+      // No direct client writes. All mutations must go through Cloud Functions.
+      allow create, update, delete: if false;
     }
 
+    // perksTransactions: Immutable logs, readable by admins
     match /perksTransactions/{transactionId} {
-      allow get, list: if request.auth != null && (isOwner() || isManager());
+      allow read: if request.auth != null && (isOwner() || isManager());
       allow write: if false; // Immutable from client
     }
 
+    // branding: Readable by all, writable only by the owner
     match /branding/{ownerId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == ownerId && isOwner();
     }
     
-    // --- New Inventory System Rules ---
-
-    // Only authenticated users can read ingredients and suppliers
-    match /ingredients/{ingredientId} {
+    // inventory, suppliers, recipes: Readable by authenticated users, writable by managers/owners
+    match /inventory/{itemId} {
       allow read: if request.auth != null;
-      // Only managers or owners can write/update inventory
       allow write: if request.auth != null && (isOwner() || isManager());
     }
 
     match /suppliers/{supplierId} {
       allow read: if request.auth != null;
-      // Only managers or owners can write supplier info
       allow write: if request.auth != null && (isOwner() || isManager());
     }
-    
+
     match /recipes/{recipeId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && (isOwner() || isManager());
     }
     
-    match /posSales/{saleId} {
-        allow write: if true; // Allow POS systems to write sales data. Secure this with an API key in a real app.
-        allow read: if request.auth != null && (isOwner() || isManager());
-    }
-
-    match /inventoryTransactions/{transactionId} {
-      allow read: if request.auth != null && (isOwner() || isManager());
-      allow write: if false; // Immutable from client
-    }
-    
-    match /stocktakeSessions/{sessionId} {
-      allow create: if request.auth != null; // Any authenticated employee can start a stocktake
-      allow read: if request.auth != null && (isOwner() || isManager());
-      allow update: if request.auth != null && request.auth.uid == resource.data.countedBy;
-    }
-
+    // purchaseOrders: Writable by managers, readable by owners
     match /purchaseOrders/{orderId} {
-      allow create: if request.auth != null && (isOwner() || isManager());
+      allow create: if request.auth != null && isManager();
       allow read, update, delete: if request.auth != null && (isOwner() || isManager());
     }
+    
+    // All other collections are locked down by default
   }
 }
