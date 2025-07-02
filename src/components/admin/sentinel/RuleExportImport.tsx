@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -36,7 +35,6 @@ export default function RuleExportImport() {
       const parsed = JSON.parse(importData)
       if (!Array.isArray(parsed)) throw new Error("Invalid JSON format. Must be an array of rules.")
       // In a real app, this would be an API call to /api/ai/import-rules
-      // await axios.post("/api/ai/import-rules", { rules: parsed })
       toast({ title: "Import Successful", description: "Rules have been imported." })
     } catch (e: any) {
       toast({ variant: "destructive", title: "Import Failed", description: e.message })

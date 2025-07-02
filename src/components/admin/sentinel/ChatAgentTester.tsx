@@ -1,8 +1,6 @@
-
 "use client"
 
 import { useState, useRef, useEffect, FormEvent } from 'react'
-import axios from 'axios'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -40,7 +38,6 @@ export default function ChatAgentTester() {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      // const res = await axios.post("/api/ai/agent-chat", { prompt: userMsg.content })
       const botResponse = `This is a simulated response to: "${userMsg.content}"`
       
       setChatLog(prev => [...prev, { role: "bot", content: botResponse }])
@@ -51,7 +48,7 @@ export default function ChatAgentTester() {
   }
 
   return (
-    <Card className="max-w-xl">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>💬 Chat Agent Tester</CardTitle>
         <CardDescription>Test the conversational capabilities of your AI agent.</CardDescription>

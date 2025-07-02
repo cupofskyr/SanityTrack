@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -29,10 +28,10 @@ export default function AdminSentinelDashboard() {
   const { toast } = useToast()
 
   return (
-    <div className="p-4 md:p-6 bg-muted/40 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 font-headline">⚙️ AI Sentinel Admin Dashboard</h1>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold font-headline">⚙️ AI Sentinel Admin Dashboard</h1>
 
-      <div className="flex flex-wrap gap-1 mb-6 border-b">
+      <div className="flex flex-wrap gap-1 border-b">
         {tabs.map(tab => (
           <button
             key={tab.id}

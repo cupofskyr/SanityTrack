@@ -29,12 +29,12 @@ import { Button } from "@/components/ui/button";
 
 const adminNav = [
     { name: "Admin Home", href: "/admin", icon: Shield, exact: true },
+    { name: "Sentinel Dashboard", href: "/admin/sentinel", icon: Bot },
     { name: "Analytics", href: "/admin/analytics", icon: LineChart },
     { name: "System Handbook", href: "/admin/documentation", icon: FileText },
     { name: "UI Components", href: "/admin/components", icon: Component },
     { name: "Feature Flags", href: "/admin/features", icon: Flag },
     { name: "AI Agent Rules", href: "/admin/agent-rules", icon: Bot },
-    { name: "Sentinel Dashboard", href: "/admin/sentinel", icon: Bot },
 ];
 
 export default function AdminLayout({

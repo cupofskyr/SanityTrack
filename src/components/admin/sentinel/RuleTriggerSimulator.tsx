@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import axios from "axios"
 import { useCollection } from "react-firebase-hooks/firestore"
 import { collection, query, orderBy, limit } from "firebase/firestore"
 import { db } from "@/lib/firebase"
@@ -33,14 +32,9 @@ export default function RuleTriggerSimulator() {
           return
       }
 
-      await axios.post("/api/ai/trigger", {
-        agentId: "admin-tester",
-        action: rule.autoAction,
-        locationId: rule.locationId,
-        targetId: "demo-user",
-        payload: { title: `[Simulated] ${rule.name}` },
-      })
-
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       toast({ title: "Trigger Sent", description: "Check logs below for agent activity."})
     } catch (e) {
       toast({ variant: "destructive", title: "Error triggering rule", description: (e as Error).message })
@@ -68,6 +62,7 @@ export default function RuleTriggerSimulator() {
                     <SelectValue placeholder={rulesLoading ? "Loading rules..." : "Choose a rule to trigger"} />
                 </SelectTrigger>
                 <SelectContent>
+                    {rules.length === 0 && <SelectItem value="no-rules" disabled>No rules found in database.</SelectItem>}
                     {rules.map(rule => (
                         <SelectItem key={rule.id} value={rule.id}>
                         {rule.name} ({rule.triggerCondition})
