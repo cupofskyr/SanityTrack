@@ -22,6 +22,7 @@ import { generateScheduleAction, generateShiftSuggestionsAction, exportScheduleT
 import type { GenerateScheduleInput, GenerateScheduleOutput } from "@/ai/schemas/ai-shift-planner-schemas";
 import type { ShiftSuggestion } from "@/ai/schemas/shift-suggestion-schemas";
 import { useAuth } from "@/context/AuthContext";
+import { usePathname } from "next/navigation";
 
 type Shift = {
   id: string;
@@ -45,6 +46,12 @@ const employees = [
     { name: "Sam Wilson", role: "Dishwasher", hourlyRate: 16.50, unavailableDates: [], transactionsPerHour: 10 },
     { name: "Alice Brown", role: "Shift Lead", hourlyRate: 22.00, unavailableDates: ["2024-07-22", "2024-07-29"], transactionsPerHour: 20 },
     { name: "Casey Lee", role: "Manager", hourlyRate: 25.00, unavailableDates: [], transactionsPerHour: 30 },
+];
+
+const locations = [
+    { id: 'loc1', name: 'Downtown' },
+    { id: 'loc2', name: 'Uptown' },
+    { id: 'loc3', name: 'Westside' },
 ];
 
 const mockPosData = {
@@ -74,6 +81,9 @@ const parseDate = (dateString: string) => {
 
 export default function AIShiftScheduler() {
     const { user } = useAuth();
+    const pathname = usePathname();
+    const isOwnerView = pathname.includes('/owner/');
+
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [shifts, setShifts] = useState<Shift[]>([]);
     const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]);
@@ -87,6 +97,7 @@ export default function AIShiftScheduler() {
     const { toast } = useToast();
 
     const [isExporting, setIsExporting] = useState(false);
+    const [selectedLocation, setSelectedLocation] = useState(locations[0].name);
 
     useEffect(() => {
         // This effect simulates listening for real-time updates from localStorage
@@ -349,10 +360,29 @@ export default function AIShiftScheduler() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">1. Add Shifts to Roster</CardTitle>
-                    <CardDescription>
-                       First, define a date range and the days of the week to schedule. Then, create your daily shift templates. This is ideal for new locations with no sales data or when you need a specific staffing structure.
-                    </CardDescription>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div>
+                             <CardTitle className="text-lg">1. Add Shifts to Roster</CardTitle>
+                             <CardDescription>
+                               {isOwnerView 
+                                   ? `Viewing schedule for ${selectedLocation}. Define templates and generate a schedule.`
+                                   : "First, define a date range and the days of the week to schedule. Then, create your daily shift templates."
+                               }
+                            </CardDescription>
+                        </div>
+                        {isOwnerView && (
+                            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                                <SelectTrigger className="w-full sm:w-[180px]">
+                                    <SelectValue placeholder="Select location" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {locations.map(loc => (
+                                        <SelectItem key={loc.id} value={loc.name}>{loc.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleAddShiftsToRoster} className="space-y-6">
@@ -600,3 +630,4 @@ export default function AIShiftScheduler() {
         </div>
     );
 }
+
