@@ -1,4 +1,5 @@
-import { z } from 'zod';
+
+      import { z } from 'zod';
 
 export const ShoppingListItemSchema = z.object({
   name: z.string().describe("The name of the item to purchase."),
@@ -32,3 +33,31 @@ export const OptimizeOrderOutputSchema = z.object({
 });
 
 export type OptimizeOrderOutput = z.infer<typeof OptimizeOrderOutputSchema>;
+
+
+// Schemas for the new suggest-order-flow
+const InventoryItemForSuggestionSchema = z.object({
+    itemName: z.string(),
+    currentStock: z.number(),
+    reorderThreshold: z.number(),
+    avgDailyUsage: z.number(),
+});
+
+export const SuggestOrderInputSchema = z.object({
+    inventory: z.array(InventoryItemForSuggestionSchema).describe("A list of current inventory items."),
+    deliveryBufferDays: z.number().describe("The number of days to buffer for delivery."),
+});
+export type SuggestOrderInput = z.infer<typeof SuggestOrderInputSchema>;
+
+export const SuggestedItemSchema = z.object({
+    itemName: z.string().describe("The name of the item to order."),
+    suggestedQty: z.number().describe("The AI-suggested quantity to order."),
+});
+
+export const SuggestOrderOutputSchema = z.object({
+    reasoning: z.string().describe("A brief, one-sentence explanation for the suggestions."),
+    suggestions: z.array(SuggestedItemSchema).describe("The list of items and suggested order quantities."),
+});
+export type SuggestOrderOutput = z.infer<typeof SuggestOrderOutputSchema>;
+
+    

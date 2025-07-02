@@ -1,4 +1,5 @@
-'use server';
+
+      'use server';
 
 // This file is the single, safe entry point for all AI calls from the client-side UI.
 
@@ -52,12 +53,10 @@ import type {
 } from '@/ai/schemas/shift-suggestion-schemas';
 import { suggestManualChecks } from '@/ai/flows/suggest-manual-checks-flow';
 import type { ManualCheckSuggestionOutput } from '@/ai/schemas/manual-check-schemas';
-import { verifyTaskProof } from '@/ai/flows/verify-task-proof-flow';
-import type { VerifyTaskProofInput, VerifyTaskProofOutput } from '@/ai/schemas/task-proof-schemas';
-import { analyzeChatMessage } from '@/ai/flows/analyze-chat-flow';
-import type { AnalyzeChatInput, AnalyzeChatOutput } from '@/ai/schemas/chat-analysis-schemas';
-import { generatePrepList } from '@/ai/flows/generate-prep-list-flow';
-import type { GeneratePrepListInput, GeneratePrepListOutput } from '@/ai/schemas/prep-list-schemas';
+import { verifyTaskProof, type VerifyTaskProofInput, type VerifyTaskProofOutput } from '@/ai/flows/verify-task-proof-flow';
+import { analyzeChatMessage, type AnalyzeChatInput, type AnalyzeChatOutput } from '@/ai/flows/analyze-chat-flow';
+import { generatePrepList, type GeneratePrepListInput, type GeneratePrepListOutput } from '@/ai/flows/generate-prep-list-flow';
+import { suggestOrder, type SuggestOrderInput, type SuggestOrderOutput } from '@/ai/flows/suggest-order-flow';
 
 
 const db = getFirestore(app);
@@ -436,6 +435,9 @@ export async function generatePrepListAction(input: GeneratePrepListInput): Prom
     return safeRun(generatePrepList, input, 'generatePrepList');
 }
 
+export async function suggestOrderAction(input: SuggestOrderInput): Promise<{ data: SuggestOrderOutput | null; error: string | null; }> {
+    return safeRun(suggestOrder, input, 'suggestOrder');
+}
 
 // These actions don't call an AI flow, so they don't need the safeRun wrapper.
 // They simulate database interactions. In a real app, you would use Firestore here.
@@ -464,3 +466,5 @@ export async function resolveServiceAlertAction(input: { alertId: string }): Pro
     // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({ status: 'resolved', resolvedAt: new Date() });
     return { success: true };
 }
+
+    
