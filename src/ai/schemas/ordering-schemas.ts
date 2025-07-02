@@ -1,5 +1,5 @@
 
-      import { z } from 'zod';
+import { z } from 'zod';
 
 export const ShoppingListItemSchema = z.object({
   name: z.string().describe("The name of the item to purchase."),
@@ -35,7 +35,7 @@ export const OptimizeOrderOutputSchema = z.object({
 export type OptimizeOrderOutput = z.infer<typeof OptimizeOrderOutputSchema>;
 
 
-// Schemas for the new suggest-order-flow
+// Schemas for the suggest-order-flow
 const InventoryItemForSuggestionSchema = z.object({
     itemName: z.string(),
     currentStock: z.number(),
@@ -59,5 +59,3 @@ export const SuggestOrderOutputSchema = z.object({
     suggestions: z.array(SuggestedItemSchema).describe("The list of items and suggested order quantities."),
 });
 export type SuggestOrderOutput = z.infer<typeof SuggestOrderOutputSchema>;
-
-    

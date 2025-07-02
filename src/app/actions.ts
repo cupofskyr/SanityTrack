@@ -1,5 +1,5 @@
 
-      'use server';
+'use server';
 
 // This file is the single, safe entry point for all AI calls from the client-side UI.
 
@@ -466,5 +466,3 @@ export async function resolveServiceAlertAction(input: { alertId: string }): Pro
     // In a real app: await db.collection('serviceAlerts').doc(input.alertId).update({ status: 'resolved', resolvedAt: new Date() });
     return { success: true };
 }
-
-    

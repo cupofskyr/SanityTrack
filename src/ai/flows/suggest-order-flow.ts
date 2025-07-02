@@ -1,5 +1,5 @@
 
-      'use server';
+'use server';
 
 /**
  * @fileOverview An AI flow for suggesting order quantities based on inventory data and usage.
@@ -64,5 +64,3 @@ const suggestOrderFlow = ai.defineFlow(
     return output;
   }
 );
-
-    

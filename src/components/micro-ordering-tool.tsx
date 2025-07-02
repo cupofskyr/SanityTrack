@@ -1,7 +1,7 @@
 
-      "use client";
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ const initialInventory = [
   { id: 'item-1', itemName: 'Ground Beef', currentStock: 8, reorderThreshold: 10, avgDailyUsage: 4, unit: 'lbs' },
   { id: 'item-2', itemName: 'Romaine Lettuce', currentStock: 5, reorderThreshold: 8, avgDailyUsage: 3, unit: 'heads' },
   { id: 'item-3', itemName: 'Takeout Containers', currentStock: 50, reorderThreshold: 100, avgDailyUsage: 25, unit: 'units' },
+  { id: 'item-4', itemName: 'Avocados', currentStock: 10, reorderThreshold: 20, avgDailyUsage: 8, unit: 'each' },
+  { id: 'item-5', itemName: 'Ketchup', currentStock: 1, reorderThreshold: 2, avgDailyUsage: 0.5, unit: 'gallon' },
 ];
 
 type OrderListItem = {
@@ -41,14 +43,15 @@ export default function MicroOrderingTool() {
     const [deliveryBufferDays, setDeliveryBufferDays] = useState(3);
     const [isLoading, setIsLoading] = useState(false);
     const [chatMessages, setChatMessages] = useState<{from: 'bot' | 'user', text: string}[]>([
-        { from: "bot", text: "Hi! Click 'Suggest My Order' and I'll draft your shopping list based on menu sales and inventory." }
+        { from: "bot", text: "Hi! I'm your ordering assistant. Click 'Suggest My Order' and I'll draft a shopping list based on sales trends and inventory levels." }
     ]);
     const [inputMessage, setInputMessage] = useState("");
 
     // Initialize order list from mock inventory
     useEffect(() => {
         const initialOrders = initialInventory.map((item) => {
-            const suggestedQty = Math.max(0, Math.ceil((item.reorderThreshold + (item.avgDailyUsage * deliveryBufferDays)) - item.currentStock));
+            const expectedUsage = item.avgDailyUsage * deliveryBufferDays;
+            const suggestedQty = Math.max(0, Math.ceil((item.reorderThreshold + expectedUsage) - item.currentStock));
             return {
                 ...item,
                 orderQty: suggestedQty,
@@ -65,7 +68,7 @@ export default function MicroOrderingTool() {
 
     const handleSuggestOrder = async () => {
         setIsLoading(true);
-        addChatMessage("user", "Suggest my order based on inventory and usage.");
+        addChatMessage("user", "Suggest my order based on current inventory and usage.");
         
         try {
             const inventoryForAI = initialInventory.map(({ itemName, currentStock, reorderThreshold, avgDailyUsage }) => ({
@@ -85,7 +88,7 @@ export default function MicroOrderingTool() {
                 });
                 return newList;
             });
-            addChatMessage("bot", `${result.data.reasoning} I've updated your list.`);
+            addChatMessage("bot", `${result.data.reasoning} I've updated your list to reflect this.`);
 
         } catch (error: any) {
             addChatMessage("bot", `Sorry, I couldn't generate suggestions. Error: ${error.message}`);
@@ -276,5 +279,3 @@ export default function MicroOrderingTool() {
         </div>
     );
 }
-
-    

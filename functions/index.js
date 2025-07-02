@@ -1,11 +1,21 @@
+
 // =================================================================
 // PART 1 & 2: BACKEND & SYSTEM GLUE
 // =================================================================
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const inventoryFunctions = require("./inventory");
+
 
 admin.initializeApp();
 const db = admin.firestore();
+
+// Export inventory-related functions
+exports.handlePOSSale = inventoryFunctions.handlePOSSale;
+exports.detectInventoryAnomalies = inventoryFunctions.detectInventoryAnomalies;
+exports.autoReorderSuggestion = inventoryFunctions.autoReorderSuggestion;
+exports.api = inventoryFunctions.api;
+
 
 // --- Helper Functions ---
 async function getUserAuthInfo(uid) {
