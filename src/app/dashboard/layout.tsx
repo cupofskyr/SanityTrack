@@ -38,7 +38,8 @@ import {
   Camera,
   Award,
   Briefcase,
-  HelpCircle
+  HelpCircle,
+  Shield
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,7 @@ const managerNav = [
           { name: "Arcade Zone", href: "/dashboard/training" },
           { name: "Arcade Zone Setup", href: "/dashboard/training/setup"},
           { name: "Knowledge Base", href: "/dashboard/manager/knowledge" },
+          { name: "Staff Meals", href: "/dashboard/manager/staff-meals" },
         ]
     },
     {

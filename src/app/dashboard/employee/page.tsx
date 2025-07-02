@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Check, Clock, ListTodo, ShieldCheck, Camera, Loader2 } from "lucide-react";
+import { Check, Clock, ListTodo, ShieldCheck, Camera, Loader2, Lightbulb, ThumbsUp, ThumbsDown } from "lucide-react";
 import LiveTeamFeed from '@/components/dashboard/employee/LiveTeamFeed';
 import WhosOnShift from '@/components/dashboard/employee/WhosOnShift';
 import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import PhotoUploader from '@/components/photo-uploader';
 import { verifyTaskProofAction } from '@/app/actions';
 import FloatingCamera from '@/components/FloatingCamera';
+import EmployeeServiceAlertWidget from '@/components/employee-service-alert-widget';
 
 const initialTasks = [
   { id: 1, name: "Clean kitchen floor", area: "Kitchen", priority: "High", status: 'Pending', type: 'regular', xp: 50 },
@@ -199,6 +200,8 @@ export default function EmployeeDashboardV2() {
                 <VibeIndicator />
             </div>
 
+            <EmployeeServiceAlertWidget />
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 <div className="lg:col-span-2 space-y-6">
@@ -247,6 +250,15 @@ export default function EmployeeDashboardV2() {
                         </CardContent>
                     </Card>
 
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-primary"><Lightbulb /> AI Tip of the Day</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">"Remember to restock sauces and napkins during downtime. A fully stocked station makes the next rush smoother for everyone!"</p>
+                        </CardContent>
+                    </Card>
+
                     <LiveTeamFeed />
                 </div>
 
@@ -263,6 +275,17 @@ export default function EmployeeDashboardV2() {
                         </CardContent>
                     </Card>
                     
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Shift Feedback</CardTitle>
+                            <CardDescription>How was your shift today?</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex gap-2">
+                            <Button variant="outline" className="w-full" onClick={() => toast({title: "Feedback Submitted!", description: "Thanks for letting us know."})}><ThumbsUp className="mr-2 text-green-500"/> Good</Button>
+                            <Button variant="outline" className="w-full" onClick={() => toast({title: "Feedback Submitted!", description: "Thanks for the feedback. A manager may follow up."})}><ThumbsDown className="mr-2 text-red-500"/> Tough</Button>
+                        </CardContent>
+                    </Card>
+
                     <TodaysFlow />
                     <WhosOnShift />
                     <PerformanceCard xpEarned={xpEarned} />
