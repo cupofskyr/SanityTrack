@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileText, Component, Flag, Shield, Settings, Users, Database, Bot, BrainCircuit } from 'lucide-react'
+import { FileText, Component, Flag, Shield, Settings, Users, Database, Bot, BrainCircuit, LineChart } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminPage() {
@@ -13,6 +13,21 @@ export default function AdminPage() {
             </p>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="hover:border-primary transition-colors">
+                <Link href="/admin/analytics" className="block h-full">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <LineChart className="text-primary"/>
+                            Usage Analytics
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                           View key metrics on task completion, compliance rates, and AI assistant usage.
+                        </p>
+                    </CardContent>
+                </Link>
+            </Card>
             <Card className="hover:border-primary transition-colors">
                 <Link href="/admin/features" className="block h-full">
                     <CardHeader>

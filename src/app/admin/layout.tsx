@@ -22,13 +22,15 @@ import {
   FileText,
   Flag,
   Home,
-  Bot
+  Bot,
+  LineChart
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 const adminNav = [
     { name: "Admin Home", href: "/admin", icon: Shield, exact: true },
+    { name: "Analytics", href: "/admin/analytics", icon: LineChart },
     { name: "System Handbook", href: "/admin/documentation", icon: FileText },
     { name: "UI Components", href: "/admin/components", icon: Component },
     { name: "Feature Flags", href: "/admin/features", icon: Flag },

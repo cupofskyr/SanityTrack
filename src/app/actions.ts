@@ -405,3 +405,52 @@ export async function submitManualCoolerCheckAction(input: { equipment: string, 
         return { success: false, error: error.message };
     }
 }
+
+export async function fetchLiveOperationsDataAction(): Promise<{
+    data: { liveSales: number; openOrders: number; tempAlerts: number; avgPrepTime: number } | null;
+    error: string | null;
+}> {
+    // This is a mock function. In a real app, it would aggregate data from various sources.
+    try {
+        const data = {
+            liveSales: 2450.75 + Math.random() * 100,
+            openOrders: Math.floor(Math.random() * 5) + 8,
+            tempAlerts: Math.random() > 0.8 ? 1 : 0,
+            avgPrepTime: 4.5 + Math.random() * 2,
+        };
+        return { data, error: null };
+    } catch (error: any) {
+        return { data: null, error: "Failed to fetch live operations data." };
+    }
+}
+
+export async function exportScheduleToQuickBooksAction(input: { shifts: any[]; laborAnalysis: any }): Promise<{ success: boolean; error?: string }> {
+    try {
+        // In a real app, this would call the QuickBooks API.
+        // Here we just log the data that would be sent.
+        console.log("Exporting to QuickBooks (Simulated):", {
+            payrollData: input.laborAnalysis,
+            schedule: input.shifts.map(s => ({
+                date: s.date,
+                employee: s.assignedTo,
+                startTime: s.startTime,
+                endTime: s.endTime,
+            })),
+        });
+        return { success: true };
+    } catch (error: any) {
+        console.error("QuickBooks export failed:", error);
+        return { success: false, error: "Failed to export schedule to QuickBooks." };
+    }
+}
+
+export async function submitFeedbackAction(input: { category: string; feedback: string; isAnonymous: boolean }): Promise<{ success: boolean; error?: string }> {
+    try {
+        // In a real app, this would write to a 'feedback' collection in Firestore.
+        console.log("Feedback submitted (Simulated):", input);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Feedback submission failed:", error);
+        return { success: false, error: "Your feedback could not be submitted." };
+    }
+}
