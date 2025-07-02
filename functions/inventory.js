@@ -10,20 +10,21 @@ exports.handlePOSSale = functions.firestore
   .document('posSales/{saleId}')
   .onCreate(async (snap, context) => {
     const sale = snap.data();
-    if (!sale) return;
+    if (!sale?.menuItemId || !sale.quantitySold) {
+      console.error(`Invalid sale data in document ${snap.id}`);
+      return;
+    }
 
-    // Expected sale object fields: menuItemId, quantitySold, soldBy, timestamp
-    const { menuItemId, quantitySold } = sale;
-
-    // Fetch latest recipe for menuItemId (highest version)
+    // Fetch the active recipe for the sold menu item
     const recipeQuery = await db.collection('recipes')
-      .where('menuItemId', '==', menuItemId)
-      .orderBy('version', 'desc')
+      .where('menuItemId', '==', sale.menuItemId)
+      .where('isActive', '==', true)
       .limit(1)
       .get();
 
     if (recipeQuery.empty) {
-      console.warn(`No recipe found for menuItemId ${menuItemId}`);
+      console.warn(`No active recipe found for menuItemId: ${sale.menuItemId}. Inventory not deducted.`);
+      // In a real application, you might create an alert for a manager here.
       return;
     }
 
@@ -31,37 +32,32 @@ exports.handlePOSSale = functions.firestore
     const batch = db.batch();
 
     // For each ingredient, calculate total quantity needed and deduct from stock
-    for (const ingredientEntry of recipe.ingredients) {
-      const ingredientRef = db.collection('ingredients').doc(ingredientEntry.ingredientId);
-      const ingredientSnap = await ingredientRef.get();
-      if (!ingredientSnap.exists) {
-        console.warn(`Ingredient ${ingredientEntry.ingredientId} not found`);
-        continue;
-      }
-      const ingredient = ingredientSnap.data();
-      const totalConsumed = ingredientEntry.quantityRequired * quantitySold;
+    for (const item of recipe.ingredients) {
+      if (!item.ingredientId || !item.quantityRequired) continue;
 
-      // Update stock atomically
+      const ingredientRef = db.collection('ingredients').doc(item.ingredientId);
+      const totalConsumed = item.quantityRequired * sale.quantitySold;
+
+      // 1. Decrement the stock of the ingredient
       batch.update(ingredientRef, {
         currentStock: admin.firestore.FieldValue.increment(-totalConsumed),
         lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      // Log transaction
+      // 2. Create a detailed transaction log for auditing
       const transactionRef = db.collection('inventoryTransactions').doc();
       batch.set(transactionRef, {
-        ingredientId: ingredientEntry.ingredientId,
+        ingredientId: item.ingredientId,
         quantityChange: -totalConsumed,
-        transactionType: 'sale',
-        relatedMenuItemId: menuItemId,
-        createdBy: sale.soldBy || 'system',
+        transactionType: 'sale_recipe_consumption',
+        relatedSaleId: snap.id,
+        createdBy: sale.soldBy || 'system/pos',
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        notes: `Consumed by sale ${context.params.saleId}`
       });
     }
 
     await batch.commit();
-    console.log(`Processed sale ${context.params.saleId}, inventory updated.`);
+    console.log(`Inventory deducted for sale ${snap.id}`);
   });
 
 // CLOUD FUNCTION: AI-powered anomaly detection

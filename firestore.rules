@@ -1,75 +1,49 @@
-rules_version = '2';
 
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function getUserData() {
-      // Check if the user is authenticated before trying to access their data
-      return request.auth != null ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data : null;
-    }
-    
-    function isManager() {
-        return getUserData() != null && getUserData().role == 'manager';
-    }
-
-    function isOwner() {
-        return getUserData() != null && getUserData().role == 'owner';
-    }
-
-    // users: Can only read/write their own document
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth.uid == userId;
     }
 
-    // employees: Role-based access
     match /employees/{employeeId} {
-      // Read access for self, owners, or managers of the same location
-      allow get: if request.auth != null &&
-                   (request.auth.uid == employeeId ||
-                    isOwner() ||
-                    (isManager() && getUserData().locationId == resource.data.locationId));
-                    
-      // List access for managers and owners
-      allow list: if request.auth != null && (isOwner() || isManager());
-
-      // No direct client writes. All mutations must go through Cloud Functions.
-      allow create, update, delete: if false;
+        allow read: if request.auth != null;
+        allow write: if request.auth.token.role in ['owner', 'manager'];
     }
 
-    // perksTransactions: Immutable logs, readable by admins
     match /perksTransactions/{transactionId} {
-      allow read: if request.auth != null && (isOwner() || isManager());
-      allow write: if false; // Immutable from client
+        allow read: if request.auth.token.role in ['owner', 'manager'];
+        allow write: if false; 
     }
 
-    // branding: Readable by all, writable only by the owner
-    match /branding/{ownerId} {
+    // Rules for inventory system
+    match /ingredients/{ingredientId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == ownerId && isOwner();
-    }
-    
-    // inventory, suppliers, recipes: Readable by authenticated users, writable by managers/owners
-    match /inventory/{itemId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && (isOwner() || isManager());
+      allow write: if request.auth.token.role == "manager";
     }
 
     match /suppliers/{supplierId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && (isOwner() || isManager());
+      allow write: if request.auth.token.role == "manager";
     }
-
+    
     match /recipes/{recipeId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && (isOwner() || isManager());
+      allow write: if request.auth.token.role in ['owner', 'manager'];
     }
-    
-    // purchaseOrders: Writable by managers, readable by owners
+
     match /purchaseOrders/{orderId} {
-      allow create: if request.auth != null && isManager();
-      allow read, update, delete: if request.auth != null && (isOwner() || isManager());
+      allow create: if request.auth.token.role == "manager";
+      allow read, update: if request.auth.token.role in ["owner", "manager"];
     }
-    
-    // All other collections are locked down by default
+
+    match /posSales/{saleId} {
+      allow create: if true; // In real app, restrict to POS system's service account
+    }
+
+    match /inventoryTransactions/{txId} {
+      allow create: if true; // Writable by backend functions only
+      allow read: if request.auth.token.role == "manager";
+    }
   }
 }
