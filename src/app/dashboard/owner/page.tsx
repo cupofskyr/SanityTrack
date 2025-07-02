@@ -618,25 +618,15 @@ export default function OwnerDashboard() {
                                         </div>
                                     </div>
                                 </AccordionTrigger>
-                                <AccordionContent className="p-4 bg-muted/30">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>Locations</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <Table>
-                                                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Manager</TableHead><TableHead>KDS Code</TableHead></TableRow></TableHeader>
-                                                <TableBody>
-                                                    {locations.map(loc => (
-                                                        <TableRow key={loc.id}><TableCell>{loc.name}</TableCell><TableCell>{loc.manager}</TableCell><TableCell><Badge variant="outline">{loc.inspectionCode}</Badge></TableCell></TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
-                                        </CardContent>
-                                        <CardFooter>
-                                            <Button onClick={() => setIsAddLocationDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Location</Button>
-                                        </CardFooter>
-                                    </Card>
+                                <AccordionContent className="p-4 bg-muted/30 space-y-4">
+                                    <p className="text-sm text-muted-foreground">
+                                        Use the dedicated Team & Payroll page to manage your staff and locations.
+                                    </p>
+                                    <Button asChild>
+                                        <Link href="/dashboard/owner/team">
+                                            <Users className="mr-2" /> Go to Team Management
+                                        </Link>
+                                    </Button>
                                 </AccordionContent>
                             </AccordionItem>
                         </Feature>
@@ -651,12 +641,15 @@ export default function OwnerDashboard() {
                                         </div>
                                     </div>
                                 </AccordionTrigger>
-                                <AccordionContent className="p-4 bg-muted/30">
-                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/team"><Users className="mr-2"/>Team & Permissions</Link></Button>
-                                        <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/branding"><Sparkles className="mr-2"/>Branding</Link></Button>
-                                        <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/billing"><DollarSign className="mr-2"/>Billing</Link></Button>
-                                    </div>
+                                <AccordionContent className="p-4 bg-muted/30 space-y-4">
+                                     <p className="text-sm text-muted-foreground">
+                                        Access the central Admin Panel for all system-wide settings.
+                                    </p>
+                                    <Button asChild variant="outline">
+                                        <Link href="/admin">
+                                            <Shield className="mr-2" /> Go to Admin Panel
+                                        </Link>
+                                    </Button>
                                 </AccordionContent>
                             </AccordionItem>
                         </Feature>

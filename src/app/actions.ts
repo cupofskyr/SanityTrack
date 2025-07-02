@@ -448,6 +448,11 @@ export async function submitFeedbackAction(input: { category: string; feedback: 
     try {
         // In a real app, this would write to a 'feedback' collection in Firestore.
         console.log("Feedback submitted (Simulated):", input);
+        await addDoc(collection(db, 'feedback'), {
+            ...input,
+            submittedAt: serverTimestamp(),
+            status: 'Received',
+        });
         return { success: true };
     } catch (error: any) {
         console.error("Feedback submission failed:", error);

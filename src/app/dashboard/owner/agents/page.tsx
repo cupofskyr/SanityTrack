@@ -8,24 +8,26 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Bot, PlusCircle, MoreHorizontal, Play, Pause, Trash2, Copy, Pencil } from 'lucide-react';
+import { Bot, PlusCircle, MoreHorizontal, Play, Pause, Trash2, Copy, Pencil, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 type Agent = {
   id: string;
   name: string;
   purpose: string;
   status: 'Running' | 'Paused';
+  health: 'Healthy' | 'Degraded';
   lastActivity: Date;
   alertCount: number;
 };
 
 const initialAgents: Agent[] = [
-  { id: 'compliance-monitor', name: 'Compliance Monitor', purpose: 'Monitors temperature logs and task completions for health code compliance.', status: 'Running', lastActivity: new Date(Date.now() - 5 * 60 * 1000), alertCount: 2 },
-  { id: 'inventory-sentinel', name: 'Inventory Sentinel', purpose: 'Tracks critical inventory levels and predicts stockouts.', status: 'Running', lastActivity: new Date(Date.now() - 2 * 60 * 1000), alertCount: 5 },
-  { id: 'staff-tracker', name: 'Staffing & Punctuality Agent', purpose: 'Analyzes clock-in data and predicts potential overtime.', status: 'Paused', lastActivity: new Date(Date.now() - 60 * 60 * 1000), alertCount: 0 },
-  { id: 'cx-sentinel', name: 'Customer Experience Sentinel', purpose: 'Scans camera feeds for long lines and service delays.', status: 'Running', lastActivity: new Date(Date.now() - 15 * 60 * 1000), alertCount: 1 },
+  { id: 'compliance-monitor', name: 'Compliance Monitor', purpose: 'Monitors temperature logs and task completions for health code compliance.', status: 'Running', health: 'Healthy', lastActivity: new Date(Date.now() - 5 * 60 * 1000), alertCount: 2 },
+  { id: 'inventory-sentinel', name: 'Inventory Sentinel', purpose: 'Tracks critical inventory levels and predicts stockouts.', status: 'Running', health: 'Healthy', lastActivity: new Date(Date.now() - 2 * 60 * 1000), alertCount: 5 },
+  { id: 'staff-tracker', name: 'Staffing & Punctuality Agent', purpose: 'Analyzes clock-in data and predicts potential overtime.', status: 'Paused', health: 'Healthy', lastActivity: new Date(Date.now() - 60 * 60 * 1000), alertCount: 0 },
+  { id: 'cx-sentinel', name: 'Customer Experience Sentinel', purpose: 'Scans camera feeds for long lines and service delays.', status: 'Running', health: 'Degraded', lastActivity: new Date(Date.now() - 15 * 60 * 1000), alertCount: 1 },
 ];
 
 export default function AgentsDashboardPage() {
@@ -73,6 +75,7 @@ export default function AgentsDashboardPage() {
                                 <TableHead>Agent Name</TableHead>
                                 <TableHead className="hidden md:table-cell">Purpose</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Health</TableHead>
                                 <TableHead className="hidden lg:table-cell">Last Activity</TableHead>
                                 <TableHead>Alerts</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
@@ -88,6 +91,14 @@ export default function AgentsDashboardPage() {
                                             <div className="flex items-center gap-1">
                                                 <span className={`h-2 w-2 rounded-full ${agent.status === 'Running' ? 'bg-green-400' : 'bg-gray-400'}`}></span>
                                                 {agent.status}
+                                            </div>
+                                        </Badge>
+                                    </TableCell>
+                                     <TableCell>
+                                        <Badge variant={agent.health === 'Healthy' ? 'secondary' : 'destructive'} className="border-transparent">
+                                            <div className="flex items-center gap-1">
+                                                <CheckCircle className={cn("h-3 w-3", agent.health === 'Healthy' ? 'text-green-600' : 'text-yellow-600')} />
+                                                {agent.health}
                                             </div>
                                         </Badge>
                                     </TableCell>

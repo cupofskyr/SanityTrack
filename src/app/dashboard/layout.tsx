@@ -39,7 +39,8 @@ import {
   Award,
   Briefcase,
   HelpCircle,
-  Shield
+  Shield,
+  MessageSquare
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -89,14 +90,6 @@ const managerNav = [
           { name: "Arcade Zone Setup", href: "/dashboard/training/setup"},
           { name: "Knowledge Base", href: "/dashboard/manager/knowledge" },
           { name: "Staff Meals", href: "/dashboard/manager/staff-meals" },
-        ]
-    },
-    {
-        category: "Store Tools",
-        icon: Wrench,
-        links: [
-            { name: "Service Contacts", href: "/dashboard/manager#service-contacts" },
-            { name: "AI Task Setup", href: "/dashboard/manager#ai-task-setup" },
         ]
     },
 ];
@@ -162,15 +155,28 @@ const employeeNav = [
             { name: "Company Perks", href: "/dashboard/perks" },
         ]
     },
+];
+
+const helpNav = [
     {
-        category: "Help",
+        category: "Help & Feedback",
         icon: HelpCircle,
         links: [
             { name: "Ask the Company Brain", href: "/dashboard/brain" },
+            { name: "Submit Feedback", href: "/dashboard/feedback" },
         ]
     }
 ];
 
+const employeeFixerNav = [
+    {
+        category: "Fixers",
+        icon: Wrench,
+        links: [
+            // This is a button, not a link
+        ]
+    }
+];
 
 const inspectorNav = [
     { name: "Dashboard", href: "/dashboard/health-department", icon: Shield },
@@ -250,16 +256,16 @@ export default function DashboardLayout({
   };
 
   const renderNav = () => {
-    let navItems;
+    let navItems: any[] = [];
     switch(role) {
       case "Owner":
-        navItems = ownerNav;
+        navItems = [...ownerNav, ...helpNav];
         break;
       case "Manager":
-        navItems = managerNav;
+        navItems = [...managerNav, ...helpNav];
         break;
       case "Employee":
-        navItems = employeeNav;
+        navItems = [...employeeNav, ...employeeFixerNav, ...helpNav];
         break;
       case "Health Department":
         return (
@@ -278,10 +284,11 @@ export default function DashboardLayout({
     }
 
     const defaultActive = (navItems as any[]).findIndex(category => 
-        category.links.some((link: any) => pathname.startsWith(link.href.split('#')[0]))
+        category.links.some((link: any) => pathname.startsWith(link.href?.split('#')[0]))
     );
 
     const isLinkActive = (href: string, exact: boolean = false) => {
+        if (!href) return false;
         const cleanPath = href.split('#')[0];
         if (exact) {
           return pathname === cleanPath;
@@ -308,27 +315,16 @@ export default function DashboardLayout({
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             ))}
+                            {/* Special case for the Fixer button */}
+                            {category.category === "Fixers" && (
+                                <SidebarMenuItem>
+                                   <SidebarMenuButton onClick={() => setIsContactsOpen(true)} size="sm">Service Contacts</SidebarMenuButton>
+                               </SidebarMenuItem>
+                            )}
                         </SidebarMenu>
                     </AccordionContent>
                 </AccordionItem>
             ))}
-            {role === 'Employee' && (
-                <AccordionItem value="item-help" className="border-b-0">
-                    <AccordionTrigger className="py-2 px-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground rounded-md hover:no-underline [&[data-state=open]]:bg-accent [&[data-state=open]]:text-accent-foreground">
-                       <div className="flex items-center gap-2">
-                         <Wrench className="h-4 w-4" />
-                         <span className="group-data-[collapsible=icon]:hidden">Fixers</span>
-                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-1 pb-0">
-                        <SidebarMenu className="pl-4 border-l ml-4">
-                           <SidebarMenuItem>
-                               <SidebarMenuButton onClick={() => setIsContactsOpen(true)} size="sm">Service Contacts</SidebarMenuButton>
-                           </SidebarMenuItem>
-                        </SidebarMenu>
-                    </AccordionContent>
-                </AccordionItem>
-            )}
         </Accordion>
     );
   };
