@@ -36,10 +36,8 @@ import {
   Lightbulb,
   DollarSign,
   Camera,
-  Briefcase,
   Award,
-  BookOpen,
-  Shield,
+  Briefcase,
   HelpCircle
 } from "lucide-react";
 import { Logo } from "@/components/icons";

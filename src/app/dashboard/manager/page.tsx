@@ -25,6 +25,10 @@ import PhotoUploader from '@/components/photo-uploader';
 import ServiceContacts from '@/components/manager/ServiceContacts';
 import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
 import { useAuth } from '@/context/AuthContext';
+import AISetupAssistant from '@/components/ai-setup-assistant';
+import { ManagedTask } from '@/lib/types';
+import { toast as sonnerToast } from "sonner"
+
 
 type TempReading = {
     value: number;
@@ -70,6 +74,8 @@ export default function ManagerDashboard() {
     const [selectedLogForWarning, setSelectedLogForWarning] = useState<TimeClockLog | null>(null);
     const [aiReport, setAiReport] = useState<AiCameraReport | null>(null);
     const [managerComment, setManagerComment] = useState('');
+    const [managedTasks, setManagedTasks] = useState<ManagedTask[]>([]);
+
 
     // State for manual temperature submission
     const [isManualTempOpen, setIsManualTempOpen] = useState(false);
@@ -343,14 +349,16 @@ export default function ManagerDashboard() {
                         <ServiceContacts />
                     </CardContent>
                 </Card>
-                <Card id="social-chat">
-                    <CardHeader>
-                        <CardTitle className="font-headline">Today's Flow</CardTitle>
-                         <CardDescription>A daily micro-thread for shift notes and team communication.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <TodaysFlow />
-                    </CardContent>
+                <Card id="ai-task-setup">
+                    <AISetupAssistant onTasksSuggested={(tasks) => {
+                         const newManagedTasks: ManagedTask[] = tasks.map((task, index) => ({
+                            ...task,
+                            id: (managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) : 0) + 1 + index,
+                            status: 'Local',
+                        }));
+                        setManagedTasks(prev => [...prev, ...newManagedTasks]);
+                        sonnerToast.success("AI tasks have been added to your Master Task List page.");
+                    }} />
                 </Card>
             </div>
             
