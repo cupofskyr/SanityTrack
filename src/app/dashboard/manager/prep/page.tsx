@@ -9,6 +9,13 @@ import { useEffect, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, getFirestore } from "firebase/firestore";
 import { app } from "@/lib/firebase"; // Use the shared firebase instance
+import { Printer, Tag } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { format, add } from "date-fns";
+import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
+
 
 const db = getFirestore(app);
 
@@ -54,10 +61,12 @@ export default function FoodPrepDashboard() {
   const [prepList, setPrepList] = useState<PrepLog[]>([]);
   const [prepType, setPrepType] = useState("default");
   
-  // The useCollection hook will now correctly use the shared db instance.
-  // Note: This will only work if a 'prep-logs' collection exists in your Firestore.
   const [snapshot, loading] = useCollection(collection(db, "prep-logs"));
   const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+  const [labelData, setLabelData] = useState<{name: string, prepDate: Date, useByDate: Date, qrData: string} | null>(null);
+  const [selectedItemForLabel, setSelectedItemForLabel] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!loading && snapshot) {
@@ -82,15 +91,50 @@ export default function FoodPrepDashboard() {
     window.open(qrURL, "_blank");
   };
 
+  const handleGenerateLabel = () => {
+      if (!selectedItemForLabel) {
+          toast({ variant: 'destructive', title: 'Please select an item.' });
+          return;
+      }
+      const prepDate = new Date();
+      const useByDate = add(prepDate, { days: 3 }); // Default 3 day shelf life
+      const qrData = JSON.stringify({
+          item: selectedItemForLabel,
+          prep: prepDate.toISOString(),
+          useBy: useByDate.toISOString(),
+      });
+      setLabelData({
+          name: selectedItemForLabel,
+          prepDate,
+          useByDate,
+          qrData: encodeURIComponent(qrData),
+      });
+  };
+
+  const handlePrintLabel = () => {
+      window.print();
+  }
+
   const activePrepItems = generatePrepList(prepType);
+  const inventoryItemsForLabel = useMemo(() => {
+    // In a real app, this would come from the inventory management page.
+    // For now, we'll use a mocked list based on the prep list generator.
+    return [
+      "Caesar Salad", "Burger Patties", "Fries", "Chicken Wrap Mix", 
+      "Lobster Bisque", "Filet Mignon", "Truffle Caesar Salad",
+      "Soda Cups"
+    ].filter((v, i, a) => a.indexOf(v) === i); // Unique items
+  }, []);
 
   return (
+    <div className="space-y-4">
     <Tabs value={selectedTab} onValueChange={setSelectedTab} className="p-4 space-y-4 text-lg">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-5">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="waste">Prep Variance</TabsTrigger>
         <TabsTrigger value="forecast">Forecast</TabsTrigger>
         <TabsTrigger value="prepgen">Prep List AI</TabsTrigger>
+        <TabsTrigger value="labeling">Labeling</TabsTrigger>
       </TabsList>
 
       <TabsContent value="overview">
@@ -188,6 +232,61 @@ export default function FoodPrepDashboard() {
           </CardContent>
         </Card>
       </TabsContent>
+
+      <TabsContent value="labeling">
+        <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Tag /> Generate Shelf-Life Label</CardTitle>
+                    <CardDescription>Select an item you've just prepped to generate a standardized label with dates and a QR code.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="label-item">Prep Item</Label>
+                        <Select value={selectedItemForLabel} onValueChange={setSelectedItemForLabel}>
+                            <SelectTrigger id="label-item">
+                                <SelectValue placeholder="Select an item to label..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {inventoryItemsForLabel.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Button onClick={handleGenerateLabel} className="w-full">Generate Label</Button>
+                </CardContent>
+            </Card>
+
+            {labelData && (
+                <Card>
+                    <CardHeader>
+                         <CardTitle className="flex items-center justify-between">Label Preview <Button size="sm" onClick={handlePrintLabel}><Printer className="mr-2 h-4 w-4"/> Print</Button></CardTitle>
+                        <CardDescription>This is a preview of the label that will be printed.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex justify-center items-center">
+                        <div id="printable" className="printable-area p-1">
+                           <div className="w-80 border-2 border-dashed rounded-lg p-4 space-y-2 bg-background text-foreground">
+                              <h3 className="text-lg font-bold text-center">{labelData.name}</h3>
+                              <div className="flex justify-between items-center">
+                                <div className="text-sm space-y-1">
+                                    <p><strong>Prepped:</strong> {format(labelData.prepDate, 'MM/dd p')}</p>
+                                    <p className="font-bold"><strong>USE BY:</strong> {format(labelData.useByDate, 'MM/dd p')}</p>
+                                </div>
+                                <Image 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${labelData.qrData}`}
+                                    width={80}
+                                    height={80}
+                                    alt="Shelf-life QR Code"
+                                />
+                              </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+      </TabsContent>
     </Tabs>
+    </div>
   );
 }
+
