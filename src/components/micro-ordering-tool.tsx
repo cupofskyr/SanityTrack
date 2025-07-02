@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -65,7 +64,7 @@ export default function MicroOrderingTool() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><ShoppingCart /> Micro-Ordering & Price Optimizer</CardTitle>
+                    <CardTitle className="font-headline flex items-center gap-2"><ShoppingCart /> Micro-Ordering &amp; Price Optimizer</CardTitle>
                     <CardDescription>Build your shopping list, then let the AI find the best price for each item across your approved suppliers.</CardDescription>
                 </CardHeader>
                 <CardContent>
