@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -183,7 +183,7 @@ export default function FoodPrepDashboard() {
                     <td>{item.name}</td>
                     <td>{item.prepped}</td>
                     <td>{item.sold}</td>
-                    <td>{item.prepped - item.sold}</td>
+                    <td>{(item.prepped || 0) - (item.sold || 0)}</td>
                   </tr>
                 ))}
               </tbody>
