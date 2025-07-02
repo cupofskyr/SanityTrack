@@ -1,38 +1,32 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Helper function to get user's role
-    function getUserRole(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
-    
-    // Users can only read/write their own data.
+
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Config can be read by any authenticated user, but only written by owners.
-    match /appConfig/{docId} {
+    match /employees/{employeeId} {
+      allow get: if request.auth != null &&
+                   (request.auth.uid == employeeId ||
+                    getUserData().role == 'owner' ||
+                    (getUserData().role == 'manager' && getUserData().locationId == resource.data.locationId));
+      allow list: if request.auth != null && getUserData().role in ['owner', 'manager'];
+      allow create, update, delete: if false; // All writes must go through Cloud Functions
+    }
+
+    match /perksTransactions/{transactionId} {
+      allow get, list: if request.auth != null && getUserData().role in ['owner', 'manager'];
+      allow write: if false; // Immutable from client
+    }
+
+    match /branding/{ownerId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && getUserRole(request.auth.uid) == 'Owner';
-    }
-
-    // Brand guidelines can only be read/written by the owner.
-    match /brandGuidelines/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Marketing opportunities can be read/written by the assigned owner.
-    match /marketingOpportunities/{oppId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.forUserId;
-    }
-    
-    // Default deny all other collections
-    match /{document=**} {
-      allow read, write: if false;
+      allow write: if request.auth != null && request.auth.uid == ownerId && getUserData().role == 'owner';
     }
   }
 }

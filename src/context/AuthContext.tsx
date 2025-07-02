@@ -1,15 +1,20 @@
-
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User as AuthUser, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+
+// This interface merges Firebase Auth User with our custom Firestore data
+export interface AppUser extends AuthUser {
+  role?: 'employee' | 'manager' | 'owner' | 'Health Department' | null;
+  locationId?: string | null;
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   loading: boolean;
   signInWithGoogle: (role: 'Business Owner' | 'Health Official') => Promise<void>;
   signUpWithEmailAndPassword: (email: string, password: string, fullName: string, role: 'Business Owner' | 'Health Official') => Promise<void>;
@@ -23,24 +28,46 @@ const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+      if (authUser) {
+        // User is signed in, now get their custom data from Firestore
+        const userDocRef = doc(db, 'users', authUser.uid);
+        const unsubDoc = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const firestoreData = docSnap.data();
+            // Combine authUser with Firestore data
+            const appUser: AppUser = {
+              ...authUser,
+              role: firestoreData.role,
+              locationId: firestoreData.locationId,
+            };
+            setUser(appUser);
+            sessionStorage.setItem('userRole', firestoreData.role);
+          } else {
+             // This case might happen briefly after user creation before the trigger runs
+            setUser(authUser as AppUser); // Store basic auth user for now
+          }
+          setLoading(false);
+        });
+        return () => unsubDoc();
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
 
-  const handleSuccessfulAuth = async (user: User, role: 'Business Owner' | 'Health Official' | 'Manager' | 'Employee', isNewUser: boolean) => {
+  const handleSuccessfulAuth = async (user: AuthUser, role: 'Business Owner' | 'Health Department' | 'Manager' | 'Employee', isNewUser: boolean) => {
     sessionStorage.setItem('userRole', role);
     if (isNewUser) {
         sessionStorage.setItem('isNewUser', 'true');
-        // Do not automatically show the policy modal here, let the layout handle it
         toast({
             title: "Account Created!",
             description: "Welcome! Let's get you set up.",
@@ -75,19 +102,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
+      const determinedRole = userDoc.exists() ? userDoc.data().role : role;
+
       if (!userDoc.exists()) {
+        // The onUserCreate trigger will handle seeding the DB, but we do it here too for immediate UI consistency
+        const userRole = role === 'Health Official' ? 'Health Department' : 'Owner';
         await setDoc(userDocRef, {
             uid: user.uid,
             displayName: user.displayName,
             email: user.email,
-            role: role,
+            role: userRole,
             createdAt: new Date(),
         });
-        await handleSuccessfulAuth(user, role, true);
+        await handleSuccessfulAuth(user, userRole, true);
       } else {
-        // Existing user, use the role from their document, not the one passed in.
-        const existingUserRole = userDoc.data().role;
-        await handleSuccessfulAuth(user, existingUserRole, false);
+        await handleSuccessfulAuth(user, determinedRole, false);
       }
     } catch (error: any) {
       console.error("Error during Google sign-in: ", error);
@@ -108,16 +137,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: fullName });
         const user = userCredential.user;
+        const userRole = role === 'Health Official' ? 'Health Department' : 'Owner';
 
+        // The onUserCreate trigger handles this, but we can do it here to speed up UI
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             displayName: fullName,
             email: user.email,
-            role: role,
+            role: userRole,
             createdAt: new Date(),
         });
 
-        await handleSuccessfulAuth(user, role, true);
+        await handleSuccessfulAuth(user, userRole, true);
     } catch (error: any) {
         console.error("Error during Email/Password sign-up: ", error);
         toast({
