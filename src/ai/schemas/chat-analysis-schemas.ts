@@ -1,5 +1,4 @@
 
-'use server';
 /**
  * @fileOverview Schemas for the chat analysis flow.
  */
