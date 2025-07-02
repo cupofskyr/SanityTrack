@@ -45,7 +45,7 @@ export default function AdminSentinelDashboard() {
             {tab.label}
           </button>
         ))}
-      </nav>
+      </div>
 
       <div>
         {activeTab === "rules" && <RulesDashboard />}
