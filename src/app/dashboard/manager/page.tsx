@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Thermometer, AlertTriangle, Printer, Clock, MailWarning, Send, MessageSquare, Wrench, Loader2 } from "lucide-react";
 import { format, formatDistanceToNow } from 'date-fns';
-import type { TimeClockLog } from '@/lib/types';
+import type { TimeClockLog, ManagedTask } from '@/lib/types';
 import { generateWarningLetterAction, submitManualCoolerCheckAction } from '@/app/actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
@@ -26,7 +26,6 @@ import ServiceContacts from '@/components/manager/ServiceContacts';
 import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
 import { useAuth } from '@/context/AuthContext';
 import AISetupAssistant from '@/components/ai-setup-assistant';
-import { ManagedTask } from '@/lib/types';
 
 type TempReading = {
     value: number;
@@ -347,16 +346,14 @@ export default function ManagerDashboard() {
                         <ServiceContacts />
                     </CardContent>
                 </Card>
-                <Card id="ai-task-setup">
-                    <AISetupAssistant onTasksSuggested={(tasks) => {
-                         const newManagedTasks: ManagedTask[] = tasks.map((task, index) => ({
-                            ...task,
-                            id: (managedTasks.length > 0 ? Math.max(...managedTasks.map(t => t.id)) : 0) + 1 + index,
-                            status: 'Local',
-                        }));
-                        setManagedTasks(prev => [...prev, ...newManagedTasks]);
-                        toast({ title: "AI Suggestions Added", description: "New tasks have been added to your Master Task List page." });
-                    }} />
+                <Card id="social-chat">
+                    <CardHeader>
+                        <CardTitle className="font-headline">Today's Flow</CardTitle>
+                        <CardDescription>A daily micro-thread for shift notes and team communication.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <TodaysFlow />
+                    </CardContent>
                 </Card>
             </div>
             

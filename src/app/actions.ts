@@ -286,7 +286,6 @@ export async function analyzeChatMessageAction(input: AnalyzeChatInput): Promise
     return safeRun(analyzeChatMessage, input, 'analyzeChatMessage');
 }
 
-
 // These actions don't call an AI flow, so they don't need the safeRun wrapper.
 // They simulate database interactions. In a real app, you would use Firestore here.
 
@@ -392,4 +391,17 @@ export async function generateShiftSuggestionsAction(
 
 export async function suggestManualChecksAction(): Promise<{ data: ManualCheckSuggestionOutput | null; error: string | null; }> {
     return safeRun(() => suggestManualChecks(), {}, 'suggestManualChecks');
+}
+
+export async function submitManualCoolerCheckAction(input: { equipment: string, temperature: number, photoDataUrl: string, user: string }): Promise<{success: boolean; error?: string}> {
+    try {
+        console.log('Simulating manual temp check submission:', input);
+        // In a real app, this would write to Firestore.
+        // const docRef = await addDoc(collection(db, 'temp_logs'), { ...input, timestamp: serverTimestamp() });
+        // console.log("Document written with ID: ", docRef.id);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error submitting manual temp check:", error);
+        return { success: false, error: error.message };
+    }
 }

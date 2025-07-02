@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, updateProfile, FacebookAuthProvider } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -12,7 +12,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGoogle: (role: 'Business Owner' | 'Health Official') => Promise<void>;
-  signInWithFacebook: () => Promise<void>;
   signUpWithEmailAndPassword: (email: string, password: string, fullName: string, role: 'Business Owner' | 'Health Official') => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -22,7 +21,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
-const facebookProvider = new FacebookAuthProvider();
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -102,14 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   };
-  
-  const signInWithFacebook = async () => {
-    toast({
-        variant: "default",
-        title: "Feature Not Implemented",
-        description: "Facebook Sign-In requires developer setup and is currently a placeholder.",
-    });
-  }
 
   const signUpWithEmailAndPassword = async (email: string, password: string, fullName: string, role: 'Business Owner' | 'Health Official') => {
     setLoading(true);
@@ -164,7 +154,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     loading,
     signInWithGoogle,
-    signInWithFacebook,
     signUpWithEmailAndPassword,
     logout
   };
