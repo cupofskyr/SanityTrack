@@ -630,4 +630,3 @@ export default function AIShiftScheduler() {
         </div>
     );
 }
-
