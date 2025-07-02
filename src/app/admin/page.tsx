@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FileText, Component, Flag, Shield, Settings, Users, Database, Bot, BrainCircuit, LineChart } from 'lucide-react'
 import Link from 'next/link'
@@ -13,6 +12,21 @@ export default function AdminPage() {
             </p>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="hover:border-primary transition-colors">
+                <Link href="/admin/sentinel" className="block h-full">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Bot className="text-primary"/>
+                            Sentinel Dashboard
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                           A comprehensive dashboard to manage all aspects of the AI Sentinel agent.
+                        </p>
+                    </CardContent>
+                </Link>
+            </Card>
             <Card className="hover:border-primary transition-colors">
                 <Link href="/admin/analytics" className="block h-full">
                     <CardHeader>

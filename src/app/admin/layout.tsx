@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -35,6 +34,7 @@ const adminNav = [
     { name: "UI Components", href: "/admin/components", icon: Component },
     { name: "Feature Flags", href: "/admin/features", icon: Flag },
     { name: "AI Agent Rules", href: "/admin/agent-rules", icon: Bot },
+    { name: "Sentinel Dashboard", href: "/admin/sentinel", icon: Bot },
 ];
 
 export default function AdminLayout({
