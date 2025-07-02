@@ -41,7 +41,8 @@ import {
   HelpCircle,
   Shield,
   MessageSquare,
-  ListChecks
+  ListChecks,
+  Gift
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,7 @@ const ownerNav = [
         links: [
             { name: "Permit Applications", href: "/dashboard/owner/permits" },
             { name: "Branding", href: "/dashboard/owner/branding" },
+            { name: "Employee Perks", href: "/dashboard/owner/perks" },
             { name: "Admin Panel", href: "/admin", isExternal: true },
         ]
     },

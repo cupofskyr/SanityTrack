@@ -159,14 +159,59 @@ export default function PerksManagementPage() {
                             <DialogContent>
                                 <DialogHeader><DialogTitle>Add New Employee Perk</DialogTitle></DialogHeader>
                                 <form onSubmit={handleAddPerk} className="space-y-4 py-4">
-                                     {/* Form content from original component */}
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="perk-name">Perk Name</Label>
+                                        <Input id="perk-name" value={newPerk.name} onChange={e => setNewPerk({...newPerk, name: e.target.value})} placeholder="e.g., Monthly Health Stipend" required />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="perk-desc">Description</Label>
+                                        <Input id="perk-desc" value={newPerk.description} onChange={e => setNewPerk({...newPerk, description: e.target.value})} placeholder="e.g., $100 towards health and wellness." required />
+                                    </div>
+                                     <div className="grid gap-2">
+                                        <Label htmlFor="perk-category">Category</Label>
+                                        <Select value={newPerk.category} onValueChange={val => setNewPerk({...newPerk, category: val as Perk['category']})}>
+                                            <SelectTrigger><SelectValue/></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Health">Health</SelectItem>
+                                                <SelectItem value="Financial">Financial</SelectItem>
+                                                <SelectItem value="Lifestyle">Lifestyle</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <DialogFooter>
+                                        <Button type="button" variant="secondary" onClick={() => setIsPerkDialogOpen(false)}>Cancel</Button>
+                                        <Button type="submit">Add Perk</Button>
+                                    </DialogFooter>
                                 </form>
                             </DialogContent>
                         </Dialog>
                     )}
                 </CardHeader>
                 <CardContent>
-                   {/* Table of Perks */}
+                   <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Perk Name</TableHead>
+                                <TableHead>Category</TableHead>
+                                {user?.role === 'owner' && <TableHead className="text-right">Action</TableHead>}
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {perks.map(perk => (
+                                <TableRow key={perk.id}>
+                                    <TableCell className="font-medium">{perk.name}</TableCell>
+                                    <TableCell>{perk.category}</TableCell>
+                                    {user?.role === 'owner' && (
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" onClick={() => handleRemovePerk(perk.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    )}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                   </Table>
                 </CardContent>
             </Card>
 
