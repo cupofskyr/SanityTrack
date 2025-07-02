@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -17,12 +16,14 @@ service cloud.firestore {
                     getUserData().role == 'owner' ||
                     (getUserData().role == 'manager' && getUserData().locationId == resource.data.locationId));
       allow list: if request.auth != null && getUserData().role in ['owner', 'manager'];
-      allow create, update, delete: if false; // All writes must go through Cloud Functions
+      // Writes are handled by secure Cloud Functions
+      allow write: if false; 
     }
 
     match /perksTransactions/{transactionId} {
       allow get, list: if request.auth != null && getUserData().role in ['owner', 'manager'];
-      allow write: if false; // Immutable from client
+      // Transactions are immutable from the client
+      allow write: if false;
     }
 
     match /branding/{ownerId} {

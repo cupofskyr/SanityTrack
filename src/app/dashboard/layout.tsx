@@ -42,7 +42,8 @@ import {
   Shield,
   MessageSquare,
   ListChecks,
-  Gift
+  Gift,
+  Palette
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";

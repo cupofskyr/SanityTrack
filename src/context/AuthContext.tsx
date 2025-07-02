@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Always clear the policy acceptance on a new sign-in/sign-up
     sessionStorage.removeItem('leifur-ai-policy-accepted');
 
-    if (role === 'Business Owner') {
+    if (role === 'Business Owner' || role === 'owner') {
         router.push('/dashboard/owner');
     } else if (role === 'Health Department') {
         router.push('/dashboard/health-department');
@@ -102,19 +102,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      const determinedRole = userDoc.exists() ? userDoc.data().role : role;
+      const determinedRole = userDoc.exists() ? userDoc.data().role : (role === 'Health Official' ? 'Health Department' : 'owner');
 
       if (!userDoc.exists()) {
         // The onUserCreate trigger will handle seeding the DB, but we do it here too for immediate UI consistency
-        const userRole = role === 'Health Official' ? 'Health Department' : 'Owner';
         await setDoc(userDocRef, {
             uid: user.uid,
             displayName: user.displayName,
             email: user.email,
-            role: userRole,
+            role: determinedRole,
             createdAt: new Date(),
         });
-        await handleSuccessfulAuth(user, userRole, true);
+        await handleSuccessfulAuth(user, determinedRole, true);
       } else {
         await handleSuccessfulAuth(user, determinedRole, false);
       }
@@ -137,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: fullName });
         const user = userCredential.user;
-        const userRole = role === 'Health Official' ? 'Health Department' : 'Owner';
+        const userRole = role === 'Health Official' ? 'Health Department' : 'owner';
 
         // The onUserCreate trigger handles this, but we can do it here to speed up UI
         await setDoc(doc(db, "users", user.uid), {
