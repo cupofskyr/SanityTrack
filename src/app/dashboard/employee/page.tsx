@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useWindowSize } from 'react-use';
 import Confetti from 'react-confetti';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Check, Clock, ListTodo, ShieldCheck, Camera, Loader2, Lightbulb, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Check, Clock, ListTodo, ShieldCheck, Camera, Loader2, Lightbulb } from "lucide-react";
 import LiveTeamFeed from '@/components/dashboard/employee/LiveTeamFeed';
 import WhosOnShift from '@/components/dashboard/employee/WhosOnShift';
 import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
@@ -20,21 +20,20 @@ import ShiftRecapDialog from '@/components/dashboard/employee/ShiftRecapDialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import PhotoUploader from '@/components/photo-uploader';
 import { verifyTaskProofAction } from '@/app/actions';
-import FloatingCamera from '@/components/FloatingCamera';
 import EmployeeServiceAlertWidget from '@/components/employee-service-alert-widget';
 
 const initialTasks = [
-  { id: 1, name: "Clean kitchen floor", area: "Kitchen", priority: "High", status: 'Pending', type: 'regular', xp: 50 },
-  { id: 2, name: "Restock restroom supplies", area: "Restroom", priority: "Medium", status: 'Pending', type: 'regular', xp: 30 },
-  { id: 3, name: "Sanitize all door handles", area: "All Areas", priority: "High", status: 'In Progress', type: 'regular', xp: 40 },
+  { id: 1, name: "Clean kitchen floor", area: "Kitchen", priority: "High", status: 'Pending', type: 'regular' },
+  { id: 2, name: "Restock restroom supplies", area: "Restroom", priority: "Medium", status: 'Pending', type: 'regular' },
+  { id: 3, name: "Sanitize all door handles", area: "All Areas", priority: "High", status: 'In Progress', type: 'regular' },
 ];
 
 const initialQaTasks = [
-  { id: 4, description: `Perform QA check for: Classic Burger`, source: 'Manager Assignment', status: 'Pending', itemToAudit: 'Classic Burger', type: 'qa', xp: 100 }
+  { id: 4, description: `Perform QA check for: Classic Burger`, source: 'Manager Assignment', status: 'Pending', itemToAudit: 'Classic Burger', type: 'qa' }
 ];
 
-type Task = { id: number; name: string; area: string; priority: string; status: 'Pending' | 'In Progress'; type: 'regular'; xp: number };
-type QaTask = { id: number; description: string; source: string; status: 'Pending' | 'In Progress'; itemToAudit: string; standardImageUrl?: string; type: 'qa'; xp: number };
+type Task = { id: number; name: string; area: string; priority: string; status: 'Pending' | 'In Progress'; type: 'regular' };
+type QaTask = { id: number; description: string; source: string; status: 'Pending' | 'In Progress'; itemToAudit: string; standardImageUrl?: string; type: 'qa' };
 
 export default function EmployeeDashboardV2() {
     const { toast } = useToast();
@@ -275,17 +274,6 @@ export default function EmployeeDashboardV2() {
                         </CardContent>
                     </Card>
                     
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Shift Feedback</CardTitle>
-                            <CardDescription>How was your shift today?</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex gap-2">
-                            <Button variant="outline" className="w-full" onClick={() => toast({title: "Feedback Submitted!", description: "Thanks for letting us know."})}><ThumbsUp className="mr-2 text-green-500"/> Good</Button>
-                            <Button variant="outline" className="w-full" onClick={() => toast({title: "Feedback Submitted!", description: "Thanks for the feedback. A manager may follow up."})}><ThumbsDown className="mr-2 text-red-500"/> Tough</Button>
-                        </CardContent>
-                    </Card>
-
                     <TodaysFlow />
                     <WhosOnShift />
                     <PerformanceCard xpEarned={xpEarned} />
@@ -313,9 +301,6 @@ export default function EmployeeDashboardV2() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            <FloatingCamera />
         </div>
     );
 }
-    
