@@ -3,18 +3,16 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, MoreHorizontal, Pencil, DollarSign, Info } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { PlusCircle, DollarSign, Info, FileDown, Mail } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Mock data for state minimum wages
@@ -77,6 +75,13 @@ export default function TeamPage() {
         if (!memberToEdit) return;
         const minWage = stateLaborLaws[businessState];
         setEditedRate(String(minWage));
+    }
+    
+    const handleExportPayroll = () => {
+        toast({
+            title: "Payroll Exported (Simulated)",
+            description: "A CSV file with the payroll data would be generated and downloaded here."
+        });
     }
 
     return (
@@ -165,6 +170,26 @@ export default function TeamPage() {
                             ))}
                         </TableBody>
                     </Table>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Payroll Export</CardTitle>
+                    <CardDescription>Export total hours and estimated costs for your accounting software or CPA.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                         <Button onClick={handleExportPayroll}>
+                            <FileDown className="mr-2 h-4 w-4" />
+                            Export Payroll Data (.csv)
+                        </Button>
+                         <Button variant="secondary" onClick={() => toast({title: "Email Sent (Simulated)"})}>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Email to CPA
+                        </Button>
+                    </div>
+                     <p className="text-xs text-muted-foreground mt-4">Integrates with shift planner totals and AI cost estimates.</p>
                 </CardContent>
             </Card>
 

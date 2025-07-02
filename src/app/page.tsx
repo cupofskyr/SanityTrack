@@ -11,6 +11,7 @@ import AuthForm from '@/components/auth-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import PasswordProtect from '@/components/password-protect';
+import { Loader2 } from 'lucide-react';
 
 
 const Feature = ({ icon, title, children }: { icon: React.ElementType, title: string, children: React.ReactNode }) => (
@@ -88,10 +89,11 @@ const MainContent = () => (
 );
 
 export default function AppFrontDoorPage() {
+    const [isMounted, setIsMounted] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
-        // This check runs only on the client-side
+        setIsMounted(true);
         if (sessionStorage.getItem('demo_authenticated') === 'true') {
             setIsAuthenticated(true);
         }
@@ -101,6 +103,14 @@ export default function AppFrontDoorPage() {
         sessionStorage.setItem('demo_authenticated', 'true');
         setIsAuthenticated(true);
     };
+
+    if (!isMounted) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <main className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-background to-muted/50">

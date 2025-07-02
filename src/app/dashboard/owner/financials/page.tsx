@@ -1,23 +1,127 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertCircle, FilePlus, Link as LinkIcon, Bot } from 'lucide-react';
-import FinancialWizard from '@/components/financial-wizard';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { fetchToastDataAction } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, DollarSign, FileText, Link as LinkIcon } from 'lucide-react';
+
+const locations = [
+    { name: 'All Locations' },
+    { name: 'Downtown' },
+    { name: 'Uptown' },
+    { name: 'Westside' },
+];
+
+const mockPnlData = [
+    { month: 'Jan', revenue: 4000, profit: 2400 },
+    { month: 'Feb', revenue: 3000, profit: 1398 },
+    { month: 'Mar', revenue: 5000, profit: 3800 },
+];
+
+const chartConfig = {
+    revenue: { label: "Revenue", color: "hsl(var(--primary))" },
+    profit: { label: "Profit", color: "hsl(var(--chart-2))" },
+};
 
 export default function FinancialsPage() {
-    const [isWizardOpen, setIsWizardOpen] = useState(false);
-
-    // This would come from a database in a real app
-    const isConnectedToQBO = false;
+    const { toast } = useToast();
+    const [selectedLocation, setSelectedLocation] = useState('All Locations');
+    const [isLoading, setIsLoading] = useState(false);
+    
+    useEffect(() => {
+        const fetchDataForLocation = async () => {
+            setIsLoading(true);
+            // Simulate fetching new data for the selected location
+            await new Promise(resolve => setTimeout(resolve, 500));
+            toast({
+                title: `Data loaded for ${selectedLocation}`,
+            });
+            setIsLoading(false);
+        };
+        fetchDataForLocation();
+    }, [selectedLocation, toast]);
 
     return (
         <div className="space-y-6">
             <Card>
+                <CardHeader>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <CardTitle className="font-headline flex items-center gap-2">
+                                <DollarSign /> Financial Dashboard
+                            </CardTitle>
+                            <CardDescription>
+                                High-level financial reports for your enterprise.
+                            </CardDescription>
+                        </div>
+                        <div className="w-full md:w-auto">
+                            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select location..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {locations.map(loc => <SelectItem key={loc.name} value={loc.name}>{loc.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </CardHeader>
+            </Card>
+
+            <div className="grid md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                             <FileText className="h-5 w-5"/> Profit & Loss
+                        </CardTitle>
+                        <CardDescription>
+                            Summary for {selectedLocation}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-[250px]"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                        ) : (
+                             <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                                <BarChart accessibilityLayer data={mockPnlData}>
+                                    <CartesianGrid vertical={false} />
+                                    <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
+                                    <YAxis />
+                                    <RechartsTooltip cursor={false} content={<ChartTooltipContent />} />
+                                    <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                                    <Bar dataKey="profit" fill="var(--color-profit)" radius={4} />
+                                </BarChart>
+                            </ChartContainer>
+                        )}
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <FileText className="h-5 w-5"/> Balance Sheet
+                        </CardTitle>
+                        <CardDescription>
+                            Summary for {selectedLocation}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-[250px]"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                        ) : (
+                             <div className="flex justify-center items-center h-[250px] border-2 border-dashed rounded-md">
+                                <p className="text-muted-foreground">Balance Sheet Data Unavailable</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline">QuickBooks Online Integration</CardTitle>
                     <CardDescription>Connect your QuickBooks account to automate expense reporting and streamline your financial operations.</CardDescription>
@@ -25,67 +129,13 @@ export default function FinancialsPage() {
                 <CardContent>
                     <div className="flex items-center space-x-4 rounded-lg border bg-muted p-4">
                         <div className="flex-1 space-y-1">
-                            <p className="text-sm font-medium leading-none">
-                                {isConnectedToQBO ? 'Status: Connected' : 'Status: Not Connected'}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                {isConnectedToQBO ? 'Your account is securely linked.' : 'Link your account to enable automated features.'}
-                            </p>
+                            <p className="text-sm font-medium leading-none">Status: Not Connected</p>
+                            <p className="text-sm text-muted-foreground">Link your account to enable automated features.</p>
                         </div>
-                        <Button disabled={isConnectedToQBO}>
+                        <Button>
                             <LinkIcon className="mr-2 h-4 w-4" />
                             Connect to QuickBooks
                         </Button>
-                    </div>
-
-                    <Alert className="mt-4">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Secure Connection</AlertTitle>
-                        <AlertDescription>
-                            We use the secure OAuth 2.0 protocol to connect to your QuickBooks account. Your login credentials are never shared with our application.
-                        </AlertDescription>
-                    </Alert>
-                </CardContent>
-            </Card>
-            
-             <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline">Expense Management</CardTitle>
-                    <CardDescription>Submit new expenses for approval and view the status of recent transactions.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Dialog open={isWizardOpen} onOpenChange={setIsWizardOpen}>
-                        <DialogTrigger asChild>
-                            <Button disabled={!isConnectedToQBO}>
-                                <FilePlus className="mr-2 h-4 w-4" />
-                                Submit New Expense
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                             <DialogHeader>
-                                <DialogTitle className="font-headline flex items-center gap-2">
-                                    <Bot className="text-primary h-6 w-6"/>
-                                    AI-Assisted Expense Submission
-                                </DialogTitle>
-                                <DialogDescription>
-                                    Follow the steps to submit a new expense. The AI will help categorize it for you.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <FinancialWizard onClose={() => setIsWizardOpen(false)}/>
-                        </DialogContent>
-                    </Dialog>
-                    {!isConnectedToQBO && <p className="text-xs text-muted-foreground mt-2">Please connect to QuickBooks to enable expense submission.</p>}
-                </CardContent>
-            </Card>
-
-             <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline">Recent Transactions</CardTitle>
-                    <CardDescription>A log of recently submitted expenses and their current approval status.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-center text-sm text-muted-foreground p-8 border-dashed border-2 rounded-md">
-                        This area will show a table of recent expenses once the feature is fully implemented.
                     </div>
                 </CardContent>
             </Card>

@@ -9,10 +9,26 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { KeyRound, Shield } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import type { SVGProps } from "react";
 
 interface PasswordProtectProps {
     onSuccess: () => void;
 }
+
+const LeifurLogo = (props: SVGProps<SVGSVGElement>) => (
+    <svg 
+        width="64" 
+        height="64" 
+        viewBox="0 0 64 64" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+    >
+        <rect width="64" height="64" rx="12" fill="currentColor"/>
+        <path d="M24.532 43V21H30.644V37.456H39.5V43H24.532Z" fill="white"/>
+    </svg>
+);
+
 
 export default function PasswordProtect({ onSuccess }: PasswordProtectProps) {
     const [password, setPassword] = useState('');
@@ -36,8 +52,8 @@ export default function PasswordProtect({ onSuccess }: PasswordProtectProps) {
     return (
         <Card className="w-full max-w-sm shadow-2xl">
             <CardHeader className="text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Shield className="h-8 w-8" />
+                <div className="mx-auto mb-4">
+                    <LeifurLogo className="h-16 w-16 text-primary" />
                 </div>
                 <CardTitle className="font-headline text-3xl text-primary">Protected Demo</CardTitle>
                 <CardDescription className="pt-2">

@@ -13,11 +13,11 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Megaphone, Lightbulb, AlertTriangle, Bot } from 'lucide-react';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Megaphone, Lightbulb, AlertTriangle, Bot, BellRing, UserCheck, ShieldAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
 import { Textarea } from '@/components/ui/textarea';
 import type { ToastPOSData } from '@/ai/schemas/toast-pos-schemas';
 import type { ServiceAlert } from '@/ai/schemas/service-alert-schemas';
@@ -328,7 +328,7 @@ export default function OwnerDashboard() {
   return (
     <div className="space-y-6">
        <Feature name="executiveVitals">
-         <Card>
+         <Card id="kpi-overview">
             <CardHeader>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
@@ -440,7 +440,15 @@ export default function OwnerDashboard() {
                                         <TableHeader><TableRow><TableHead>Task</TableHead><TableHead>Source</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
                                         <TableBody>
                                             {inspectorTasks.map(task => (
-                                                 <TableRow key={task.id}><TableCell>{task.description}</TableCell><TableCell>{task.source}</TableCell><TableCell className="text-right"><Button size="sm">Acknowledge</Button></TableCell></TableRow>
+                                                 <TableRow key={task.id}>
+                                                    <TableCell>{task.description}</TableCell>
+                                                    <TableCell>{task.source}</TableCell>
+                                                    <TableCell className="text-right space-x-1">
+                                                        <Button variant="outline" size="sm" onClick={() => toast({ title: "Task Assigned" })} aria-label="Assign Task"><UserCheck /></Button>
+                                                        <Button variant="outline" size="sm" onClick={() => toast({ title: "Reminder Sent" })} aria-label="Send Reminder"><BellRing /></Button>
+                                                        <Button variant="destructive" size="sm" onClick={() => toast({ title: "Marked as Urgent" })} aria-label="Mark as Urgent"><ShieldAlert /></Button>
+                                                    </TableCell>
+                                                </TableRow>
                                             ))}
                                         </TableBody>
                                     </Table>
@@ -565,7 +573,7 @@ export default function OwnerDashboard() {
 
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Feature name="strategicCommand">
-            <Card>
+            <Card id="strategic-command">
                 <CardHeader>
                         <CardTitle className="font-headline">Strategic Command & Administration</CardTitle>
                         <CardDescription>High-level tools for management, security, and system configuration.</CardDescription>
@@ -620,7 +628,7 @@ export default function OwnerDashboard() {
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent className="p-4 bg-muted/30 space-y-4">
-                                    <p className="text-sm text-muted-foreground">
+                                     <p className="text-sm text-muted-foreground">
                                         Use the dedicated Team & Payroll page to manage your staff and locations.
                                     </p>
                                     <Button asChild>

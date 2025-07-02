@@ -40,7 +40,8 @@ import {
   Briefcase,
   HelpCircle,
   Shield,
-  MessageSquare
+  MessageSquare,
+  ListChecks
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -107,23 +108,27 @@ const ownerNav = [
         category: "Strategy & Ops",
         icon: Eye,
         links: [
+            { name: "Task Master Board", href: "/dashboard/owner/tasks"},
+            { name: "Shift Planner", href: "/dashboard/manager/shifts"},
             { name: "AI Sentinel", href: "/dashboard/owner/agent-rules" },
             { name: "Monitoring Setup", href: "/dashboard/owner/monitoring" },
         ]
     },
-    {
-        category: "Growth & Compliance",
-        icon: Lightbulb,
+     {
+        category: "Financials",
+        icon: DollarSign,
         links: [
-            { name: "Permit Applications", href: "/dashboard/owner/permits" },
+            { name: "Financial Dashboard", href: "/dashboard/owner/financials" },
+            { name: "Team & Payroll", href: "/dashboard/owner/team" },
         ]
     },
      {
         category: "System Admin",
         icon: Settings,
         links: [
-            { name: "Team & Payroll", href: "/dashboard/owner/team" },
+            { name: "Permit Applications", href: "/dashboard/owner/permits" },
             { name: "Branding", href: "/dashboard/owner/branding" },
+            { name: "Admin Panel", href: "/admin", isExternal: true },
         ]
     },
 ];
@@ -309,7 +314,7 @@ export default function DashboardLayout({
                             {category.links.map((link: any) => (
                                 <SidebarMenuItem key={link.href}>
                                     <SidebarMenuButton asChild isActive={isLinkActive(link.href, link.exact)} size="sm">
-                                        <Link href={link.href}>{link.name}</Link>
+                                        <Link href={link.href} target={link.isExternal ? '_blank' : '_self'}>{link.name}</Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             ))}
