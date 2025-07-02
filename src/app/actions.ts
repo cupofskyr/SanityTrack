@@ -57,6 +57,9 @@ import { verifyTaskProof } from '@/ai/flows/verify-task-proof-flow';
 import type { VerifyTaskProofInput, VerifyTaskProofOutput } from '@/ai/schemas/task-proof-schemas';
 import { analyzeChatMessage } from '@/ai/flows/analyze-chat-flow';
 import type { AnalyzeChatInput, AnalyzeChatOutput } from '@/ai/schemas/chat-analysis-schemas';
+import { generatePrepList } from '@/ai/flows/generate-prep-list-flow';
+import type { GeneratePrepListInput, GeneratePrepListOutput } from '@/ai/schemas/prep-list-schemas';
+
 
 const db = getFirestore(app);
 
@@ -429,6 +432,11 @@ export async function submitFeedbackAction(input: { category: string; feedback: 
         return { success: false, error: "Your feedback could not be submitted." };
     }
 }
+
+export async function generatePrepListAction(input: GeneratePrepListInput): Promise<{ data: GeneratePrepListOutput | null; error: string | null; }> {
+    return safeRun(generatePrepList, input, 'generatePrepList');
+}
+
 
 // These actions don't call an AI flow, so they don't need the safeRun wrapper.
 // They simulate database interactions. In a real app, you would use Firestore here.
