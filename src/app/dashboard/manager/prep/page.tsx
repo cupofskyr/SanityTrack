@@ -5,7 +5,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, getFirestore } from "firebase/firestore";
 import { app } from "@/lib/firebase"; // Use the shared firebase instance
@@ -62,28 +62,26 @@ export default function FoodPrepDashboard() {
   const [prepType, setPrepType] = useState("default");
   
   const [snapshot, loading] = useCollection(collection(db, "prep-logs"));
-  const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
-
+  
   const [labelData, setLabelData] = useState<{name: string, prepDate: Date, useByDate: Date, qrData: string} | null>(null);
   const [selectedItemForLabel, setSelectedItemForLabel] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && snapshot) {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as PrepLog));
-      setPrepList(data);
-      if(typeof window !== 'undefined') {
-        localStorage.setItem("prepListCache", JSON.stringify(data));
-      }
-    } else if (isOffline) {
-      if(typeof window !== 'undefined') {
-        const cached = localStorage.getItem("prepListCache");
-        if (cached) {
-            setPrepList(JSON.parse(cached));
+    if (typeof window !== 'undefined') {
+        const isOffline = !navigator.onLine;
+        if (!loading && snapshot) {
+          const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as PrepLog));
+          setPrepList(data);
+          localStorage.setItem("prepListCache", JSON.stringify(data));
+        } else if (isOffline) {
+          const cached = localStorage.getItem("prepListCache");
+          if (cached) {
+              setPrepList(JSON.parse(cached));
+          }
         }
-      }
     }
-  }, [snapshot, loading, isOffline]);
+  }, [snapshot, loading]);
 
   const exportToQR = () => {
     const data = encodeURIComponent(JSON.stringify(prepList));
@@ -128,7 +126,7 @@ export default function FoodPrepDashboard() {
 
   return (
     <div className="space-y-4">
-    <Tabs value={selectedTab} onValueChange={setSelectedTab} className="p-4 space-y-4 text-lg">
+    <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
       <TabsList className="grid w-full grid-cols-5">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="waste">Prep Variance</TabsTrigger>
@@ -238,7 +236,7 @@ export default function FoodPrepDashboard() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Tag /> Generate Shelf-Life Label</CardTitle>
-                    <CardDescription>Select an item you've just prepped to generate a standardized label with dates and a QR code.</CardDescription>
+                    <CardDescription>Select an item to generate a standardized label. This is optional and useful if you have a label printer.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
@@ -289,4 +287,3 @@ export default function FoodPrepDashboard() {
     </div>
   );
 }
-
