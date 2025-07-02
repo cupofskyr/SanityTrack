@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -9,6 +10,8 @@ import AnalyticsPanel from "./AnalyticsPanel"
 import ChatAgentTester from "./ChatAgentTester"
 import RuleTemplateSelector from "./RuleTemplateSelector"
 import RuleExportImport from "./RuleExportImport"
+import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
 const tabs = [
   { id: "rules", label: "Rules" },
@@ -23,26 +26,28 @@ const tabs = [
 
 export default function AdminSentinelDashboard() {
   const [activeTab, setActiveTab] = useState("rules")
+  const { toast } = useToast()
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">⚙️ AI Sentinel Admin Dashboard</h1>
+    <div className="p-4 md:p-6 bg-muted/40 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 font-headline">⚙️ AI Sentinel Admin Dashboard</h1>
 
-      <nav className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-1 mb-6 border-b">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded ${
-              activeTab === tab.id ? "bg-blue-600 text-white" : "bg-white border"
-            }`}
+            className={cn(
+              "px-4 py-2 text-sm font-medium border-b-2 border-transparent hover:bg-muted rounded-t-md",
+              activeTab === tab.id ? "border-primary text-primary" : "text-muted-foreground"
+            )}
           >
             {tab.label}
           </button>
         ))}
       </nav>
 
-      <div className="bg-white p-6 rounded shadow min-h-[400px]">
+      <div>
         {activeTab === "rules" && <RulesDashboard />}
         {activeTab === "simulator" && <RuleTriggerSimulator />}
         {activeTab === "alerts" && <LiveAlertFeed />}
@@ -52,7 +57,10 @@ export default function AdminSentinelDashboard() {
         {activeTab === "templates" && (
           <RuleTemplateSelector
             onSelectTemplate={tmpl => {
-              alert(`Template selected: ${tmpl.name}\nIntegrate this to your Rule Editor form!`)
+              toast({
+                title: "Template Loaded",
+                description: `Loaded template: ${tmpl.name}`,
+              })
             }}
           />
         )}

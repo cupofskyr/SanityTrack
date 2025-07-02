@@ -1,28 +1,86 @@
-type Template = { name: string; description: string };
-type RuleTemplateSelectorProps = {
-  onSelectTemplate: (template: Template) => void;
-};
-export default function RuleTemplateSelector({ onSelectTemplate }: RuleTemplateSelectorProps) {
-  const templates: Template[] = [
-    { name: "Low Inventory Alert", description: "Notifies manager when stock is low." },
-    { name: "Spill Detection Task", description: "Creates a task when a spill is detected." },
-  ];
+
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const templates = [
+  {
+    id: "handwash-alert",
+    name: "Handwash Alert",
+    description: "Alert when no handwash detected for more than 60 minutes.",
+    triggerCondition: "no_handwash > 60min",
+    frequency: "daily",
+    severity: "high",
+    assignedToRole: "manager",
+    autoAction: "notifyManager",
+  },
+  {
+    id: "spill-detected",
+    name: "Spill Detected",
+    description: "Detect spills and alert cleaning staff immediately.",
+    triggerCondition: "spill_detected == true",
+    frequency: "once",
+    severity: "high",
+    assignedToRole: "employee",
+    autoAction: "assignTask",
+  },
+  {
+    id: "temp-missing",
+    name: "Temperature Log Missing",
+    description: "Notify manager if temperature log not submitted on time.",
+    triggerCondition: "manual_temp_missing == true",
+    frequency: "daily",
+    severity: "medium",
+    assignedToRole: "manager",
+    autoAction: "notifyManager",
+  },
+]
+
+type Template = typeof templates[0]
+
+type Props = {
+  onSelectTemplate: (template: Partial<Template>) => void
+}
+
+export default function RuleTemplateSelector({ onSelectTemplate }: Props) {
+  const [selectedId, setSelectedId] = useState("")
+
+  const handleSelect = () => {
+    const tmpl = templates.find(t => t.id === selectedId)
+    if (tmpl) onSelectTemplate(tmpl)
+  }
+
   return (
-    <div>
-      <h3 className="font-bold mb-2">Select a Template</h3>
-      <div className="space-y-2">
-        {templates.map((tmpl) => (
-          <div key={tmpl.name} className="p-2 border rounded flex justify-between items-center">
-            <div>
-              <p className="font-semibold">{tmpl.name}</p>
-              <p className="text-sm text-gray-500">{tmpl.description}</p>
-            </div>
-            <button onClick={() => onSelectTemplate(tmpl)} className="px-3 py-1 bg-blue-500 text-white rounded">
-              Select
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+    <Card className="max-w-md">
+      <CardHeader>
+        <CardTitle>⚙️ Rule Automation Templates</CardTitle>
+        <CardDescription>
+          Start with a pre-defined template to quickly create a new rule.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Select value={selectedId} onValueChange={setSelectedId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a template..." />
+          </SelectTrigger>
+          <SelectContent>
+            {templates.map(t => (
+              <SelectItem key={t.id} value={t.id}>
+                {t.name} - {t.description}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          onClick={handleSelect}
+          disabled={!selectedId}
+        >
+          Load Template
+        </Button>
+      </CardContent>
+    </Card>
+  )
 }
