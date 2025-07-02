@@ -15,6 +15,7 @@ export type IssueCategory = z.infer<typeof IssueCategorySchema>;
 
 export const AnalyzeIssueInputSchema = z.object({
   description: z.string().describe('A description of the maintenance issue reported.'),
+  photoDataUri: z.string().optional().describe("An optional photo of the issue as a data URI."),
 });
 export type AnalyzeIssueInput = z.infer<typeof AnalyzeIssueInputSchema>;
 

@@ -38,7 +38,12 @@ For the 'suggestedContact', provide the type of professional needed (e.g., Plumb
 Issue Description:
 "{{{description}}}"
 
-Analyze the issue and provide the category, emergency status, urgency, suggested contact type, and a suggested action for the inspector.
+{{#if photoDataUri}}
+The user has also provided a photo for context. Analyze it carefully.
+Photo: {{media url=photoDataUri}}
+{{/if}}
+
+Analyze the issue based on the text and optional photo, and provide the category, emergency status, urgency, suggested contact type, and a suggested action.
 `,
 });
 

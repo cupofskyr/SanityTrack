@@ -13,7 +13,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, Building, Activity, Bot, ShieldCheck, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Handshake, Watch, ClipboardCopy, UserSearch, Megaphone, Lightbulb, TrendingUp, AlertTriangle, Trophy, Package, Link as LinkIcon } from 'lucide-react';
+import { Loader2, Sparkles, Briefcase, Check, X, Send, ShoppingCart, PlusCircle, DollarSign, Smile, Users, Eye, Settings, Video, FileText, Megaphone, Lightbulb, AlertTriangle, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -22,7 +22,6 @@ import type { ToastPOSData } from '@/ai/schemas/toast-pos-schemas';
 import type { ServiceAlert } from '@/ai/schemas/service-alert-schemas';
 import OwnerServiceAlertWidget from '@/components/owner-service-alert-widget';
 import { Input } from '@/components/ui/input';
-import OnboardingInterview from '@/components/onboarding/onboarding-interview';
 import type { MasterAgentOutput } from '@/ai/schemas/agent-schemas';
 import type { GenerateMarketingIdeasOutput } from '@/ai/schemas/menu-trends-schemas';
 import { format, formatDistanceToNow, add } from 'date-fns';
@@ -33,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/context/AuthContext';
 import Feature from '@/components/feature-flag';
+import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
 
 type Location = {
   id: number;
@@ -109,8 +109,6 @@ export default function OwnerDashboard() {
   const [pendingPOs, setPendingPOs] = useState<PurchaseOrder[]>([]);
   const [inspectorTasks] = useState<DelegatedTask[]>(initialDelegatedTasks);
   const [pendingAlertCount, setPendingAlertCount] = useState(0);
-
-  const [copiedUrlId, setCopiedUrlId] = useState<number | null>(null);
 
   const [topSeller, setTopSeller] = useState('Yuzu');
   const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
@@ -270,13 +268,6 @@ export default function OwnerDashboard() {
     toast({ title: `Purchase Order ${action}` });
   };
 
-  const handleCopyUrl = (url: string, id: number) => {
-    navigator.clipboard.writeText(url);
-    setCopiedUrlId(id);
-    toast({ title: "URL Copied!" });
-    setTimeout(() => setCopiedUrlId(null), 2000);
-  };
-
   const handleGenerateIdeas = async () => {
     setIsGeneratingIdeas(true);
     setMarketingIdeas(null);
@@ -340,31 +331,20 @@ export default function OwnerDashboard() {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <Card>
-                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Today's Sales</CardTitle></CardHeader>
-                        <CardContent><div className="text-xl font-bold flex items-center gap-2">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.liveSalesToday.toLocaleString()}` : <p>N/A</p>}<DollarSign className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between"><CardTitle className="text-sm font-medium">Today's Sales</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader>
+                        <CardContent><div className="text-2xl font-bold flex items-center">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.liveSalesToday.toLocaleString()}` : <p>N/A</p>}</div></CardContent>
                     </Card>
                     <Card>
-                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Month-to-Date Sales</CardTitle></CardHeader>
-                        <CardContent><div className="text-xl font-bold flex items-center gap-2">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.salesThisMonth.toLocaleString()}` : <p>N/A</p>}<DollarSign className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between"><CardTitle className="text-sm font-medium">Month-to-Date Sales</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground"/></CardHeader>
+                        <CardContent><div className="text-2xl font-bold flex items-center">{isFetchingToast ? <Loader2 className="h-5 w-5 animate-spin"/> : toastData ? `$${toastData.salesThisMonth.toLocaleString()}` : <p>N/A</p>}</div></CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Compliance Score</CardTitle></CardHeader>
-                        <CardContent><div className="text-xl font-bold flex items-center gap-2">92.5%<ShieldCheck className="h-4 w-4 text-muted-foreground"/></div></CardContent>
+                     <Card>
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between"><CardTitle className="text-sm font-medium">Pending Approvals</CardTitle><Briefcase className="h-4 w-4 text-muted-foreground"/></CardHeader>
+                        <CardContent><div className="text-2xl font-bold">{hiringRequests.length + pendingPOs.length}</div></CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Customer Satisfaction</CardTitle></CardHeader>
-                        <CardContent><div className="text-xl font-bold flex items-center gap-2">4.8/5<Smile className="h-4 w-4 text-muted-foreground"/></div></CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pending Approvals</CardTitle></CardHeader>
-                        <CardContent><div className="text-xl font-bold flex items-center gap-2">{hiringRequests.length + pendingPOs.length}<Briefcase className="h-4 w-4 text-muted-foreground"/></div></CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Open Service Alerts</CardTitle></CardHeader>
-                        <CardContent><div className="text-xl font-bold flex items-center gap-2">{pendingAlertCount}<AlertTriangle className="h-4 w-4 text-muted-foreground"/></div></CardContent>
-                    </Card>
+                    
                 </div>
             </CardContent>
          </Card>
@@ -531,7 +511,7 @@ export default function OwnerDashboard() {
                               <Feature name="ghostShopperProgram">
                                 <Card>
                                   <CardHeader>
-                                    <CardTitle className="font-headline flex items-center gap-2"><UserSearch /> Ghost Shopper Program</CardTitle>
+                                    <CardTitle className="font-headline flex items-center gap-2"><Smile /> Ghost Shopper Program</CardTitle>
                                     <CardDescription>Invite customers to provide anonymous, detailed feedback in exchange for a reward.</CardDescription>
                                   </CardHeader>
                                   <CardContent>
@@ -582,32 +562,31 @@ export default function OwnerDashboard() {
          </Card>
        </Feature>
 
-       <Feature name="strategicCommand">
-         <Card>
-             <CardHeader>
-                  <CardTitle className="font-headline">Strategic Command & Administration</CardTitle>
-                  <CardDescription>High-level tools for management, security, and system configuration.</CardDescription>
-             </CardHeader>
-             <CardContent>
-                 <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
-                     <Feature name="aiSentinel">
-                        <AccordionItem value="item-1">
-                             <AccordionTrigger>
-                                <div className="flex items-center gap-3">
-                                <Eye className="h-5 w-5" />
-                                <div>
-                                    <h4 className="font-semibold">AI Sentinel & Security</h4>
-                                    <p className="text-sm text-muted-foreground">Configure AI monitoring and view autonomous agent logs.</p>
-                                </div>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="p-6 bg-muted/30">
-                                <div className="grid gap-6">
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Feature name="strategicCommand">
+            <Card>
+                <CardHeader>
+                        <CardTitle className="font-headline">Strategic Command & Administration</CardTitle>
+                        <CardDescription>High-level tools for management, security, and system configuration.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+                        <Feature name="aiSentinel">
+                            <AccordionItem value="item-1">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-3">
+                                    <Eye className="h-5 w-5" />
+                                    <div>
+                                        <h4 className="font-semibold">AI Sentinel & Security</h4>
+                                        <p className="text-sm text-muted-foreground">Configure AI monitoring and view autonomous agent logs.</p>
+                                    </div>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="p-4 bg-muted/30">
                                     <AIMonitoringSetup />
-                                    <Card id="agent-activity-log">
+                                    <Card id="agent-activity-log" className="mt-4">
                                         <CardHeader>
                                             <CardTitle>Agent Activity Log</CardTitle>
-                                            <CardDescription>A real-time log of actions taken by the Sentinel Agent.</CardDescription>
                                         </CardHeader>
                                         <CardContent>
                                             <Button onClick={handleRunAgent} disabled={isAgentRunning}>
@@ -625,72 +604,76 @@ export default function OwnerDashboard() {
                                             </div>
                                         </CardContent>
                                     </Card>
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                     </Feature>
-                     <Feature name="teamManagement">
-                        <AccordionItem value="item-2">
-                             <AccordionTrigger>
-                                <div className="flex items-center gap-3">
-                                    <Users className="h-5 w-5" />
-                                    <div>
-                                        <h4 className="font-semibold">Team & Locations</h4>
-                                        <p className="text-sm text-muted-foreground">Manage your team members and business locations.</p>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Feature>
+                        <Feature name="teamManagement">
+                            <AccordionItem value="item-2">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-3">
+                                        <Users className="h-5 w-5" />
+                                        <div>
+                                            <h4 className="font-semibold">Team & Locations</h4>
+                                            <p className="text-sm text-muted-foreground">Manage your team members and business locations.</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </AccordionTrigger>
-                             <AccordionContent className="p-6 bg-muted/30">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Locations</CardTitle>
-                                        <CardDescription>Add or manage your business locations. Each location gets a unique code for KDS pairing.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                         <Table>
-                                            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Manager</TableHead><TableHead>KDS Code</TableHead></TableRow></TableHeader>
-                                            <TableBody>
-                                                {locations.map(loc => (
-                                                     <TableRow key={loc.id}><TableCell>{loc.name}</TableCell><TableCell>{loc.manager}</TableCell><TableCell><Badge variant="outline">{loc.inspectionCode}</Badge></TableCell></TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </CardContent>
-                                    <CardFooter>
-                                        <Button onClick={() => setIsAddLocationDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Location</Button>
-                                    </CardFooter>
-                                </Card>
-                            </AccordionContent>
-                        </AccordionItem>
-                     </Feature>
-                     <Feature name="systemAdministration">
-                        <AccordionItem value="item-3">
-                            <AccordionTrigger>
-                                <div className="flex items-center gap-3">
-                                    <Settings className="h-5 w-5" />
-                                    <div>
-                                        <h4 className="font-semibold">System & Administration</h4>
-                                        <p className="text-sm text-muted-foreground">Manage billing, branding, and global settings.</p>
+                                </AccordionTrigger>
+                                <AccordionContent className="p-4 bg-muted/30">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Locations</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <Table>
+                                                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Manager</TableHead><TableHead>KDS Code</TableHead></TableRow></TableHeader>
+                                                <TableBody>
+                                                    {locations.map(loc => (
+                                                        <TableRow key={loc.id}><TableCell>{loc.name}</TableCell><TableCell>{loc.manager}</TableCell><TableCell><Badge variant="outline">{loc.inspectionCode}</Badge></TableCell></TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </CardContent>
+                                        <CardFooter>
+                                            <Button onClick={() => setIsAddLocationDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Location</Button>
+                                        </CardFooter>
+                                    </Card>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Feature>
+                        <Feature name="systemAdministration">
+                            <AccordionItem value="item-3">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-3">
+                                        <Settings className="h-5 w-5" />
+                                        <div>
+                                            <h4 className="font-semibold">System & Administration</h4>
+                                            <p className="text-sm text-muted-foreground">Manage billing, branding, and global settings.</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </AccordionTrigger>
-                             <AccordionContent className="p-6 bg-muted/30">
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                     <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/team"><Users className="mr-2"/>Team & Permissions</Link></Button>
-                                     <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/branding"><Package className="mr-2"/>Branding</Link></Button>
-                                     <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/agent-rules"><Bot className="mr-2"/>AI Agent Rules</Link></Button>
-                                     <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/documents"><FileText className="mr-2"/>Document Storage</Link></Button>
-                                     <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/billing"><DollarSign className="mr-2"/>Billing</Link></Button>
-                                     <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/integrations"><LinkIcon className="mr-2"/>API Integrations</Link></Button>
-                                     <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/features"><Sparkles className="mr-2"/>Feature Flags</Link></Button>
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                     </Feature>
-                 </Accordion>
-             </CardContent>
-         </Card>
-       </Feature>
+                                </AccordionTrigger>
+                                <AccordionContent className="p-4 bg-muted/30">
+                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/team"><Users className="mr-2"/>Team & Permissions</Link></Button>
+                                        <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/branding"><Sparkles className="mr-2"/>Branding</Link></Button>
+                                        <Button asChild variant="outline" className="justify-start"><Link href="/dashboard/owner/billing"><DollarSign className="mr-2"/>Billing</Link></Button>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Feature>
+                    </Accordion>
+                </CardContent>
+            </Card>
+        </Feature>
+        <Card id="social-chat">
+            <CardHeader>
+                <CardTitle className="font-headline">Today's Flow</CardTitle>
+                <CardDescription>A daily micro-thread for shift notes and team communication.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <TodaysFlow />
+            </CardContent>
+        </Card>
+      </div>
       
       <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
         <DialogContent>

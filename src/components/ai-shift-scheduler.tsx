@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, FormEvent } from "react";
 import { format, eachDayOfInterval, getDay } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle, Send, Pencil, DollarSign, Info, Sparkles, PlusCircle } from "lucide-react";
+import { Loader2, List, UserCheck, Trash2, CalendarIcon, AlertCircle, CheckCircle, Send, Pencil, DollarSign, Info, Sparkles, PlusCircle, Hand, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
@@ -18,9 +18,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { generateScheduleAction, generateShiftSuggestionsAction } from "@/app/actions";
+import { generateScheduleAction, generateShiftSuggestionsAction, exportScheduleToQuickBooksAction } from "@/app/actions";
 import type { GenerateScheduleInput, GenerateScheduleOutput } from "@/ai/schemas/ai-shift-planner-schemas";
 import type { ShiftSuggestion } from "@/ai/schemas/shift-suggestion-schemas";
+import { useAuth } from "@/context/AuthContext";
 
 type Shift = {
   id: string;
@@ -28,7 +29,7 @@ type Shift = {
   startTime: string;
   endTime: string;
   assignedTo?: string;
-  status?: 'scheduled' | 'offered';
+  status?: 'scheduled' | 'up-for-grabs';
 };
 
 type ShiftTemplate = {
@@ -72,6 +73,7 @@ const parseDate = (dateString: string) => {
 };
 
 export default function AIShiftScheduler() {
+    const { user } = useAuth();
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [shifts, setShifts] = useState<Shift[]>([]);
     const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]);
@@ -86,10 +88,29 @@ export default function AIShiftScheduler() {
 
     const [suggestedShifts, setSuggestedShifts] = useState<ShiftSuggestion[] | null>(null);
     const [isSuggesting, setIsSuggesting] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     useEffect(() => {
-        setIsPublished(false);
-    }, [shifts]);
+        // This effect simulates listening for real-time updates from localStorage
+        const checkStorage = () => {
+            const storedSchedule = localStorage.getItem('published-schedule');
+            if (storedSchedule) {
+                const parsedSchedule = JSON.parse(storedSchedule);
+                setShifts(parsedSchedule);
+                setIsPublished(true);
+            }
+        };
+
+        checkStorage();
+        window.addEventListener('storage', checkStorage);
+        return () => window.removeEventListener('storage', checkStorage);
+    }, []);
+
+    useEffect(() => {
+        if (!isPublished) {
+            setIsPublished(false);
+        }
+    }, [shifts, isPublished]);
     
     const handleAddTemplate = () => {
         setShiftTemplates([
@@ -181,6 +202,18 @@ export default function AIShiftScheduler() {
             });
         }
     };
+    
+    const handleClaimShift = (shiftId: string) => {
+        const employeeName = user?.displayName || "Current Employee";
+         const updatedShifts = shifts.map(shift => 
+            shift.id === shiftId ? { ...shift, assignedTo: employeeName, status: 'scheduled' as const } : shift
+        );
+        setShifts(updatedShifts);
+        if (isPublished) {
+             localStorage.setItem('published-schedule', JSON.stringify(updatedShifts));
+        }
+        toast({ title: "Shift Claimed!", description: `You have been assigned to the shift.` });
+    }
 
     const handleSuggestShifts = async () => {
         setIsSuggesting(true);
@@ -266,6 +299,20 @@ export default function AIShiftScheduler() {
             description: "The schedule is now live and visible to all employees on their dashboards."
         });
     };
+
+    const handleExport = async () => {
+        setIsExporting(true);
+        const { error } = await exportScheduleToQuickBooksAction({
+            shifts,
+            laborAnalysis,
+        });
+        setIsExporting(false);
+        if (error) {
+            toast({ variant: 'destructive', title: 'Export Failed', description: error });
+        } else {
+            toast({ title: 'Export Successful', description: 'Schedule and payroll data sent to QuickBooks.' });
+        }
+    }
     
     const laborAnalysis = useMemo(() => {
         const weeklyHours: { [key: string]: number } = {};
@@ -435,6 +482,13 @@ export default function AIShiftScheduler() {
                                 <Send className="mr-2 h-4 w-4" />
                                 {isPublished ? 'Schedule Published' : 'Publish Schedule'}
                             </Button>
+                            {isPublished && (
+                                <Button onClick={handleExport} disabled={isExporting}>
+                                    {isExporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    Export to QuickBooks
+                                </Button>
+                            )}
                         </div>
                         {result && (
                             <Alert className="mt-4">
@@ -515,31 +569,38 @@ export default function AIShiftScheduler() {
                         </TableHeader>
                         <TableBody>
                             {shifts.length > 0 ? shifts.sort((a,b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)).map(shift => (
-                                <TableRow key={shift.id} className={cn(shift.assignedTo && laborAnalysis.employeesInOvertime.has(shift.assignedTo) && 'bg-destructive/10')}>
+                                <TableRow key={shift.id} className={cn(shift.assignedTo && laborAnalysis.employeesInOvertime.has(shift.assignedTo) && 'bg-destructive/10', shift.status === 'up-for-grabs' && 'bg-yellow-100 dark:bg-yellow-900/30')}>
                                     <TableCell>{format(parseDate(shift.date), 'PPP')}</TableCell>
                                     <TableCell>{shift.startTime} - {shift.endTime}</TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Select
-                                                value={shift.assignedTo || 'unassign'}
-                                                onValueChange={(employeeName) => handleManualAssignment(shift.id, employeeName)}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Assign Employee" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="unassign">
-                                                        <span className="text-muted-foreground">Unassigned</span>
-                                                    </SelectItem>
-                                                    {employees.map(emp => (
-                                                        <SelectItem key={emp.name} value={emp.name}>{emp.name}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {shift.status === 'offered' && (
-                                                <Badge variant="secondary" className="bg-accent/80 whitespace-nowrap">Offered</Badge>
-                                            )}
-                                        </div>
+                                        {shift.status === 'up-for-grabs' ? (
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="destructive">UP FOR GRABS</Badge>
+                                                <Button size="sm" onClick={() => handleClaimShift(shift.id)}>
+                                                    <Hand className="mr-2 h-4 w-4"/>
+                                                    Claim Shift
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2">
+                                                <Select
+                                                    value={shift.assignedTo || 'unassign'}
+                                                    onValueChange={(employeeName) => handleManualAssignment(shift.id, employeeName)}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Assign Employee" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="unassign">
+                                                            <span className="text-muted-foreground">Unassigned</span>
+                                                        </SelectItem>
+                                                        {employees.map(emp => (
+                                                            <SelectItem key={emp.name} value={emp.name}>{emp.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="ghost" size="icon" onClick={() => handleDeleteShift(shift.id)} disabled={isPublished}>

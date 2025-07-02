@@ -3,7 +3,7 @@
 
 // This file is the single, safe entry point for all AI calls from the client-side UI.
 
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { analyzeCamera } from '@/ai/flows/cameraAnalysisFlow';
 import type { CameraAnalysisInput, CameraAnalysisOutput } from '@/ai/schemas/camera-analysis-schemas';
@@ -55,7 +55,8 @@ import { suggestManualChecks } from '@/ai/flows/suggest-manual-checks-flow';
 import type { ManualCheckSuggestionOutput } from '@/ai/schemas/manual-check-schemas';
 import { verifyTaskProof } from '@/ai/flows/verify-task-proof-flow';
 import type { VerifyTaskProofInput, VerifyTaskProofOutput } from '@/ai/schemas/task-proof-schemas';
-
+import { analyzeChatMessage } from '@/ai/flows/analyze-chat-flow';
+import type { AnalyzeChatInput, AnalyzeChatOutput } from '@/ai/schemas/chat-analysis-schemas';
 
 const db = getFirestore(app);
 
@@ -281,6 +282,11 @@ export async function verifyTaskProofAction(input: VerifyTaskProofInput): Promis
     return safeRun(verifyTaskProof, input, 'verifyTaskProof');
 }
 
+export async function analyzeChatMessageAction(input: AnalyzeChatInput): Promise<{ data: AnalyzeChatOutput | null; error: string | null; }> {
+    return safeRun(analyzeChatMessage, input, 'analyzeChatMessage');
+}
+
+
 // These actions don't call an AI flow, so they don't need the safeRun wrapper.
 // They simulate database interactions. In a real app, you would use Firestore here.
 
@@ -386,4 +392,47 @@ export async function generateShiftSuggestionsAction(
 
 export async function suggestManualChecksAction(): Promise<{ data: ManualCheckSuggestionOutput | null; error: string | null; }> {
     return safeRun(() => suggestManualChecks(), {}, 'suggestManualChecks');
+}
+
+export async function exportScheduleToQuickBooksAction(schedule: any): Promise<{success: boolean; error?: string}> {
+    try {
+        // In a real app, this would call the QuickBooks API
+        console.log("Exporting schedule to QuickBooks (Simulated):", schedule);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error exporting to QuickBooks:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function fetchLiveOperationsDataAction(): Promise<{ data: any | null; error: string | null; }> {
+    try {
+        // Simulate fetching data from various sources
+        const data = {
+            liveSales: 450.75 + Math.random() * 50,
+            openOrders: 8 + Math.floor(Math.random() * 5),
+            avgPrepTime: 245 + Math.floor(Math.random() * 60), // in seconds
+            tempAlerts: 1,
+        };
+        return { data, error: null };
+    } catch (error: any) {
+        console.error("Error fetching live operations data:", error);
+        return { data: null, error: error.message };
+    }
+}
+
+export async function submitManualCoolerCheckAction(data: { equipment: string, temperature: number, photoDataUrl: string, user: string }): Promise<{success: boolean; error?: string}> {
+    try {
+        // In a real app, you would save this to a 'compliance_logs' collection in Firestore
+        console.log("Submitting manual cooler check (Simulated):", data);
+        await addDoc(collection(db, "compliance_logs"), {
+            ...data,
+            type: 'manual_temp_check',
+            timestamp: serverTimestamp(),
+        });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error submitting manual cooler check:", error);
+        return { success: false, error: error.message };
+    }
 }

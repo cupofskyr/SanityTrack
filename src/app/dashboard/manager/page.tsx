@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Thermometer, AlertTriangle, Printer, Info, Clock, MailWarning, Phone, Send, CheckCircle, MessageSquare, Megaphone, Utensils, Sigma, Loader2, Wifi, Camera } from "lucide-react";
+import { Thermometer, AlertTriangle, Printer, Clock, MailWarning, Send, MessageSquare, Wrench, Loader2 } from "lucide-react";
 import { format, formatDistanceToNow } from 'date-fns';
 import type { TimeClockLog } from '@/lib/types';
-import { generateWarningLetterAction } from '@/app/actions';
+import { generateWarningLetterAction, submitManualCoolerCheckAction } from '@/app/actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { GenerateWarningLetterOutput } from '@/ai/schemas/warning-letter-schemas';
 import ComplianceChart from '@/components/compliance-chart';
@@ -22,6 +21,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import PhotoUploader from '@/components/photo-uploader';
+import ServiceContacts from '@/components/manager/ServiceContacts';
+import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
+import { useAuth } from '@/context/AuthContext';
 
 type TempReading = {
     value: number;
@@ -56,6 +59,7 @@ type AiCameraReport = {
 } & CameraAnalysisOutput;
 
 export default function ManagerDashboard() {
+    const { user } = useAuth();
     const { toast } = useToast();
     const [tempData, setTempData] = useState<TempData>(initialTempData);
     const [timeClockLogs, setTimeClockLogs] = useState<TimeClockLog[]>([]);
@@ -70,6 +74,8 @@ export default function ManagerDashboard() {
     // State for manual temperature submission
     const [isManualTempOpen, setIsManualTempOpen] = useState(false);
     const [manualTempForm, setManualTempForm] = useState({ equipment: '', temperature: '' });
+    const [manualTempPhoto, setManualTempPhoto] = useState<string | null>(null);
+    const [isSubmittingTemp, setIsSubmittingTemp] = useState(false);
 
     useEffect(() => {
         // Simulate real-time temperature fluctuations for sensor-based equipment
@@ -146,27 +152,40 @@ export default function ManagerDashboard() {
         setManagerComment('');
     };
 
-    const handleManualTempSubmit = (e: FormEvent) => {
+    const handleManualTempSubmit = async (e: FormEvent) => {
         e.preventDefault();
         const { equipment, temperature } = manualTempForm;
-        if (!equipment || !temperature) {
-            toast({ variant: 'destructive', title: 'Missing fields', description: 'Please select equipment and enter a temperature.' });
+        if (!equipment || !temperature || !manualTempPhoto) {
+            toast({ variant: 'destructive', title: 'Missing fields', description: 'Please select equipment, enter a temperature, and provide a photo.' });
             return;
         }
 
-        setTempData(prev => ({
-            ...prev,
-            [equipment]: {
-                value: parseFloat(temperature),
-                source: 'manual',
-                timestamp: new Date(),
-                submittedBy: 'Casey Lee' // Manager simulating an employee entry
-            }
-        }));
+        setIsSubmittingTemp(true);
+        const result = await submitManualCoolerCheckAction({
+            equipment,
+            temperature: parseFloat(temperature),
+            photoDataUrl: manualTempPhoto,
+            user: user?.displayName || 'Manager'
+        });
+        setIsSubmittingTemp(false);
 
-        toast({ title: "Manual Log Submitted", description: `Temperature for ${equipment} has been updated.` });
-        setIsManualTempOpen(false);
-        setManualTempForm({ equipment: '', temperature: '' });
+        if (result.success) {
+            setTempData(prev => ({
+                ...prev,
+                [equipment]: {
+                    value: parseFloat(temperature),
+                    source: 'manual',
+                    timestamp: new Date(),
+                    submittedBy: user?.displayName || 'Manager'
+                }
+            }));
+            toast({ title: "Manual Log Submitted", description: `Temperature for ${equipment} has been updated.` });
+            setIsManualTempOpen(false);
+            setManualTempForm({ equipment: '', temperature: '' });
+            setManualTempPhoto(null);
+        } else {
+            toast({ variant: 'destructive', title: 'Submission Failed', description: result.error });
+        }
     };
 
     return (
@@ -176,7 +195,7 @@ export default function ManagerDashboard() {
                     <form onSubmit={handlePostReport}>
                         <CardHeader>
                             <CardTitle className="font-headline text-accent flex items-center gap-2">
-                                <Megaphone/> New Report from Owner
+                                <MessageSquare/> New Report from Owner
                             </CardTitle>
                             <CardDescription>
                                 The owner has shared a new AI Camera analysis. Review and post it for your team with an optional comment.
@@ -187,15 +206,7 @@ export default function ManagerDashboard() {
                                <Image src={aiReport.output.imageUrl} alt="AI Analysis" layout="fill" objectFit="cover" data-ai-hint="security camera" />
                              </div>
                              <div className="space-y-4">
-                                <Alert>
-                                    <Sigma className="h-4 w-4" />
-                                    <AlertTitle>AI Analysis: {aiReport.output.reportTitle}</AlertTitle>
-                                    <AlertDescription>
-                                         <ul className="list-disc list-inside mt-2 text-sm">
-                                            {aiReport.output.observations.map((obs, i) => <li key={i}>{obs}</li>)}
-                                        </ul>
-                                    </AlertDescription>
-                                </Alert>
+                                <ComplianceChart data={complianceData} />
                                 <Textarea 
                                     placeholder="Add a comment for your team... (e.g., 'Great job on the quick cleanup here!' or 'Let's keep an eye on this.')"
                                     value={managerComment}
@@ -232,12 +243,7 @@ export default function ManagerDashboard() {
                                     <CardContent>
                                         <div className="text-2xl font-bold">{value}°F</div>
                                         <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                            {source === 'sensor' ? <Wifi className="h-3 w-3" /> : <Camera className="h-3 w-3" />}
-                                            <span>
-                                                {source === 'sensor' 
-                                                    ? 'Live Sensor' 
-                                                    : `by ${submittedBy} ${timestamp ? formatDistanceToNow(timestamp, { addSuffix: true }) : ''}`}
-                                            </span>
+                                            {source === 'sensor' ? 'Live Sensor' : `by ${submittedBy} ${timestamp ? formatDistanceToNow(timestamp, { addSuffix: true }) : ''}`}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -281,7 +287,7 @@ export default function ManagerDashboard() {
                                     <DialogHeader>
                                         <DialogTitle>Log Manual Temperature Check</DialogTitle>
                                         <DialogDescription>
-                                            This action simulates an employee completing a scheduled temperature check task.
+                                            This action simulates an employee completing a scheduled temperature check task. Photo proof is required.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <form onSubmit={handleManualTempSubmit}>
@@ -308,9 +314,16 @@ export default function ManagerDashboard() {
                                                     required
                                                 />
                                             </div>
+                                            <div className="grid gap-2">
+                                                <Label>Photo of Thermometer</Label>
+                                                <PhotoUploader onPhotoDataChange={setManualTempPhoto} />
+                                            </div>
                                         </div>
                                         <DialogFooter>
-                                            <Button type="submit">Submit Log</Button>
+                                            <Button type="submit" disabled={isSubmittingTemp}>
+                                                {isSubmittingTemp && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                Submit Log
+                                            </Button>
                                         </DialogFooter>
                                     </form>
                                 </DialogContent>
@@ -320,6 +333,27 @@ export default function ManagerDashboard() {
                 </div>
             </div>
 
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card id="service-contacts">
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><Wrench /> Service Contacts &amp; AI Diagnostics</CardTitle>
+                        <CardDescription>Quickly diagnose issues and find the right contact number.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ServiceContacts />
+                    </CardContent>
+                </Card>
+                <Card id="social-chat">
+                    <CardHeader>
+                        <CardTitle className="font-headline">Today's Flow</CardTitle>
+                         <CardDescription>A daily micro-thread for shift notes and team communication.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <TodaysFlow />
+                    </CardContent>
+                </Card>
+            </div>
+            
             <Card id="time-clock-feed" className="lg:col-span-3">
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2"><Clock/> Live Time Clock Feed</CardTitle>

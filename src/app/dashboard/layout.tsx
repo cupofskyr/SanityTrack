@@ -36,26 +36,11 @@ import {
   Lightbulb,
   DollarSign,
   Camera,
-  Package,
-  Link as LinkIcon,
-  Gift,
-  Flag,
-  CookingPot,
-  Printer,
-  ShieldAlert,
-  ListTodo,
-  Clock,
-  Sparkles,
-  Award,
-  MessageSquare,
-  Megaphone,
   Briefcase,
-  Bot,
-  TrendingUp,
-  FileText,
-  Handshake,
-  Heart,
-  CalendarCheck2
+  Award,
+  BookOpen,
+  Shield,
+  HelpCircle
 } from "lucide-react";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -75,6 +60,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import ServiceContacts from "@/components/manager/ServiceContacts";
 
 const managerNav = [
     { 
@@ -85,7 +71,6 @@ const managerNav = [
           { name: "Live Time Clock", href: "/dashboard/manager#time-clock-feed" },
           { name: "Quality Control", href: "/dashboard/manager/quality-control" },
           { name: "Master Task List", href: "/dashboard/manager/equipment" },
-          { name: "AI Photo Review", href: "/dashboard/manager/ai-review" },
         ]
     },
     { 
@@ -95,7 +80,6 @@ const managerNav = [
           { name: "Shift Planner", href: "/dashboard/manager/shifts" },
           { name: "Inventory", href: "/dashboard/manager/inventory" },
           { name: "Ordering", href: "/dashboard/manager/ordering" },
-          { name: "Food Prep & Labeling", href: "/dashboard/manager/prep" },
         ]
     },
     { 
@@ -105,8 +89,6 @@ const managerNav = [
           { name: "Arcade Zone", href: "/dashboard/training" },
           { name: "Arcade Zone Setup", href: "/dashboard/training/setup"},
           { name: "Knowledge Base", href: "/dashboard/manager/knowledge" },
-          { name: "Hiring Requests", href: "/dashboard/manager#hiring-request" },
-          { name: "Employee Perks", href: "/dashboard/perks" },
         ]
     },
     {
@@ -114,6 +96,7 @@ const managerNav = [
         icon: Wrench,
         links: [
             { name: "Service Contacts", href: "/dashboard/manager#service-contacts" },
+            { name: "AI Task Setup", href: "/dashboard/manager#ai-task-setup" },
         ]
     },
 ];
@@ -125,26 +108,14 @@ const ownerNav = [
         links: [
             { name: "Executive Dashboard", href: "/dashboard/owner", exact: true },
             { name: "Live Operations", href: "/dashboard/owner/live-operations" },
-            { name: "KPI Overview", href: "/dashboard/owner#kpi-overview" },
         ]
     },
     {
         category: "Strategy & Ops",
         icon: Eye,
         links: [
-            { name: "Strategic Command", href: "/dashboard/owner#strategic-command" },
+            { name: "AI Sentinel", href: "/dashboard/owner/agent-rules" },
             { name: "Monitoring Setup", href: "/dashboard/owner/monitoring" },
-            { name: "Agent Rules", href: "/dashboard/owner/agent-rules" },
-            { name: "Agent Alerts", href: "/dashboard/owner#sentinel-alerts" },
-        ]
-    },
-    {
-        category: "AI Agents",
-        icon: Bot,
-        links: [
-            { name: "Agent Dashboard", href: "/dashboard/owner/agents" },
-            { name: "Create Agent", href: "/dashboard/owner/agents/new" },
-            { name: "Agent Templates", href: "/dashboard/owner/agents/templates" },
         ]
     },
     {
@@ -152,28 +123,18 @@ const ownerNav = [
         icon: Lightbulb,
         links: [
             { name: "Permit Applications", href: "/dashboard/owner/permits" },
-            { name: "Document Storage", href: "/dashboard/owner/documents" },
+            { name: "Knowledge Base", href: "/dashboard/owner/documents" },
         ]
     },
      {
         category: "System Admin",
         icon: Settings,
         links: [
-            { name: "Team & Permissions", href: "/dashboard/owner/team" },
+            { name: "Team & Payroll", href: "/dashboard/owner/team" },
             { name: "Branding", href: "/dashboard/owner/branding" },
-            { name: "API Integrations", href: "/dashboard/owner/integrations" },
-            { name: "Employee Perks", href: "/dashboard/owner/perks" },
-            { name: "Feature Flags", href: "/dashboard/owner/features" },
-        ]
-    },
-    {
-        category: "Financials",
-        icon: DollarSign,
-        links: [
-            { name: "Financial Overview", href: "/dashboard/owner/financials" },
             { name: "Billing", href: "/dashboard/owner/billing"},
         ]
-    }
+    },
 ];
 
 const employeeNav = [
@@ -181,45 +142,38 @@ const employeeNav = [
         category: "My Day",
         icon: LayoutDashboard,
         links: [
-            { name: "Dashboard", href: "/dashboard/employee", exact: true, icon: LayoutDashboard },
-            { name: "My Schedule", href: "/dashboard/employee/schedule", icon: CalendarCheck2 },
-            { name: "Tasks & Checklists", href: "/dashboard/employee#tasks-checklists", icon: ListTodo },
-            { name: "Clock In / Clock Out", href: "/dashboard/employee#clock-in-out", icon: Clock },
+            { name: "Dashboard", href: "/dashboard/employee", exact: true },
+            { name: "My Schedule", href: "/dashboard/employee/schedule" },
+            { name: "My Tasks", href: "/dashboard/employee#tasks-checklists" },
         ]
     },
     {
         category: "Learn & Grow",
         icon: Award,
         links: [
-            { name: "Arcade Zone", href: "/dashboard/training", icon: Sparkles },
-            { name: "Training Progress", href: "/dashboard/employee#performance-card", icon: TrendingUp },
-            { name: "Knowledge Base", href: "/dashboard/brain", icon: BrainCircuit },
-            { name: "Feedback Center", href: "/dashboard/employee", icon: Handshake },
+            { name: "Arcade Zone", href: "/dashboard/training" },
+            { name: "My Performance", href: "/dashboard/employee#performance-card" },
         ]
     },
     {
         category: "Company Info",
         icon: Briefcase,
         links: [
-            { name: "Company Perks", href: "/dashboard/perks", icon: Gift },
-            { name: "Store Announcements", href: "/dashboard/employee", icon: Megaphone },
-            { name: "Team Directory", href: "/dashboard/employee#whos-on-shift", icon: Users },
-            { name: "Service Contacts", href: "/dashboard/employee", icon: FileText },
+            { name: "Company Perks", href: "/dashboard/perks" },
         ]
     },
     {
-        category: "Ask the Brain",
-        icon: BrainCircuit,
+        category: "Help",
+        icon: HelpCircle,
         links: [
-            { name: "Chat with Assistant", href: "/dashboard/brain", icon: MessageSquare },
-            { name: "My Questions History", href: "/dashboard/brain", icon: Heart },
+            { name: "Ask the Company Brain", href: "/dashboard/brain" },
         ]
     }
 ];
 
 
 const inspectorNav = [
-    { name: "Dashboard", href: "/dashboard/health-department", icon: LayoutDashboard },
+    { name: "Dashboard", href: "/dashboard/health-department", icon: Shield },
 ];
 
 export default function DashboardLayout({
@@ -234,6 +188,7 @@ export default function DashboardLayout({
   const [isPolicyModalOpen, setIsPolicyModalOpen] = React.useState(false);
   const [isPolicyAccepted, setIsPolicyAccepted] = React.useState(false);
   const { toast } = useToast();
+  const [isContactsOpen, setIsContactsOpen] = React.useState(false);
 
   React.useEffect(() => {
     
@@ -357,6 +312,23 @@ export default function DashboardLayout({
                     </AccordionContent>
                 </AccordionItem>
             ))}
+            {role === 'Employee' && (
+                <AccordionItem value="item-help" className="border-b-0">
+                    <AccordionTrigger className="py-2 px-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground rounded-md hover:no-underline [&[data-state=open]]:bg-accent [&[data-state=open]]:text-accent-foreground">
+                       <div className="flex items-center gap-2">
+                         <Wrench className="h-4 w-4" />
+                         <span className="group-data-[collapsible=icon]:hidden">Fixers</span>
+                       </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-1 pb-0">
+                        <SidebarMenu className="pl-4 border-l ml-4">
+                           <SidebarMenuItem>
+                               <SidebarMenuButton onClick={() => setIsContactsOpen(true)} size="sm">Service Contacts</SidebarMenuButton>
+                           </SidebarMenuItem>
+                        </SidebarMenu>
+                    </AccordionContent>
+                </AccordionItem>
+            )}
         </Accordion>
     );
   };
@@ -462,6 +434,19 @@ export default function DashboardLayout({
           ) : (
             <>
               {children}
+               <Dialog open={isContactsOpen} onOpenChange={setIsContactsOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="font-headline">Service Contacts</DialogTitle>
+                    <DialogDescription>
+                      Approved service professionals for your location. For emergencies only.
+                    </DialogDescription>
+                  </DialogHeader>
+                   <div className="py-4">
+                       <ServiceContacts />
+                   </div>
+                </DialogContent>
+              </Dialog>
               <Dialog open={isPolicyModalOpen} onOpenChange={(open) => {
                 if (!open && !isPolicyAccepted) {
                     setIsPolicyModalOpen(true);

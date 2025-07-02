@@ -9,9 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from '@/lib/utils';
-import Link from 'next/link';
-import { Check, Clock, ListTodo, ShieldCheck, Sparkles, Trophy, Zap, MessageSquare, Briefcase, BarChart, BookOpen, AlertCircle, Award, CalendarDays, Loader2, Camera } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Check, Clock, ListTodo, ShieldCheck, Camera, Loader2 } from "lucide-react";
 import LiveTeamFeed from '@/components/dashboard/employee/LiveTeamFeed';
 import WhosOnShift from '@/components/dashboard/employee/WhosOnShift';
 import TodaysFlow from '@/components/dashboard/employee/TodaysFlow';
@@ -181,7 +180,7 @@ export default function EmployeeDashboardV2() {
         }[storeVibe];
         return (
             <div className="flex items-center gap-2 text-xs font-semibold">
-                <span className={cn("h-2 w-2 rounded-full animate-pulse", colorClass)} />
+                <span className={`h-2 w-2 rounded-full animate-pulse ${colorClass}`} />
                 <span className="text-muted-foreground">{vibeMessage}</span>
             </div>
         );
@@ -213,25 +212,38 @@ export default function EmployeeDashboardV2() {
                                 <Progress value={progressPercentage} className="h-2 flex-1" />
                                 <span className="text-sm font-semibold">{completedCount} / {totalTasks} Complete</span>
                             </div>
-                            <div className="space-y-3">
-                                {tasks.map(task => (
-                                    <div key={task.id} className="flex items-center gap-3 p-3 rounded-lg border bg-background hover:bg-muted/50 transition-colors">
-                                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary">
-                                            {task.type === 'qa' ? <ShieldCheck className="h-5 w-5" /> : <Zap className="h-5 w-5" />}
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-medium">{task.type === 'qa' ? task.description : (task as Task).name}</p>
-                                            <p className="text-xs text-muted-foreground">{task.type === 'qa' ? task.source : (task as Task).area}</p>
-                                        </div>
-                                        <Badge variant={task.type === 'qa' || (task as Task).priority === "High" ? "destructive" : "secondary"}>
-                                            {task.type === 'qa' ? 'High Priority' : (task as Task).priority}
-                                        </Badge>
-                                        <Button size="sm" onClick={() => handleOpenProofDialog(task)}>
-                                            <Check className="mr-2 h-4 w-4" /> Done
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
+                             <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Task</TableHead>
+                                        <TableHead>Area / Source</TableHead>
+                                        <TableHead>Priority</TableHead>
+                                        <TableHead className="text-right">Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {tasks.length > 0 ? tasks.map(task => (
+                                        <TableRow key={task.id}>
+                                            <TableCell className="font-medium">{task.type === 'qa' ? task.description : (task as Task).name}</TableCell>
+                                            <TableCell className="text-muted-foreground">{task.type === 'qa' ? task.source : (task as Task).area}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={task.type === 'qa' || (task as Task).priority === "High" ? "destructive" : "secondary"}>
+                                                    {task.type === 'qa' ? 'High Priority' : (task as Task).priority}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button size="sm" onClick={() => handleOpenProofDialog(task)}>
+                                                    <Check className="mr-2 h-4 w-4" /> Done
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    )) : (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="h-24 text-center">All tasks completed. Great job!</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
                         </CardContent>
                     </Card>
 
@@ -251,21 +263,9 @@ export default function EmployeeDashboardV2() {
                         </CardContent>
                     </Card>
                     
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><CalendarDays /> My Schedule</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground mb-4">Your next shift is on Tuesday at 9:00 AM.</p>
-                            <Button asChild className="w-full" variant="outline">
-                                <Link href="/dashboard/employee/schedule">View Full Schedule & Set Preferences</Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
-
+                    <TodaysFlow />
                     <WhosOnShift />
                     <PerformanceCard xpEarned={xpEarned} />
-                    <TodaysFlow />
                     <TeamLeaderboard />
                 </div>
             </div>
