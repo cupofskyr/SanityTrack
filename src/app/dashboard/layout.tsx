@@ -83,6 +83,7 @@ const managerNav = [
           { name: "Shift Planner", href: "/dashboard/manager/shifts" },
           { name: "Inventory", href: "/dashboard/manager/inventory" },
           { name: "Ordering", href: "/dashboard/manager/ordering" },
+          { name: "Food Prep & Labeling", href: "/dashboard/manager/prep" },
         ]
     },
     { 
