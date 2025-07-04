@@ -129,7 +129,7 @@ exports.toggleWalletEnabled = functions.https.onCall(async (data, context) => {
   const uid = context.auth?.uid;
   if (!uid) throw new functions.https.HttpsError('unauthenticated', 'User not authenticated.');
   const { employeeId, enableWallet } = data;
-  if (!employeeId || typeof enableWallet !== 'boolean') throw new functions.https.HttpsError('invalid-argument', 'Missing or invalid parameters.');
+  if (!employeeId || typeof enableWallet !== 'boolean') throw new functions.https.HttpsError('missing-or-invalid-parameters', 'Missing or invalid parameters.');
 
   const adminInfo = await getUserAuthInfo(uid);
   if (!adminInfo || adminInfo.role === "employee") throw new functions.https.HttpsError('permission-denied', 'Insufficient permissions.');

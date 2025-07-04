@@ -1,49 +1,9 @@
-
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth.uid == userId;
-    }
-
-    match /employees/{employeeId} {
-        allow read: if request.auth != null;
-        allow write: if request.auth.token.role in ['owner', 'manager'];
-    }
-
-    match /perksTransactions/{transactionId} {
-        allow read: if request.auth.token.role in ['owner', 'manager'];
-        allow write: if false; 
-    }
-
-    // Rules for inventory system
-    match /ingredients/{ingredientId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.token.role == "manager";
-    }
-
-    match /suppliers/{supplierId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.token.role == "manager";
-    }
-    
-    match /recipes/{recipeId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.token.role in ['owner', 'manager'];
-    }
-
-    match /purchaseOrders/{orderId} {
-      allow create: if request.auth.token.role == "manager";
-      allow read, update: if request.auth.token.role in ["owner", "manager"];
-    }
-
-    match /posSales/{saleId} {
-      allow create: if true; // In real app, restrict to POS system's service account
-    }
-
-    match /inventoryTransactions/{txId} {
-      allow create: if true; // Writable by backend functions only
-      allow read: if request.auth.token.role == "manager";
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
