@@ -1,320 +1,171 @@
-
 "use client";
 
-import { useState, FormEvent } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useState, useRef, FormEvent } from 'react';
+import { Camera, Trash2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { Camera, PlusCircle, Trash2, Video, Sparkles, Loader2, Link as LinkIcon, AlertCircle } from 'lucide-react';
-import { analyzeCameraImageAction, suggestManualChecksAction } from '@/app/actions';
-import type { CameraAnalysisOutput } from '@/ai/flows/camera-analysis-schemas';
-import type { ManualCheckTask } from '@/ai/schemas/manual-check-schemas';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { Textarea } from './ui/textarea';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Badge } from './ui/badge';
 
-type VirtualCamera = {
+interface Camera {
   id: number;
   name: string;
   location: string;
   streamUrl: string;
-  videoUrl: string; // Blob URL for the placeholder video
-};
-
-type AnalysisResult = {
-    cameraId: number;
-    output: CameraAnalysisOutput;
-};
+  videoUrl: string;
+}
 
 export default function AIMonitoringSetup() {
-    const { toast } = useToast();
-    const [cameras, setCameras] = useState<VirtualCamera[]>([]);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [monitoringType, setMonitoringType] = useState<'digital' | 'manual'>('digital');
-    
-    // Form state for new camera
-    const [newCameraName, setNewCameraName] = useState('');
-    const [newCameraLocation, setNewCameraLocation] = useState('');
-    const [newStreamUrl, setNewStreamUrl] = useState('');
-    const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [newCameraName, setNewCameraName] = useState("");
+  const [newCameraLocation, setNewCameraLocation] = useState("");
+  const [newStreamUrl, setNewStreamUrl] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // AI Analysis state
-    const [analysisPrompts, setAnalysisPrompts] = useState<Record<number, string>>({});
-    const [isLoading, setIsLoading] = useState<number | null>(null);
-    const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const { toast } = useToast()
+  const handleAddCamera = (e: FormEvent) => {
+    e.preventDefault();
 
-    // Manual mode state
-    const [isSuggesting, setIsSuggesting] = useState(false);
-    const [suggestedManualTasks, setSuggestedManualTasks] = useState<ManualCheckTask[] | null>(null);
+    if (!newCameraName || !newCameraLocation || !newStreamUrl || !videoFile) {
+      toast({
+        variant: "destructive",
+        title: "Missing Fields",
+        description: "Please fill out all fields and select a video file.",
+      });
+      return;
+    }
 
-    const handleAddCamera = (e: FormEvent) => {
-        e.preventDefault();
-        if (!newCameraName || !newCameraLocation || !newStreamUrl || !videoFile) {
-            toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please fill out all fields and select a video file.' });
-            return;
-        }
+    const videoUrl = URL.createObjectURL(videoFile);
 
-        const newCamera: VirtualCamera = {
-            id: Date.now(),
-            name: newCameraName,
-            location: newCameraLocation,
-            streamUrl: newStreamUrl,
-            videoUrl: URL.createObjectURL(videoFile),
-        };
-
-        setCameras(prev => [...prev, newCamera]);
-        toast({ title: 'Camera Added', description: `Successfully added the ${newCameraName} camera.` });
-        
-        // Reset form and close dialog
-        setNewCameraName('');
-        setNewCameraLocation('');
-        setNewStreamUrl('');
-        setVideoFile(null);
-        setIsDialogOpen(false);
-    };
-    
-    const handleDeleteCamera = (id: number) => {
-        // Revoke the blob URL to prevent memory leaks
-        const cameraToDelete = cameras.find(c => c.id === id);
-        if (cameraToDelete) {
-            URL.revokeObjectURL(cameraToDelete.videoUrl);
-        }
-        setCameras(prev => prev.filter(c => c.id !== id));
-        toast({ variant: 'secondary', title: 'Camera Removed' });
+    const newCamera: Camera = {
+      id: cameras.length > 0 ? cameras[cameras.length - 1].id + 1 : 1,
+      name: newCameraName,
+      location: newCameraLocation,
+      streamUrl: newStreamUrl,
+      videoUrl,
     };
 
-    const handleAnalyzeVideo = async (camera: VirtualCamera) => {
-        const analysisPrompt = analysisPrompts[camera.id];
-        if (!analysisPrompt) {
-            toast({ variant: 'destructive', title: 'Missing Prompt', description: 'Please enter an analysis prompt.' });
-            return;
-        }
-        
-        setIsLoading(camera.id);
-        setAnalysisResult(null);
+    setCameras((prev) => [...prev, newCamera]);
 
-        try {
-            // **SIMULATION NOTE**: We use a representative static image for analysis
-            // because transmitting and processing video in real-time is beyond
-            // the scope of this prototype environment. This simulates analyzing a keyframe.
-            const representativeImageUrl = 'https://storage.googleapis.com/gen-ai-recipes/person-in-restaurant.jpg';
+    setNewCameraName("");
+    setNewCameraLocation("");
+    setNewStreamUrl("");
+    setVideoFile(null);
 
-            const result = await analyzeCameraImageAction({
-                imageUrl: representativeImageUrl,
-                analysisPrompt,
-            });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
 
-            if (result.error || !result.data) {
-                throw new Error(result.error || 'AI analysis returned no data.');
-            }
-            
-            setAnalysisResult({ cameraId: camera.id, output: result.data });
-            toast({ title: 'AI Analysis Complete', description: `Report for ${camera.name} is ready.` });
+    toast({ variant: "default", title: "Camera Added" });
+  };
 
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'AI Error', description: error.message });
-        } finally {
-            setIsLoading(null);
-        }
-    };
-    
-    const handleSuggestManualChecks = async () => {
-        setIsSuggesting(true);
-        setSuggestedManualTasks(null);
-        try {
-            const result = await suggestManualChecksAction();
-            if (result.error || !result.data) {
-                throw new Error(result.error || 'Could not get AI suggestions.');
-            }
-            setSuggestedManualTasks(result.data.tasks);
-            toast({ title: "AI Suggestions Ready!", description: "Review the suggested manual checks below." });
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'AI Error', description: error.message });
-        } finally {
-            setIsSuggesting(false);
-        }
-    };
+  const handleDeleteCamera = (id: number) => {
+    // Revoke the blob URL to prevent memory leaks
+    const cameraToDelete = cameras.find((c) => c.id === id);
+    if (cameraToDelete) {
+      URL.revokeObjectURL(cameraToDelete.videoUrl);
+    }
+    setCameras((prev) => prev.filter((c) => c.id !== id));
+    toast({ variant: "secondary", title: "Camera Removed" });
+  };
 
-    const handleAddManualTask = (task: ManualCheckTask) => {
-        // In a real app, this would write to a central task database.
-        // For this demo, we'll just show a success toast.
-        toast({
-            title: "Task Added (Simulated)",
-            description: `"${task.description}" has been added to the Master Task List.`
-        });
-        setSuggestedManualTasks(prev => prev ? prev.filter(t => t.description !== task.description) : null);
-    };
+  return (
+    <div className="space-y-6">
+      <form onSubmit={handleAddCamera} className="space-y-4 max-w-md">
+        <div>
+          <label htmlFor="cameraName" className="block font-medium mb-1">
+            Camera Name
+          </label>
+          <input
+            id="cameraName"
+            type="text"
+            value={newCameraName}
+            onChange={(e) => setNewCameraName(e.target.value)}
+            className="input input-bordered w-full"
+            placeholder="Camera Name"
+          />
+        </div>
 
+        <div>
+          <label htmlFor="cameraLocation" className="block font-medium mb-1">
+            Camera Location
+          </label>
+          <input
+            id="cameraLocation"
+            type="text"
+            value={newCameraLocation}
+            onChange={(e) => setNewCameraLocation(e.target.value)}
+            className="input input-bordered w-full"
+            placeholder="Camera Location"
+          />
+        </div>
 
-    return (
-        <Card className="lg:col-span-3" id="ai-monitoring">
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><Video /> Monitoring &amp; Automation</CardTitle>
-                <CardDescription>Choose your monitoring method and configure your AI assistant.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-3 rounded-lg border p-4">
-                    <Label className="font-semibold">Monitoring Method</Label>
-                    <RadioGroup
-                        value={monitoringType}
-                        onValueChange={(value) => setMonitoringType(value as 'digital' | 'manual')}
-                        className="flex flex-col sm:flex-row gap-x-4 gap-y-2"
-                    >
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="digital" id="r-digital" />
-                            <Label htmlFor="r-digital" className="font-normal">Digital IoT Sensors</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="manual" id="r-manual" />
-                            <Label htmlFor="r-manual" className="font-normal">Manual Photo-Verified Checks</Label>
-                        </div>
-                    </RadioGroup>
-                </div>
-                
-                {monitoringType === 'digital' ? (
-                    <div>
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
-                            <div>
-                                <h3 className="font-semibold">Camera Feeds</h3>
-                                <p className="text-sm text-muted-foreground">Configure tasks for your AI camera assistant.</p>
-                            </div>
-                            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" size="sm" className="mt-2 sm:mt-0"><PlusCircle className="mr-2 h-4 w-4" /> Add Camera</Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle className="font-headline">Add New Camera Feed</DialogTitle>
-                                    </DialogHeader>
-                                    <form onSubmit={handleAddCamera} className="space-y-4 py-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="cam-name">Camera Name</Label>
-                                            <Input id="cam-name" value={newCameraName} onChange={e => setNewCameraName(e.target.value)} placeholder="e.g., Front Counter Cam" required />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="cam-location">Location</Label>
-                                            <Input id="cam-location" value={newCameraLocation} onChange={e => setNewCameraLocation(e.target.value)} placeholder="e.g., Main Dining Room" required />
-                                        </div>
-                                         <div className="grid gap-2">
-                                            <Label htmlFor="cam-stream">Live Stream URL</Label>
-                                            <Input id="cam-stream" value={newStreamUrl} onChange={e => setNewStreamUrl(e.target.value)} placeholder="e.g., rtsp://..." required />
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="cam-video">Placeholder Video File</Label>
-                                            <Input id="cam-video" type="file" accept="video/*" onChange={e => setVideoFile(e.target.files ? e.target.files[0] : null)} required />
-                                        </div>
-                                        <DialogFooter>
-                                            <Button type="submit">Add Camera</Button>
-                                        </DialogFooter>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
-                        <Alert variant="default" className="mb-6">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Video Analysis Simulation</AlertTitle>
-                            <AlertDescription>
-                                For this prototype, AI analysis is performed on a representative static image, not the full video file. This simulates analyzing a keyframe from a live feed to generate insights.
-                            </AlertDescription>
-                        </Alert>
-                        {cameras.length === 0 ? (
-                            <div className="text-center text-sm text-muted-foreground p-8 border-dashed border-2 rounded-md">
-                                <Camera className="mx-auto h-12 w-12" />
-                                <p className="mt-4 font-semibold">No cameras added yet.</p>
-                                <p>Click "Add Camera" to get started.</p>
-                            </div>
-                        ) : (
-                            <div className="grid md:grid-cols-2 gap-6">
-                                {cameras.map(camera => (
-                                    <Card key={camera.id}>
-                                        <CardHeader>
-                                            <CardTitle className="flex justify-between items-start">
-                                                <span>{camera.name}</span>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCamera(camera.id)}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </CardTitle>
-                                            <CardDescription>{camera.location}</CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="space-y-4">
-                                            <div className="aspect-video w-full rounded-md overflow-hidden border bg-black">
-                                                <video src={camera.videoUrl} loop autoPlay muted playsInline className="w-full h-full object-cover" />
-                                            </div>
-                                            <div className="text-xs text-muted-foreground flex items-center gap-2">
-                                                <LinkIcon className="h-3 w-3" />
-                                                <span className="truncate">{camera.streamUrl}</span>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor={`prompt-${camera.id}`} className="font-semibold">Tell the AI what to analyze:</Label>
-                                                <Textarea
-                                                    id={`prompt-${camera.id}`}
-                                                    value={analysisPrompts[camera.id] || ''}
-                                                    onChange={e => setAnalysisPrompts({...analysisPrompts, [camera.id]: e.target.value})}
-                                                    placeholder="Be specific. For example: 'Count how many customers are in line.' or 'Alert me if a spill is not cleaned within 5 minutes.'"
-                                                    rows={3}
-                                                />
-                                            </div>
-                                             {analysisResult && analysisResult.cameraId === camera.id && (
-                                                <Alert>
-                                                    <AlertTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" />{analysisResult.output.reportTitle}</AlertTitle>
-                                                    <AlertDescription>
-                                                        <ul className="list-disc list-inside mt-2">
-                                                            {analysisResult.output.observations.map((obs, i) => <li key={i}>{obs}</li>)}
-                                                        </ul>
-                                                    </AlertDescription>
-                                                </Alert>
-                                            )}
-                                        </CardContent>
-                                        <CardFooter>
-                                            <Button className="w-full" onClick={() => handleAnalyzeVideo(camera)} disabled={isLoading === camera.id}>
-                                                {isLoading === camera.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                                Run Daily Analysis
-                                            </Button>
-                                        </CardFooter>
-                                    </Card>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <Card className="bg-muted/50">
-                        <CardHeader>
-                            <CardTitle>Configure Manual Verification Tasks</CardTitle>
-                            <CardDescription>In this mode, the AI relies on human-in-the-loop photo verification. Use the AI to suggest a baseline set of manual checks for your team.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                             <Button onClick={handleSuggestManualChecks} disabled={isSuggesting}>
-                                {isSuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                Use AI to Suggest Manual Checks
-                            </Button>
-                            {suggestedManualTasks && (
-                                <div className="pt-4">
-                                     <h4 className="font-semibold mb-2">AI Suggestions</h4>
-                                     <Table>
-                                         <TableHeader><TableRow><TableHead>Task</TableHead><TableHead>Frequency</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
-                                         <TableBody>
-                                             {suggestedManualTasks.map((task, i) => (
-                                                 <TableRow key={i}>
-                                                     <TableCell>{task.description}</TableCell>
-                                                     <TableCell><Badge variant="secondary">{task.frequency}</Badge></TableCell>
-                                                     <TableCell className="text-right">
-                                                         <Button size="sm" onClick={() => handleAddManualTask(task)}><PlusCircle className="mr-2 h-4 w-4"/> Add to List</Button>
-                                                     </TableCell>
-                                                 </TableRow>
-                                             ))}
-                                         </TableBody>
-                                     </Table>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
-            </CardContent>
-        </Card>
-    );
+        <div>
+          <label htmlFor="streamUrl" className="block font-medium mb-1">
+            Stream URL
+          </label>
+          <input
+            id="streamUrl"
+            type="text"
+            value={newStreamUrl}
+            onChange={(e) => setNewStreamUrl(e.target.value)}
+            className="input input-bordered w-full"
+            placeholder="rtsp://example.com/stream"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="videoFile" className="block font-medium mb-1">
+            Video File
+          </label>
+          <input
+            id="videoFile"
+            type="file"
+            accept="video/*"
+            ref={fileInputRef}
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                setVideoFile(e.target.files[0]);
+              }
+            }}
+            className="file-input file-input-bordered w-full"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="btn btn-primary flex items-center space-x-2"
+        >
+          <Camera size={18} />
+          <span>Add Camera</span>
+        </button>
+      </form>
+
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Configured Cameras</h2>
+        {cameras.length === 0 && (
+          <p className="text-sm text-muted-foreground">No cameras added yet.</p>
+        )}
+        <ul className="space-y-4">
+          {cameras.map(({ id, name, location, streamUrl }) => (
+            <li
+              key={id}
+              className="p-4 border rounded flex justify-between items-center"
+            >
+              <div>
+                <p className="font-medium">{name}</p>
+                <p className="text-sm text-muted-foreground">{location}</p>
+                <p className="text-sm text-muted-foreground">{streamUrl}</p>
+              </div>
+              <button
+                onClick={() => handleDeleteCamera(id)}
+                className="btn btn-destructive btn-sm"
+                aria-label={`Remove camera ${name}`}
+              >
+                <Trash2 size={16} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 }

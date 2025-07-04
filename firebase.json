@@ -1,13 +1,11 @@
 {
   "emulators": {
     "auth": {
-      "port": 9097
-      ,
+      "port": 9097,
       "host": "127.0.0.1"
     },
     "firestore": {
-      "port": 8082
-      ,
+      "port": 8082,
       "host": "127.0.0.1"
     },
     "functions": {
@@ -17,11 +15,9 @@
     "storage": {
       "port": 9199,
       "host": "127.0.0.1"
-
     },
     "ui": {
-      "enabled": true
-      ,
+      "enabled": true,
       "port": 4001,
       "host": "127.0.0.1"
     }
@@ -37,18 +33,6 @@
       "source": "functions",
       "codebase": "default",
       "ignore": [
-        "node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint",
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
-    },
-    {
-
-      "source": "leifurai",  // Assuming 'leifurai' is a valid functions source directory
-      "codebase": "leifurai",
-      "ignore": [
         "node_modules",
         ".git",
         "firebase-debug.log",
@@ -56,7 +40,8 @@
         "*.local"
       ],
       "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint"
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
     }
   ],
@@ -66,11 +51,19 @@
   "hosting": {
     "public": "public",
     "ignore": [
-      "firebase.json", "**/.*",
+      "firebase.json",
+      "**/.*",
       "**/node_modules/**"
     ],
     "rewrites": [
-      { "source": "**", "function": "nextServer" }
+      {
+        "source": "/api/settings/sms",
+        "function": "smsSettings"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
     ]
   }
 }
