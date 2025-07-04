@@ -1,3 +1,4 @@
+
 {
   "emulators": {
     "auth": {
@@ -57,12 +58,8 @@
     ],
     "rewrites": [
       {
-        "source": "/api/settings/sms",
-        "function": "smsSettings"
-      },
-      {
         "source": "**",
-        "destination": "/index.html"
+        "function": "nextServer"
       }
     ]
   }
